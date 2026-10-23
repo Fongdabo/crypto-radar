@@ -273,6 +273,7 @@
     }), 3);
     for (const k of Object.keys(cache)) if (!jobs.some(j => j.key === k)) delete cache[k];
     cachePut(cache);
+    window.dispatchEvent(new Event('cr-wallets'));   // the wallet side panel re-reads the cache
     walletRows = results.flat().filter(r => r.value == null || r.value >= 0.01).sort((x, y) => (y.value || 0) - (x.value || 0));
     walletState = ok === 0 && !walletRows.length ? 'blocked' : failedChains.length ? 'partial' : 'ok';
     renderWallet(); render();

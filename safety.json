@@ -1,0 +1,14 @@
+{
+  "_about": "Public list of known phishing domains copying sites in the dashboard. Used by the link checker in the wallet panel. No personal data.",
+  "fakes": [
+    { "domain": "claim.pharos.sbs", "project": "Pharos" },
+    { "domain": "pharosnetwsworks.com", "project": "Pharos" },
+    { "domain": "claim-grassfoundation.pages.dev", "project": "Grass" },
+    { "domain": "grass-foundations.pages.dev", "project": "Grass" },
+    { "domain": "ink-airdrop.vercel.app", "project": "Ink (Kraken)" }
+  ],
+  "extra_official": [
+    { "project": "Grass", "url": "https://app.grass.io" },
+    { "project": "Pharos", "url": "https://claim.pharos.xyz" }
+  ]
+}

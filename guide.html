@@ -10,6 +10,7 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preload" href="vendor/fonts/noto-sans-thai-looped-thai-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/app.css">
 <script src="js/i18n.js"></script>
 <style>
@@ -98,6 +99,7 @@ table.sec td:first-child { white-space: nowrap; font-weight: 600; padding-right:
     <summary>2. แถบเครื่องมือมุมขวาบน และการอัปเดต</summary>
     <div class="body">
       <table class="sec">
+        <tr><td>👛 กระเป๋า</td><td>แผงกระเป๋าด้านขวาแบบ MetaMask: ยอดรวม เหรียญแยกเครือข่าย และแท็บ "กิจกรรม" ที่รวมเว็บทางการที่ตรวจแล้ว กับช่องตรวจลิงก์ก่อนเชื่อมกระเป๋า (ดูอย่างเดียว แอปไม่เชื่อมหรือเซ็นแทนคุณ)</td></tr>
         <tr><td>☁️ ก้อนเมฆ</td><td>จุดสีเขียว = ออนไลน์ จุดสีเทา = ออฟไลน์ (แสดงข้อมูลที่บันทึกไว้) กดเพื่อดูเวลาข้อมูลล่าสุด</td></tr>
         <tr><td>🔔 กระดิ่ง</td><td>วันสำคัญใน 7 วันข้างหน้า และแจ้งเตือนราคาที่เคยเด้ง ตัวเลขสีแดง = รายการที่ยังไม่ได้อ่าน</td></tr>
         <tr><td>🌙 พระจันทร์</td><td>สลับธีมมืด/สว่าง</td></tr>
@@ -360,6 +362,7 @@ table.sec td:first-child { white-space: nowrap; font-weight: 600; padding-right:
     <summary>2. The top-right toolbar and updates</summary>
     <div class="body">
       <table class="sec">
+        <tr><td>👛 Wallet</td><td>MetaMask-style wallet panel on the right: total, coins by network, and an "Activities" tab with verified official sites and a link checker to use before connecting (read-only; the app never connects or signs for you)</td></tr>
         <tr><td>☁️ Cloud</td><td>Green dot = online, grey dot = offline (showing saved data). Tap it to see when the data was last updated.</td></tr>
         <tr><td>🔔 Bell</td><td>Key dates in the next 7 days and price alerts that have fired. The red number counts unread items.</td></tr>
         <tr><td>🌙 Moon</td><td>Switch between the dark and light theme</td></tr>
@@ -586,6 +589,7 @@ document.querySelectorAll('[data-lang]').forEach(e => { if (e.dataset.lang !== (
 <footer class="app-foot">ข้อมูลเพื่อการศึกษา ไม่ใช่คำแนะนำการลงทุน · แอปนี้ไม่รับฝากเงินและไม่เชื่อมกระเป๋า</footer>
 
 <script src="js/app.js"></script>
+<script src="js/wallet-panel.js"></script>
 <script src="js/coins.js"></script>
 <script src="js/telegram.js"></script>
 <script src="js/alerts.js"></script>
