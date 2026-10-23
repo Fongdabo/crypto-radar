@@ -1,5 +1,5 @@
 // Network first, so every open shows the latest app and data; the cache is the offline fallback.
-const VERSION = 'v17';
+const VERSION = 'v18';
 const CACHE = 'crypto-radar-' + VERSION;
 const SHELL = [
   './', 'index.html', 'portfolio.html', 'guide.html', 'coin.html', 'js/portfolio.js', 'js/coin.js', 'js/coins.js', 'js/alerts.js', 'js/i18n.js', 'js/wallet-panel.js', 'agents.html', 'js/agents.js', 'safety.json', 'manifest.webmanifest', 'css/app.css',
@@ -8,7 +8,8 @@ const SHELL = [
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  // cache: 'reload' skips the browser's HTTP cache (GitHub Pages allows 10 minutes), so a new version never installs old files.
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL.map(u => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
@@ -22,8 +23,10 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
+  // no-cache: always ask the server (a cheap 304 when unchanged) instead of reusing a copy up to 10 minutes old.
+  const fresh = req.mode === 'navigate' ? fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' }) : fetch(req, { cache: 'no-cache' });
   e.respondWith(
-    fetch(req).then(res => {
+    fresh.then(res => {
       if (res.ok) {
         const copy = res.clone();
         const key = req.url.split('?')[0];

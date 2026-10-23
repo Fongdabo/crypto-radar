@@ -1,7 +1,8 @@
 // Shared by every page: the top-right toolbar (status, bell, theme, help, language, menu), install and update, offline cache and new-version notice.
 (function () {
-  const APP_VERSION = '17';   // keep in step with VERSION in sw.js; add a CHANGELOG entry for every release
+  const APP_VERSION = '18';   // keep in step with VERSION in sw.js; add a CHANGELOG entry for every release
   const CHANGELOG = [
+    ['18', '23 ต.ค. 2569', ['แผงกระเป๋ากะทัดรัดขึ้นแบบ MetaMask อยู่ใต้แถบเมนู ลากขอบซ้ายเพื่อปรับความกว้างได้', 'แสดงโลโก้เหรียญจริง พร้อมป้ายเครือข่ายที่มุม', 'ปุ่มอัปเดตบอกผลทุกครั้ง: อัปเดตเป็นเวอร์ชันใหม่แล้ว หรือเป็นเวอร์ชันล่าสุดอยู่แล้ว', 'แก้ปุ่มอัปเดตที่บางครั้งยังโหลดเวอร์ชันเก่าค้างอยู่ประมาณ 10 นาทีหลังมีเวอร์ชันใหม่']],
     ['17', '23 ต.ค. 2569', ['แก้ "อ่านไม่ได้": Solana และ EVM ใช้ผู้ให้บริการสำรองเมื่อตัวหลักบล็อก และเครือข่ายเดียวพังจะไม่ทำให้ทั้งกระเป๋าอ่านไม่ได้อีก', 'บอกเหตุผลจริงเมื่ออ่านยอดไม่ได้', 'ปุ่มวางที่อยู่กระเป๋าเป็นทางหลัก ปุ่มเชื่อมกระเป๋าย้ายไปเป็นตัวเลือกเสริม']],
     ['16', '23 ต.ค. 2569', ['แท็บเอเจนต์: แชทแบบแอป PM เอเจนต์ 1 ตัวต่อ 1 กิจกรรม (Base, Ink, Abstract, เคลม, ความปลอดภัย, ปลดล็อก, Polymarket) บอกขั้นต่อไปพร้อมปุ่ม ทำแล้ว / ข้าม / ฉันพร้อมเซ็น', 'ขั้นที่ต้องเซ็นบอกว่าหน้าต่าง MetaMask ควรเป็นแบบไหน และเมื่อไรต้องกดปฏิเสธ เซ็นเสร็จเอเจนต์ตรวจบนเชนให้ (คุณเซ็นเอง แอปไม่เซ็นแทน)', 'กระดิ่งแจ้งเมื่อเอเจนต์รอให้คุณเซ็น หรือใกล้ถึงกำหนด']],
     ['15', '23 ต.ค. 2569', ['ปิดการแจ้งเตือน Telegram ไว้ก่อน', 'กดเชื่อมกระเป๋าแล้วถามก่อนว่ากระเป๋าอยู่ในเบราว์เซอร์ไหน (เบราว์เซอร์นี้ / Chrome / Edge / Brave) ถ้าอยู่อีกเบราว์เซอร์ แอปพาไปเปิดที่นั่นให้', 'ปุ่มเดียว "วางที่อยู่กระเป๋าที่คัดลอกไว้" ไม่ต้องเชื่อมต่อ', 'เตือนตอนกดเชื่อม: ถ้ากระเป๋าขึ้นหน้าสร้างกระเป๋าใหม่ ให้ปิด อย่ากรอกคำกู้คืนในเบราว์เซอร์ที่สอง']],
@@ -25,6 +26,36 @@
   const T = (th, en) => (EN ? en : th);
   const locale = window.CR_LOCALE || 'th-TH';
   const h = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+
+  // Coin logos: the token's own icon from a trusted source (Blockscout, Jupiter verified list), else the
+  // cryptocurrency-icons set by symbol, else a coloured letter. A small network badge sits on tokens that are not the chain's own coin.
+  const ICON_CDN = 'https://cdn.jsdelivr.net/npm/cryptocurrency-icons@0.18.1/svg/color/';
+  const CHAINS = {
+    Ethereum: ['#627eea', 'ETH', 'eth'], Base: ['#0052ff', 'ETH', null], Polygon: ['#8247e5', 'POL', 'matic'], Arbitrum: ['#28a0f0', 'ETH', null],
+    Optimism: ['#ff0420', 'ETH', null], Bitcoin: ['#f7931a', 'BTC', 'btc'], Solana: ['#14f195', 'SOL', 'sol'], Tron: ['#eb0029', 'TRX', 'trx'],
+    Stellar: ['#7d7d7d', 'XLM', 'xlm'], Ronin: ['#1273ea', 'RON', null],
+  };
+  const imgOr = (srcs, fallback) => {
+    if (!srcs.length) return fallback();
+    const im = h('img'); im.alt = ''; im.loading = 'lazy'; im.decoding = 'async'; im.referrerPolicy = 'no-referrer';
+    let i = 0; im.onerror = () => { if (i < srcs.length) im.src = srcs[i++]; else im.replaceWith(fallback()); };
+    im.src = srcs[i++]; return im;
+  };
+  window.CRLogo = function (sym, chain, url, opts) {
+    const s = String(sym || '').replace(/\s*⚠$/, '').trim(), c = CHAINS[chain] || null, trusted = !(opts && opts.unverified);
+    const wrap = h('span', 'clogo'); wrap.setAttribute('aria-hidden', 'true');
+    const letter = () => { const d = h('span', 'clogo-l', (s[0] || '?').toUpperCase()); d.style.background = c ? c[0] : '#64748b'; return d; };
+    const srcs = [];
+    if (trusted && typeof url === 'string' && /^https:\/\/[^\s"'<>]+$/.test(url)) srcs.push(url);
+    if (trusted && /^[A-Za-z0-9]{1,10}$/.test(s)) srcs.push(ICON_CDN + s.toLowerCase() + '.svg');
+    wrap.append(imgOr(srcs, letter));
+    if (c && s.toUpperCase() !== c[1]) {
+      const b = h('span', 'clogo-b'); b.title = chain;
+      b.append(imgOr(c[2] ? [ICON_CDN + c[2] + '.svg'] : [], () => { const d = h('span', 'clogo-l', chain[0]); d.style.background = c[0]; return d; }));
+      wrap.append(b);
+    }
+    return wrap;
+  };
   const icon = d => '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
   const ICONS = {
     cloud: '<path d="M7 18h10a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.1 9.2 4.5 4.5 0 0 0 7 18z"/>',
@@ -36,6 +67,7 @@
   };
 
   function toast(text, ms) {
+    document.querySelectorAll('.toast:not(.new-version)').forEach(x => x.remove());
     const t = h('div', 'toast', text); document.body.append(t);
     setTimeout(() => t.remove(), ms || 4000);
   }
@@ -166,18 +198,39 @@
 
   // 6. Menu: update, what's new, backup, alerts, Telegram, install.
   let prompt = null, reg = null, updating = false;
+  // Update: ask the server for the newest version number (skipping every cache), install it, then reload.
+  // The result is shown after the reload, so pressing the button always says what happened.
+  const UPD_KEY = 'crypto-radar:update-msg';
+  async function latestVersion() {
+    try { const t = await (await fetch('js/app.js?t=' + Date.now(), { cache: 'no-store' })).text(); const m = t.match(/APP_VERSION = '(\d+)'/); return m ? m[1] : null; }
+    catch (e) { return null; }
+  }
   async function update() {
     if (!navigator.onLine) { toast(T('ออฟไลน์อยู่ ต่ออินเทอร์เน็ตก่อนแล้วกดอัปเดตอีกครั้ง', 'You are offline. Connect to the internet and press update again.')); return; }
-    updating = true; closeDd(); toast(T('กำลังอัปเดต…', 'Updating…'));
+    updating = true; closeDd(); toast(T('กำลังตรวจหาเวอร์ชันใหม่…', 'Checking for a new version…'));
+    const latest = await latestVersion();
+    const newer = latest && Number(latest) > Number(APP_VERSION);
+    if (newer) toast(T('พบเวอร์ชัน ', 'Found version ') + latest + T(' กำลังอัปเดต…', ', updating…'));
     try {
       if (reg) {
         await reg.update();
-        // A new version installs and takes over by itself; controllerchange then reloads.
-        if (reg.installing || reg.waiting) { setTimeout(() => location.reload(), 4000); return; }
+        const w = reg.installing || reg.waiting;
+        if (w) await new Promise(res => { const t = setTimeout(res, 8000); w.addEventListener('statechange', () => { if (w.state === 'activated') { clearTimeout(t); res(); } }); });
       }
+      // Drop the saved copies so the reload fetches every file again.
+      if (newer && window.caches) for (const k of await caches.keys()) if (k.startsWith('crypto-radar-')) await caches.delete(k);
     } catch (e) {}
+    try { sessionStorage.setItem(UPD_KEY, newer ? 'new:' + latest : latest ? 'same:' + latest : 'data'); } catch (e) {}
     location.reload();
   }
+  (function updateResult() {
+    let m = null; try { m = sessionStorage.getItem(UPD_KEY); sessionStorage.removeItem(UPD_KEY); } catch (e) {}
+    if (!m) return;
+    const [kind, v] = m.split(':');
+    if (kind === 'new' && Number(APP_VERSION) < Number(v)) toast(T('ยังโหลดเวอร์ชันใหม่ไม่ครบ ปิดแอปทุกหน้าต่างแล้วเปิดใหม่ หรือกด Ctrl+Shift+R', 'The new version did not fully load. Close every app window and reopen it, or press Ctrl+Shift+R.'));
+    else if (kind === 'new') toast(T('อัปเดตเป็น v', 'Updated to v') + APP_VERSION + T(' แล้ว', ''));
+    else toast(T('เป็นเวอร์ชันล่าสุดแล้ว (v', 'You have the latest version (v') + APP_VERSION + T(') · อัปเดตข้อมูลแล้ว', ') · data refreshed'));
+  })();
   dropdown('menu', icon(ICONS.menu) + '<span class="lbl">' + T('เมนู', 'Menu') + '</span><span class="caret">▾</span>', T('เมนู', 'Menu'), p => {
     p.replaceChildren();
     const item = (ico, text, href, onclick) => {

@@ -126,9 +126,13 @@ html[data-theme="light"] .ic.xlm { background: #333; }
 
 /* Wallet side panel (js/wallet-panel.js): docked on wide screens, a sheet on phones */
 .wbtn[aria-pressed="true"] { background: var(--accent-bg); color: var(--teal); }
-body.wp-docked { padding-right: calc(360px + env(safe-area-inset-right)); }
-.wpanel { position: fixed; top: 0; right: 0; bottom: 0; width: 360px; z-index: 15; overflow-y: auto; overscroll-behavior: contain;
-  background: var(--panel); border-left: 1px solid var(--line); padding: 12px 14px calc(16px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 12px; }
+:root { --wp-w: 300px; }
+body.wp-docked { padding-right: calc(var(--wp-w) + env(safe-area-inset-right)); }
+/* Docked panel sits under the top bar; the bar keeps the full width by reaching into the body's right padding. */
+body.wp-docked .app-bar { margin-right: calc(-1 * (var(--wp-w) + env(safe-area-inset-right))); z-index: 20; }
+body.wp-docked .wpanel { top: var(--bar-h, 0px); }
+.wpanel { position: fixed; top: 0; right: 0; bottom: 0; width: var(--wp-w); z-index: 15; overflow-y: auto; overscroll-behavior: contain;
+  background: var(--panel); border-left: 1px solid var(--line); padding: 10px 12px calc(14px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 10px; font-size: 14px; }
 body.wp-sheet .wpanel { z-index: 40; width: min(420px, 100%); box-shadow: var(--shadow); padding-top: calc(12px + env(safe-area-inset-top)); }
 .wpanel[hidden] { display: none; }
 .wp-head { display: flex; align-items: center; gap: 8px; }
@@ -145,13 +149,13 @@ body.wp-sheet .wpanel { z-index: 40; width: min(420px, 100%); box-shadow: var(--
 .wp-addr .ic { color: var(--muted); }
 .wp-addr.copied { border-color: var(--teal); color: var(--teal); }
 .wp-addr.copied .ic::after { content: " ✓"; }
-.wp-total b { display: block; font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.wp-total b { display: block; font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }
 .wp-total .muted { font-size: 12px; }
-.wp-acts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.wp-act { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 4px; border: 0; border-radius: 12px; background: var(--panel2);
-  color: var(--fg); font: inherit; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; }
+.wp-acts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.wp-act { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 2px; border: 0; border-radius: 10px; background: var(--panel2);
+  color: var(--fg); font: inherit; font-size: 12px; font-weight: 600; text-decoration: none; cursor: pointer; }
 .wp-act:hover { outline: 1px solid var(--line); }
-.wp-act .i { font-size: 17px; line-height: 1.2; }
+.wp-act .i { font-size: 15px; line-height: 1.2; }
 .wp-recv { display: grid; gap: 6px; }
 .wp-recv p { margin: 0; font-size: 12px; }
 .wp-tabs { display: flex; gap: 18px; border-bottom: 1px solid var(--line); }
@@ -159,10 +163,10 @@ body.wp-sheet .wpanel { z-index: 40; width: min(420px, 100%); box-shadow: var(--
 .wp-tabs button.on { color: var(--fg); border-bottom-color: var(--fg); }
 .wp-list { display: flex; flex-direction: column; gap: 2px; }
 .wp-pad { padding: 8px 2px; margin: 0; }
-.wp-tok, .wp-site { display: flex; align-items: center; gap: 10px; padding: 9px 6px; border-radius: 10px; color: var(--fg); text-decoration: none; }
+.wp-tok, .wp-site { display: flex; align-items: center; gap: 8px; padding: 7px 4px; border-radius: 10px; color: var(--fg); text-decoration: none; }
 a.wp-tok[href]:hover, .wp-site:hover { background: var(--panel2); }
 .wp-tok.unv { opacity: .55; }
-.wp-dot { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 13px; flex: none; }
+.wp-dot { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 13px; flex: none; }
 .wp-tok .l, .wp-site .l { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .wp-tok .r { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
 .wp-tok .muted, .wp-site .muted { font-size: 12px; }
@@ -185,6 +189,11 @@ html[data-theme="light"] .wp-rules li.no { color: #dc2626; }
 .wp-cta { display: block; text-align: center; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--teal); color: var(--teal); text-decoration: none; font-weight: 600; }
 .wp-empty { display: grid; gap: 8px; }
 .wp-empty p { margin: 0; color: var(--muted); }
+/* Drag the panel's left edge to resize it; double-click resets. */
+.wp-grip { display: none; position: fixed; top: var(--bar-h, 0px); bottom: 0; right: calc(var(--wp-w) - 3px); width: 6px; z-index: 16; cursor: col-resize; }
+body.wp-docked .wp-grip { display: block; }
+.wp-grip:hover, .wp-grip.drag { background: var(--teal); opacity: .5; }
+body.wp-resizing { user-select: none; cursor: col-resize; }
 @media (max-width: 1199px) { body.wp-docked { padding-right: env(safe-area-inset-right); } }
 
 /* Wallet badges and wallet tabs (portfolio page and side panel) */
@@ -231,9 +240,18 @@ html[data-theme="light"] .wp-rules li.no { color: #dc2626; }
 .cbrowser .btnlink { display: inline-block; padding: 9px 14px; border-radius: 8px; background: var(--panel); color: var(--fg); border: 1px solid var(--line); font-weight: 600; text-decoration: none; }
 .cbrowser .btnlink:hover { border-color: var(--teal); }
 .cbrowser .danger { margin-top: 8px; border-left: 3px solid #f87171; background: rgba(248, 113, 113, .1); padding: 10px 12px; border-radius: 8px; }
-.wp-name { font-size: 16px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wp-name { font-size: 15px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wp-wtabs { display: flex; gap: 6px; overflow-x: auto; }
-.wp-wtab { display: grid; place-items: center; width: 40px; height: 40px; flex: none; border: 1px solid var(--line); border-radius: 12px; background: var(--panel2); cursor: pointer; padding: 0; }
-.wp-wtab .wbadge { width: 28px; height: 28px; }
+.wp-wtab { display: grid; place-items: center; width: 32px; height: 32px; flex: none; border: 1px solid var(--line); border-radius: 10px; background: var(--panel2); cursor: pointer; padding: 0; }
+.wp-wtab .wbadge { width: 22px; height: 22px; font-size: 12px; border-radius: 7px; }
 .wp-wtab.on { border-color: var(--teal); box-shadow: inset 0 0 0 1px var(--teal); }
-.wp-wtab.plus { color: var(--teal); font-size: 22px; text-decoration: none; border-style: dashed; }
+.wp-wtab.plus { color: var(--teal); font-size: 18px; text-decoration: none; border-style: dashed; }
+
+/* Coin logos with a network badge (js/app.js CRLogo). */
+.clogo { position: relative; display: inline-grid; place-items: center; width: 28px; height: 28px; flex: none; vertical-align: middle; }
+.clogo > img, .clogo > .clogo-l { width: 100%; height: 100%; border-radius: 50%; }
+.clogo-l { display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 12px; line-height: 1; }
+.clogo-b { position: absolute; right: -3px; bottom: -3px; width: 13px; height: 13px; border-radius: 4px; background: var(--panel); box-shadow: 0 0 0 2px var(--panel); overflow: hidden; }
+.clogo-b > img, .clogo-b > .clogo-l { width: 100%; height: 100%; border-radius: 3px; font-size: 8px; }
+.coin-cell { display: inline-flex; align-items: center; gap: 8px; }
+.coin-cell .clogo { width: 22px; height: 22px; }

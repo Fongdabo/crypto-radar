@@ -230,7 +230,7 @@
       const tk = t.token || {};
       if (tk.type !== 'ERC-20' || tk.exchange_rate == null || typeof tk.symbol !== 'string') continue;
       const amt = units(t.value, tk.decimals);
-      if (amt > 0) rows.push(row(tk.symbol.slice(0, 20), chain, amt, tk.exchange_rate));
+      if (amt > 0) rows.push(row(tk.symbol.slice(0, 20), chain, amt, tk.exchange_rate, typeof tk.icon_url === 'string' ? { logo: tk.icon_url } : undefined));
     }
     return rows;
   }
@@ -300,7 +300,7 @@
       try {
         const list = await retry(() => getJson('https://lite-api.jup.ag/tokens/v2/search?query=' + part.join(',')), 2);
         for (const t of Array.isArray(list) ? list : []) {
-          if (t && t.id && t.usdPrice != null) out[t.id] = { sym: String(t.symbol || '').slice(0, 20), price: Number(t.usdPrice), verified: !!t.isVerified };
+          if (t && t.id && t.usdPrice != null) out[t.id] = { sym: String(t.symbol || '').slice(0, 20), price: Number(t.usdPrice), verified: !!t.isVerified, logo: t.isVerified && typeof t.icon === 'string' ? t.icon : undefined };
         }
       } catch (e) {}
       const missing = part.filter(m => !out[m]);
@@ -340,7 +340,7 @@
     for (const t of accts) {
       const p = px[t.mint];
       if (!p || !p.sym) continue;   // no market price: skip, like unpriced EVM tokens
-      rows.push(row(p.sym + (p.verified ? '' : ' ⚠'), 'Solana', t.amount, p.price, { unverified: !p.verified }));
+      rows.push(row(p.sym + (p.verified ? '' : ' ⚠'), 'Solana', t.amount, p.price, { unverified: !p.verified, logo: p.logo }));
     }
     return rows;
   }
@@ -399,6 +399,13 @@
   const sumOf = rows => rows.reduce((t, r) => t + (r.unverified ? 0 : r.value || 0), 0);
   const addrTotal = a => sumOf(walletRows.filter(r => r.addr === a));
 
+  // Logo + name; unverified tokens get a plain name (no link, no borrowed logo).
+  function coinCell(sym, chain, logo, unverified) {
+    const c = el('span', 'coin-cell');
+    if (window.CRLogo) c.append(window.CRLogo(sym, chain, logo, { unverified }));
+    c.append(unverified ? el('span', '', sym) : coinLink(sym));
+    return c;
+  }
   function coinLink(sym) {
     const a = document.createElement('a');
     a.className = 'coinlink'; a.href = 'coin.html?sym=' + encodeURIComponent(sym); a.textContent = sym; a.title = 'ดูกราฟ';
@@ -502,7 +509,7 @@
       const tr = document.createElement('tr');
       const where = r.chain + (many && accountOf(r.addr) ? ' · ' + accountOf(r.addr).name : '');
       for (const c of [r.sym, where, r.amount.toLocaleString('en-US', { maximumFractionDigits: 6 }), usd(r.price), usd(r.value)]) { const td = document.createElement('td'); td.textContent = c; tr.append(td); }
-      if (!r.unverified) tr.cells[0].replaceChildren(coinLink(r.sym));
+      tr.cells[0].replaceChildren(coinCell(r.sym, r.chain, r.logo, r.unverified));
       tb.append(tr);
     }
     if (rows.some(r => r.unverified)) note('⚠ = เหรียญที่ยังไม่ได้รับการยืนยันหรือสภาพคล่องต่ำ ราคาอาจไม่จริง อาจเป็นเหรียญสแกมที่ถูกส่งมาเอง และไม่นับรวมในยอดรวม');
@@ -940,7 +947,7 @@
       const tr = document.createElement('tr');
       const cells = [h.asset, h.amount.toLocaleString('en-US', { maximumFractionDigits: 6 }), usd(h.buy_price_usd), usd(price) + (p || price == null ? '' : ' (กรอกเอง)'), usd(value)];
       for (const c of cells) { const td = document.createElement('td'); td.textContent = c; tr.append(td); }
-      tr.cells[0].replaceChildren(coinLink(h.asset));
+      tr.cells[0].replaceChildren(coinCell(h.asset));
       const tdp = document.createElement('td');
       if (pl != null) { tdp.textContent = (pl >= 0 ? '+' : '') + usd(pl) + (cost ? ` (${(pl / cost * 100).toFixed(1)}%)` : ''); tdp.className = pl >= 0 ? 'pos' : 'neg'; } else tdp.textContent = '–';
       tr.append(tdp);

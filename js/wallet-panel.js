@@ -38,6 +38,26 @@
   btn.title = T('กระเป๋า', 'Wallet'); btn.setAttribute('aria-label', btn.title);
   if (tools) tools.prepend(btn);
 
+  // Width: drag the left edge (260–480px), remembered on this device; double-click goes back to the default.
+  const W_KEY = 'crypto-radar:panel-width:v1', W_MIN = 260, W_MAX = 480, W_DEF = 300;
+  const setW = w => { w = Math.round(Math.min(W_MAX, Math.max(W_MIN, w))); document.documentElement.style.setProperty('--wp-w', w + 'px'); return w; };
+  try { const w = Number(localStorage.getItem(W_KEY)); if (w) setW(w); } catch (e) {}
+  const grip = h('div', 'wp-grip'); grip.title = T('ลากเพื่อปรับความกว้าง · ดับเบิลคลิกเพื่อคืนค่า', 'Drag to resize · double-click to reset');
+  document.body.append(grip);
+  grip.addEventListener('pointerdown', e => {
+    e.preventDefault(); grip.setPointerCapture(e.pointerId); grip.classList.add('drag'); document.body.classList.add('wp-resizing');
+    const move = ev => setW(window.innerWidth - ev.clientX);
+    const up = ev => {
+      grip.removeEventListener('pointermove', move); grip.removeEventListener('pointerup', up); grip.classList.remove('drag'); document.body.classList.remove('wp-resizing');
+      put(W_KEY, String(setW(window.innerWidth - ev.clientX)));
+    };
+    grip.addEventListener('pointermove', move); grip.addEventListener('pointerup', up);
+  });
+  grip.addEventListener('dblclick', () => { setW(W_DEF); put(W_KEY, String(W_DEF)); });
+  // The docked panel starts below the top bar, whose height changes with wrapping and font loading.
+  const appBar = document.querySelector('.app-bar');
+  const barH = () => document.documentElement.style.setProperty('--bar-h', (appBar ? appBar.offsetHeight : 0) + 'px');
+  barH(); if (appBar && window.ResizeObserver) new ResizeObserver(barH).observe(appBar);
   const wide = () => window.innerWidth >= DOCK_MIN;
   function setOpen(open, remember) {
     panel.hidden = !open;
@@ -201,7 +221,9 @@
       const a = h('a', 'wp-tok' + (r.unverified ? ' unv' : ''));
       const sym = String(r.sym).replace(' ⚠', '');
       if (!r.unverified && /^[A-Za-z0-9.$_-]{1,20}$/.test(sym)) a.href = 'coin.html?sym=' + encodeURIComponent(sym);
-      const dot = h('span', 'wp-dot', sym.slice(0, 1)); dot.style.background = CHAIN_COLOR[r.chain] || '#64748b';
+      let dot;
+      if (window.CRLogo) dot = window.CRLogo(sym, r.chain, r.logo, { unverified: r.unverified });
+      else { dot = h('span', 'wp-dot', sym.slice(0, 1)); dot.style.background = CHAIN_COLOR[r.chain] || '#64748b'; }
       const l = h('span', 'l'); l.append(h('b', '', r.sym), h('span', 'muted', r.chain + (r.unverified ? ' · ' + T('ไม่นับรวม', 'not counted') : '')));
       const v = h('span', 'r'); v.append(h('b', '', usd(r.value)), h('span', 'muted', amt(r.amount) + ' ' + sym));
       a.append(dot, l, v); box.append(a);
