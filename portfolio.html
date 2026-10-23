@@ -63,9 +63,9 @@ th { color: var(--muted); font-weight: 500; font-size: 13px; }
 
   <div class="card">
     <h2>อ่านยอดจากกระเป๋าอัตโนมัติ</h2>
-    <p class="muted">ใส่ที่อยู่กระเป๋าสาธารณะ (public address ขึ้นต้นด้วย 0x) จาก MetaMask แอปจะอ่านยอดแบบดูอย่างเดียว ไม่ต้องเชื่อมกระเป๋า ไม่ต้องเซ็นอะไร รองรับ Ethereum, Base, Polygon, Arbitrum, Optimism (ยังไม่รองรับ Solana)</p>
+    <p class="muted">ใส่ที่อยู่กระเป๋าสาธารณะ (public address) แอปจะอ่านยอดแบบดูอย่างเดียว ไม่ต้องเชื่อมกระเป๋า ไม่ต้องเซ็นอะไร รองรับกระเป๋า EVM ที่ขึ้นต้นด้วย 0x เช่น MetaMask (Ethereum, Base, Polygon, Arbitrum, Optimism) และกระเป๋า Solana เช่น Phantom</p>
     <div class="grid">
-      <label style="grid-column:1/-2">ที่อยู่กระเป๋า<input id="w-addr" maxlength="42" placeholder="0x..." autocomplete="off" spellcheck="false"></label>
+      <label style="grid-column:1/-2">ที่อยู่กระเป๋า<input id="w-addr" maxlength="120" placeholder="0x... หรือที่อยู่ Solana" autocomplete="off" spellcheck="false"></label>
       <button id="w-add" type="button">เพิ่มกระเป๋า</button>
     </div>
     <div class="msg muted" id="w-msg"></div>
@@ -75,7 +75,7 @@ th { color: var(--muted); font-weight: 500; font-size: 13px; }
       <tbody id="w-rows"></tbody>
     </table></div>
     <div class="row" style="margin-top:10px"><button class="plain" id="w-refresh" type="button">อ่านยอดใหม่</button></div>
-    <p class="muted">ราคาในกระเป๋ามาจาก Blockscout (ตัวสำรวจบล็อกเชนสาธารณะ) ณ ตอนที่เปิด แสดงเฉพาะเหรียญที่มีราคาในตลาด เหรียญแปลก ๆ ที่ถูกส่งเข้ากระเป๋าโดยไม่ได้ขอมักเป็นสแกม อย่ากดหรือแลกเด็ดขาด</p>
+    <p class="muted">ยอดและราคาอ่านจาก Blockscout (EVM) และ Solana RPC + Jupiter/DexScreener (Solana) ณ ตอนที่เปิด แสดงเฉพาะเหรียญที่มีราคาในตลาด เหรียญแปลก ๆ ที่ถูกส่งเข้ากระเป๋าโดยไม่ได้ขอมักเป็นสแกม อย่ากดหรือแลกเด็ดขาด</p>
   </div>
 
   <div class="card">
