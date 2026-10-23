@@ -63,7 +63,6 @@ table.sec td:first-child { white-space: nowrap; font-weight: 600; padding-right:
     <a href="#wallet">ใส่ที่อยู่กระเป๋า</a>
     <a href="#backup">สำรองข้อมูล</a>
     <a href="#chart">ดูกราฟเหรียญ</a>
-    <a href="#telegram-guide">แจ้งเตือน Telegram</a>
     <a href="#targets-guide">ราคาเป้าหมาย / บันทึกซื้อขาย</a>
     <a href="#buy">ซื้อเหรียญและโอนเข้ากระเป๋า</a>
     <a href="#airdrop">กระเป๋าแยกสำหรับแอร์ดรอป</a>
@@ -105,7 +104,7 @@ table.sec td:first-child { white-space: nowrap; font-weight: 600; padding-right:
         <tr><td>🌙 พระจันทร์</td><td>สลับธีมมืด/สว่าง</td></tr>
         <tr><td>❓</td><td>เปิดคู่มือนี้</td></tr>
         <tr><td>🇹🇭 ภาษา</td><td>เปลี่ยนภาษาไทย/อังกฤษ (เนื้อหาวิจัยในแดชบอร์ดยังเป็นภาษาไทย)</td></tr>
-        <tr><td>☰ เมนู</td><td>อัปเดตแอปและข้อมูล, มีอะไรใหม่, แจ้งเตือนราคา, Telegram, สำรองข้อมูล, ติดตั้งแอป และเลขเวอร์ชัน</td></tr>
+        <tr><td>☰ เมนู</td><td>อัปเดตแอปและข้อมูล, มีอะไรใหม่, แจ้งเตือนราคา, สำรองข้อมูล, ติดตั้งแอป และเลขเวอร์ชัน</td></tr>
       </table>
       <p>ข้อมูลในแอปอัปเดตเองทุกเช้าประมาณ <b>07:17 น.</b> และแอปจะดึงเวอร์ชันใหม่เองทุกครั้งที่เปิด</p>
       <p>ถ้าอยากได้ข้อมูลล่าสุดทันที กด <b>☰ เมนู</b> → <b>↻ อัปเดตแอปและข้อมูล</b> แอปจะเช็กเวอร์ชันใหม่ ดึงข้อมูลล่าสุด และอ่านยอดกระเป๋าใหม่</p>
@@ -160,6 +159,10 @@ table.sec td:first-child { white-space: nowrap; font-weight: 600; padding-right:
         <li>แอปจะสร้างแท็บของกระเป๋านั้นและอ่านยอดให้เอง แต่ละกระเป๋ามีแท็บของตัวเอง กด <b>เอากระเป๋านี้ออก</b> เมื่อไม่ต้องการแล้ว</li>
       </ol>
       <div class="danger">แอปนี้ขอแค่ "ดูที่อยู่" เท่านั้น <b>จะไม่ขอให้เซ็น ไม่ขอ Approve และไม่ขอส่งธุรกรรม</b> ถ้ากระเป๋าเด้งคำขอแบบนั้นขึ้นมา ให้กด <b>ปฏิเสธ (Reject)</b> ทันที และเช็กว่าอยู่บนเว็บ fongdabo.github.io จริง</div>
+      <h3>กระเป๋าอยู่ในเบราว์เซอร์อื่น</h3>
+      <p>แอปเห็นได้เฉพาะกระเป๋าที่ติดตั้งในเบราว์เซอร์ที่เปิดแอปอยู่ ตอนกดเชื่อม แอปจะถามว่า <b>"กระเป๋าของคุณอยู่ในเบราว์เซอร์ไหน?"</b> เลือก <b>เบราว์เซอร์นี้</b> เพื่อเชื่อมเลย หรือเลือก Chrome / Edge / Brave แอปจะเปิดให้ (Edge) หรือคัดลอกลิงก์ให้ไปวางใน Chrome แล้วกด Enter จากนั้นติดตั้งแอปจากเบราว์เซอร์นั้น แอปจะเปิดด้วยเบราว์เซอร์นั้นทุกครั้ง</p>
+      <p>ทางที่ง่ายที่สุด: เปิด MetaMask กดที่ที่อยู่ (0x…) เพื่อคัดลอก แล้วกดปุ่ม <b>📋 วางที่อยู่กระเป๋าที่คัดลอกไว้</b> ในแอป ใช้ได้ทุกเบราว์เซอร์ ไม่ต้องเชื่อมต่อ</p>
+      <div class="danger">ถ้ากดเชื่อมแล้วขึ้นหน้า "Create a new wallet" หรือ "I have an existing wallet" ให้ปิดหน้านั้น <b>อย่านำคำกู้คืนไปกรอกในเบราว์เซอร์ที่สอง</b></div>
       <p><b>บนมือถือ:</b> ปุ่มเชื่อมใช้ได้เมื่อเปิดแอปนี้จาก <b>เบราว์เซอร์ในแอป MetaMask หรือ Phantom</b> (แอปจะมีลิงก์ให้กด) หรือใช้วิธีวางที่อยู่เองด้านล่างแทนก็ได้</p>
       <h3>หรือวางที่อยู่เอง</h3>
       <h3>MetaMask (ขึ้นต้นด้วย 0x)</h3>
@@ -210,7 +213,7 @@ table.sec td:first-child { white-space: nowrap; font-weight: 600; padding-right:
         <li>กด <b>🔔 เปิดการแจ้งเตือนบนเครื่องนี้</b> แล้วกดอนุญาต (iPhone ต้องติดตั้งแอปลงหน้าจอโฮมก่อนถึงจะเปิดได้)</li>
         <li>เมื่อราคาถึง แอปจะเด้งเตือนและขึ้นว่า <b>ถึงแล้ว</b> กด <b>ตั้งใหม่</b> ถ้าอยากให้เตือนอีก</li>
       </ol>
-      <div class="tip">แอปเช็กราคาตอนเปิดแอป และทุก 5 นาทีระหว่างเปิดอยู่ ถ้าอยากให้เตือนตอนปิดแอป ให้ใช้ Telegram</div>
+      <div class="tip">แอปเช็กราคาตอนเปิดแอป และทุก 5 นาทีระหว่างเปิดอยู่</div>
       <h3>บันทึกซื้อขาย</h3>
       <ol>
         <li>ทุกครั้งที่ซื้อหรือขาย ใส่วันที่ เหรียญ จำนวน ราคาต่อเหรียญ สกุลเงิน (บาทหรือดอลลาร์) ค่าธรรมเนียม และที่ที่ซื้อขาย</li>
@@ -221,7 +224,7 @@ table.sec td:first-child { white-space: nowrap; font-weight: 600; padding-right:
     </div>
   </details>
 
-  <details id="telegram-guide">
+  <details id="telegram-guide" hidden>
     <summary>แจ้งเตือนเข้า Telegram</summary>
     <div class="body">
       <h3>ขั้นที่ 1: สร้างบอทและตั้งค่าในแอป (เตือนตอนเปิดแอป)</h3>
@@ -326,7 +329,6 @@ table.sec td:first-child { white-space: nowrap; font-weight: 600; padding-right:
     <a href="#wallet">Adding wallets</a>
     <a href="#backup">Backup</a>
     <a href="#chart">Coin charts</a>
-    <a href="#telegram-guide">Telegram alerts</a>
     <a href="#targets-guide">Price targets / trade log</a>
     <a href="#buy">Buying coins and moving them to a wallet</a>
     <a href="#airdrop">A separate wallet for airdrops</a>
@@ -368,7 +370,7 @@ table.sec td:first-child { white-space: nowrap; font-weight: 600; padding-right:
         <tr><td>🌙 Moon</td><td>Switch between the dark and light theme</td></tr>
         <tr><td>❓</td><td>Opens this guide</td></tr>
         <tr><td>🇬🇧 Language</td><td>Switch between Thai and English (the dashboard research stays in Thai)</td></tr>
-        <tr><td>☰ Menu</td><td>Update app and data, what's new, price alerts, Telegram, backup, install, and the version number</td></tr>
+        <tr><td>☰ Menu</td><td>Update app and data, what's new, price alerts, backup, install, and the version number</td></tr>
       </table>
       <p>The data refreshes by itself every morning around <b>07:17</b> (Thailand time), and the app picks up a new version each time it opens.</p>
       <p>For the latest data right now, press <b>☰ Menu</b> → <b>↻ Update app and data</b>. The app checks for a new version, fetches the latest data and re-reads your wallets.</p>
@@ -423,6 +425,10 @@ table.sec td:first-child { white-space: nowrap; font-weight: 600; padding-right:
         <li>The app creates a tab for that wallet and reads its balance. Each wallet gets its own tab. Press <b>Remove this wallet</b> when you no longer want it.</li>
       </ol>
       <div class="danger">This app only asks to "see your address". <b>It never asks you to sign, approve, or send a transaction.</b> If your wallet pops up a request like that, press <b>Reject</b> straight away and check that you are really on fongdabo.github.io.</div>
+      <h3>Wallet in another browser</h3>
+      <p>The app can only see wallets installed in the browser it is open in. When you press connect, it asks <b>"Which browser has your wallet?"</b> Pick <b>This browser</b> to connect right away, or pick Chrome / Edge / Brave: the app opens Edge for you, or copies the link so you can paste it into Chrome and press Enter. Then install the app from that browser so it always opens there.</p>
+      <p>Easiest of all: open MetaMask, click the address (0x…) to copy it, then press <b>📋 Paste the wallet address you copied</b> in the app. Works in any browser, no connecting needed.</p>
+      <div class="danger">If connecting shows "Create a new wallet" or "I have an existing wallet", close that page. <b>Do not type your Seed Phrase into a second browser.</b></div>
       <p><b>On a phone:</b> the connect buttons work when you open this app inside the <b>MetaMask or Phantom in-app browser</b> (the app shows a link for that), or paste the address yourself as below.</p>
       <h3>Or paste an address yourself</h3>
       <h3>MetaMask (starts with 0x)</h3>
@@ -472,7 +478,7 @@ table.sec td:first-child { white-space: nowrap; font-weight: 600; padding-right:
         <li>Press <b>🔔 Turn on notifications on this device</b> and allow them (on iPhone, add the app to the Home Screen first)</li>
         <li>When the price is reached, the app alerts you and shows <b>Reached</b>. Press <b>Re-arm</b> to be alerted again.</li>
       </ol>
-      <div class="tip">The app checks prices when it opens and every 5 minutes while it is open. To be alerted while the app is closed, use Telegram.</div>
+      <div class="tip">The app checks prices when it opens and every 5 minutes while it is open.</div>
       <h3>Trade log</h3>
       <ol>
         <li>Each time you buy or sell, enter the date, coin, amount, price per coin, currency (THB or USD), fee and where you traded</li>
@@ -483,7 +489,7 @@ table.sec td:first-child { white-space: nowrap; font-weight: 600; padding-right:
     </div>
   </details>
 
-  <details id="telegram-guide">
+  <details id="telegram-guide" hidden>
     <summary>Telegram alerts</summary>
     <div class="body">
       <h3>Step 1: create a bot and set it up in the app (alerts while the app is open)</h3>
@@ -591,7 +597,6 @@ document.querySelectorAll('[data-lang]').forEach(e => { if (e.dataset.lang !== (
 <script src="js/app.js"></script>
 <script src="js/wallet-panel.js"></script>
 <script src="js/coins.js"></script>
-<script src="js/telegram.js"></script>
 <script src="js/alerts.js"></script>
 <script>
 (function () {

@@ -58,7 +58,7 @@
         .filter(a => !seen.has(a) && seen.add(a)).slice(0, MAX_PER_ACCOUNT),
     }));
     // Only wallets the user added are shown, so an empty unnamed starter account is dropped.
-    accounts = accounts.filter(x => x.addresses.length || x.wallet || !/^(บัญชี|Account) 1$/.test(x.name));
+    accounts = accounts.filter(x => x.addresses.length || x.wallet || !/^(บัญชี|Account|กระเป๋า|Wallet) 1$/.test(x.name));
     const connected = (Array.isArray(s.connected) ? s.connected : []).filter(a => seen.has(a));
     const trades = (Array.isArray(s.trades) ? s.trades : []).filter(t => t && /^\d{4}-\d{2}-\d{2}$/.test(t.date) && (t.type === 'buy' || t.type === 'sell')
       && /^[A-Z0-9.$_-]{1,20}$/.test(t.sym) && t.amount > 0 && t.price >= 0 && (t.cur === 'THB' || t.cur === 'USD'))
@@ -558,6 +558,45 @@
     if (mobile && w.mobile) { m.append('บนมือถือต้องเปิดแอปนี้จากเบราว์เซอร์ในแอป ' + w.name + ' หรือวางที่อยู่เองด้านล่าง: '); m.append(link(w.mobile(), 'เปิดในแอป ' + w.name)); return; }
     m.append('ไม่พบ ' + w.name + ' ในเบราว์เซอร์นี้ ติดตั้งจากเว็บทางการก่อน หรือวางที่อยู่เองด้านล่าง ');
     if (w.install) m.append(link(w.install, 'ดาวน์โหลด ' + w.name + ' (เว็บทางการ) ↗'));
+    openBrowserHelp();
+  }
+  const openBrowserHelp = () => { const b = $('c-browser'); if (b) b.open = true; };
+  // A web page cannot choose the browser, so when the wallet lives in another browser we help the user move this page there.
+  function browserName() {
+    const ua = navigator.userAgent;
+    if (/Edg(A|iOS)?\//.test(ua)) return 'Edge';
+    if (/OPR\/|Opera/.test(ua)) return 'Opera';
+    if (navigator.brave) return 'Brave';
+    if (/SamsungBrowser/.test(ua)) return 'Samsung Internet';
+    if (/Firefox|FxiOS/.test(ua)) return 'Firefox';
+    if (/CriOS|Chrome\//.test(ua)) return 'Chrome';
+    if (/Safari/.test(ua)) return 'Safari';
+    return '';
+  }
+  function otherBrowsers() {
+    const ua = navigator.userAgent, now = browserName(), bare = here.replace(/^https:\/\//, '');
+    let list = [];
+    if (/Android/i.test(ua)) list = [['Chrome', 'com.android.chrome'], ['Edge', 'com.microsoft.emmx'], ['Brave', 'com.brave.browser']]
+      .map(([n, pkg]) => [n, 'intent://' + bare + '#Intent;scheme=https;package=' + pkg + ';end']);
+    else if (/iPhone|iPad|iPod/i.test(ua)) list = [['Chrome', 'googlechromes://' + bare], ['Edge', 'microsoft-edge-https://' + bare], ['Brave', 'brave://open-url?url=' + encodeURIComponent(here)]];
+    else if (/Windows/i.test(ua)) list = [['Edge', 'microsoft-edge:' + here]];
+    return list.filter(([n]) => n !== now);
+  }
+  function setupBrowserHelp() {
+    const box = $('c-browser'); if (!box) return;
+    const now = browserName(), app = matchMedia('(display-mode: standalone)').matches;
+    $('cb-now').textContent = now ? (app ? 'ตอนนี้แอปนี้เปิดด้วย ' : 'ตอนนี้คุณเปิดหน้านี้ด้วย ') + now : '';
+    const btns = $('cb-btns');
+    for (const [n, href] of otherBrowsers()) {
+      const a = document.createElement('a'); a.className = 'plain btnlink'; a.href = href; a.rel = 'noopener noreferrer';
+      a.append('เปิดใน ', n, ' ↗'); btns.append(a);
+    }
+    const msg = el('span', 'muted'); btns.append(msg);
+    $('cb-copy').onclick = async () => {
+      const link = here + '#wallets';
+      try { await navigator.clipboard.writeText(link); msg.textContent = 'คัดลอกแล้ว นำไปวางในเบราว์เซอร์ที่มีกระเป๋า'; }
+      catch (e) { msg.textContent = link; msg.dataset.noI18n = ''; }
+    };
   }
   function renderPicker() {
     const box = $('c-wallets'); if (!box) return;
@@ -567,15 +606,48 @@
       const b = el('button', 'wpick-b'); b.type = 'button';
       const t = el('span', 't'); t.append(el('b', '', w.name), el('span', 'muted', mine ? 'เพิ่มแล้ว · เชื่อมใหม่' : p ? 'พบในเบราว์เซอร์นี้' : 'ยังไม่ได้ติดตั้ง'));
       b.append(badge({ wallet: w.key, name: w.name }, detectedIcon(w.key)), t);
-      b.onclick = () => connect(w);
+      b.onclick = () => chooseBrowser(w);
       box.append(b);
     }
+  }
+  // Pressing a wallet first asks which browser holds it, because a page can only see wallets installed in its own browser.
+  const WB_KEY = 'crypto-radar:wallet-browser:v1';
+  function chooseBrowser(w) {
+    const now = browserName(), ua = navigator.userAgent, dlg = $('c-ask');
+    let saved = ''; try { saved = localStorage.getItem(WB_KEY) || ''; } catch (e) {}
+    if (/Android|iPhone|iPad|iPod/i.test(ua) || !dlg || !dlg.showModal) return connect(w);
+    const remember = v => { try { localStorage.setItem(WB_KEY, v); } catch (e) {} };
+    // Thai phrases and names go in separate text nodes so the English dictionary can match each phrase whole.
+    const put = (node, ...parts) => { node.textContent = ''; node.append(...parts); return node; };
+    const msg = $('c-ask-msg'); msg.textContent = '';
+    put($('c-ask-sub'), 'แอปเห็นได้เฉพาะกระเป๋าที่ติดตั้งในเบราว์เซอร์ที่เปิดแอปอยู่', ...(now ? [' (', 'ตอนนี้คือ', ' ' + now + ')'] : []));
+    const opts = $('c-ask-opts'); opts.textContent = '';
+    const opt = (icon, title, sub, on, fn) => {
+      const b = el('button'); b.type = 'button'; if (on) b.className = 'on';
+      const t = el('span'); t.append(put(el('b'), ...title), put(el('small'), ...sub));
+      b.append(el('span', 'bi', icon), t); b.onclick = fn; opts.append(b);
+    };
+    opt('✅', ['เบราว์เซอร์นี้', now ? ' (' + now + ')' : ''], ['เชื่อมกระเป๋าที่ติดตั้งในเบราว์เซอร์นี้เลย'], saved === 'this:' + now,
+      () => { remember('this:' + now); dlg.close(); connect(w); });
+    for (const n of ['Chrome', 'Edge', 'Brave'].filter(n => n !== now)) {
+      opt('🌐', [n], ['เปิดแอปนี้ใน', ' ' + n + ' ', 'แล้วกดเชื่อมที่นั่น'], saved === 'other:' + n, async () => {
+        remember('other:' + n);
+        const link = here + '#wallets', typeIt = ['เปิด', ' ' + n + ' ', 'แล้วพิมพ์', ' fongdabo.github.io/crypto-radar'];
+        if (n === 'Edge' && /Windows/i.test(ua)) { location.href = 'microsoft-edge:' + link; put(msg, 'กำลังเปิด Edge… ถ้าไม่ขึ้น', ' ', ...typeIt); return; }
+        let ok = false; try { await navigator.clipboard.writeText(link); ok = true; } catch (e) {}
+        const key = /Macintosh/.test(ua) ? '⌘V' : 'Ctrl+V';
+        if (ok) put(msg, 'คัดลอกลิงก์แล้ว ✓', ' ', 'เปิด', ' ' + n + ' ', 'แล้วกด', ' ' + key + ' ', 'แล้ว Enter', ' ', '(เบราว์เซอร์อื่นสั่งเปิด Chrome ให้โดยตรงไม่ได้)');
+        else put(msg, ...typeIt);
+      });
+    }
+    $('c-ask-close').onclick = () => dlg.close();
+    dlg.showModal();
   }
   async function connect(w) {
     const p = providerOf(w);
     if (!p) return noWallet(w);
     const m = $('c-msg');
-    m.textContent = 'กดยืนยันการเชื่อมต่อใน ' + w.name + ' (เป็นการขอดูที่อยู่เท่านั้น)';
+    m.textContent = 'กดยืนยันการเชื่อมต่อใน ' + w.name + ' (เป็นการขอดูที่อยู่เท่านั้น) ถ้า ' + w.name + ' ขึ้นหน้าสร้างกระเป๋าใหม่ แปลว่ากระเป๋าไม่ได้อยู่ในเบราว์เซอร์นี้ ให้ปิดหน้านั้น อย่ากรอกคำกู้คืน แล้วใช้ปุ่มวางที่อยู่ด้านบนแทน';
     try {
       let list;
       if (w.type === 'sol') { const r = await p.connect(); list = [String((r && r.publicKey) || p.publicKey || '')].filter(isSol); }
@@ -600,6 +672,21 @@
     } catch (e) {}
   }
   function renderConnect() { if (!current()) renderPicker(); }
+  setupBrowserHelp();
+  // The simplest path: copy the address in the wallet, press one button here. Goes through the same checks as typing it in.
+  $('w-paste').onclick = async () => {
+    const m = $('w-easy-msg');
+    let text = '';
+    try { text = (await navigator.clipboard.readText() || '').trim(); } catch (e) {}
+    if (!text) { m.textContent = 'อ่านคลิปบอร์ดไม่ได้ ให้กด Ctrl+V (มือถือ: กดค้างแล้วเลือกวาง) ในช่องที่อยู่ด้านล่าง แล้วกดเพิ่ม'; $('w-addr').focus(); return; }
+    $('w-addr').value = text; text = '';
+    $('a-target').value = 'new';
+    $('w-add').click();
+    const err = $('w-msg').textContent;
+    if (err) $('w-addr').value = '';
+    m.textContent = err || 'เพิ่มกระเป๋าแล้ว กำลังอ่านยอด… (กดชื่อแท็บเพื่อเปลี่ยนชื่อได้)';
+    m.className = 'msg ' + (err ? 'neg' : 'pos');
+  };
   window.dispatchEvent(new Event('eip6963:requestProvider'));
   fillTargets();
   renderConnect();

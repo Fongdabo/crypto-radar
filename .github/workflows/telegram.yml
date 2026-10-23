@@ -1,7 +1,8 @@
 name: Telegram morning digest
 on:
-  schedule:
-    - cron: '35 0 * * *'   # 07:35 Bangkok, after the 07:17 data sync
+  # Paused at the user's request; restore the schedule to turn the morning digest back on.
+  # schedule:
+  #   - cron: '35 0 * * *'   # 07:35 Bangkok, after the 07:17 data sync
   workflow_dispatch:
 permissions:
   contents: read

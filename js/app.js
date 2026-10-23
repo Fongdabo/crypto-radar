@@ -1,7 +1,8 @@
 // Shared by every page: the top-right toolbar (status, bell, theme, help, language, menu), install and update, offline cache and new-version notice.
 (function () {
-  const APP_VERSION = '14';   // keep in step with VERSION in sw.js; add a CHANGELOG entry for every release
+  const APP_VERSION = '15';   // keep in step with VERSION in sw.js; add a CHANGELOG entry for every release
   const CHANGELOG = [
+    ['15', '23 ต.ค. 2569', ['ปิดการแจ้งเตือน Telegram ไว้ก่อน', 'กดเชื่อมกระเป๋าแล้วถามก่อนว่ากระเป๋าอยู่ในเบราว์เซอร์ไหน (เบราว์เซอร์นี้ / Chrome / Edge / Brave) ถ้าอยู่อีกเบราว์เซอร์ แอปพาไปเปิดที่นั่นให้', 'ปุ่มเดียว "วางที่อยู่กระเป๋าที่คัดลอกไว้" ไม่ต้องเชื่อมต่อ', 'เตือนตอนกดเชื่อม: ถ้ากระเป๋าขึ้นหน้าสร้างกระเป๋าใหม่ ให้ปิด อย่ากรอกคำกู้คืนในเบราว์เซอร์ที่สอง']],
     ['14', '23 ต.ค. 2569', ['กระเป๋าแบบแท็บ: แสดงเฉพาะกระเป๋าที่คุณเพิ่มไว้ สลับได้ทั้งในหน้าพอร์ตและแผงด้านขวา กด + เพื่อเพิ่ม', 'เชื่อม Ronin Wallet และกระเป๋าอื่นที่ติดตั้งในเบราว์เซอร์ได้ (ดูอย่างเดียว)', 'อ่านยอดบนเครือข่าย Ronin: RON, AXS, SLP, WETH และ USDC']],
     ['13', '23 ต.ค. 2569', ['แผงกระเป๋าฝังขวาแบบ MetaMask: บัญชี ยอดรวม เหรียญแยกเครือข่าย (ดูอย่างเดียว)', 'แท็บกิจกรรม: เว็บทางการที่ตรวจแล้ว ตัวตรวจลิงก์ก่อนเชื่อมกระเป๋า และสิ่งที่กดได้/ห้ามกด', 'ฟอนต์ภาษาไทยใหม่ (Noto Sans Thai Looped) อ่านง่ายขึ้น ใช้ได้แม้ออฟไลน์', 'การ์ดนับถอยหลังกดไปเว็บทางการได้']],
     ['12', '23 ต.ค. 2569', ['แดชบอร์ดเป็นภาษาอังกฤษทั้งหน้าเมื่อเลือก English รวมบทวิจัยและบทวิเคราะห์รายเหรียญ (แปลใหม่ทุกเช้า)', 'ธงภาษาแสดงถูกต้องบน Windows']],
@@ -184,7 +185,7 @@
     item('✨', T('มีอะไรใหม่', "What's new") + ' · v' + APP_VERSION, 'guide.html#whatsnew');
     p.append(h('div', 'dd-sep'));
     item('🎯', T('แจ้งเตือนราคา', 'Price alerts'), 'portfolio.html#targets');
-    item('✈️', T('ตั้งค่าแจ้งเตือน Telegram', 'Telegram alert settings'), 'portfolio.html#telegram');
+    // Telegram is switched off for now at the user's request; js/telegram.js stays in the repo for later.
     item('💾', T('สำรองข้อมูล / นำเข้า', 'Backup / import'), 'portfolio.html#backup');
     if (prompt) item('📲', T('ติดตั้งเป็นแอป', 'Install as app'), null, install);
     p.append(h('div', 'dd-sep'));

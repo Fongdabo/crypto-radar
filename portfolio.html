@@ -90,9 +90,34 @@ label.inline select { width: auto; margin: 0; }
     <div id="w-list"></div>
 
     <div id="w-addpane" hidden>
-      <h3 class="sub">เชื่อมกระเป๋า (ดูอย่างเดียว)</h3>
+      <div class="easy">
+        <button id="w-paste" class="big" type="button">📋 วางที่อยู่กระเป๋าที่คัดลอกไว้</button>
+        <p class="muted">ง่ายสุด: เปิด MetaMask แล้วกดที่ที่อยู่ (0x…) ใต้ชื่อบัญชีเพื่อคัดลอก แล้วกดปุ่มนี้ ไม่ต้องเชื่อมต่อ ไม่ต้องเซ็นอะไร</p>
+        <div class="msg" id="w-easy-msg"></div>
+      </div>
+      <h3 class="sub">หรือเชื่อมกระเป๋าในเบราว์เซอร์นี้ (ดูอย่างเดียว)</h3>
       <div class="wpick" id="c-wallets"></div>
       <div class="msg muted" id="c-msg"></div>
+      <dialog class="bdlg" id="c-ask">
+        <h3>กระเป๋าของคุณอยู่ในเบราว์เซอร์ไหน?</h3>
+        <p class="muted" id="c-ask-sub"></p>
+        <div class="bdlg-opts" id="c-ask-opts"></div>
+        <div class="msg" id="c-ask-msg"></div>
+        <div class="row" style="justify-content:flex-end"><button class="plain" type="button" id="c-ask-close">ปิด</button></div>
+      </dialog>
+      <details class="cbrowser" id="c-browser">
+        <summary>กระเป๋าของคุณอยู่ในเบราว์เซอร์อื่น? (เช่น ติดตั้ง MetaMask ไว้ใน Chrome แต่ตอนนี้เปิดด้วย Edge)</summary>
+        <p class="muted" id="cb-now"></p>
+        <p>เว็บแอปเลือกเบราว์เซอร์ให้เองไม่ได้ ให้เปิดหน้านี้ในเบราว์เซอร์ที่มีกระเป๋าของคุณอยู่แล้ว:</p>
+        <div class="row" id="cb-btns"><button class="plain" id="cb-copy" type="button">📋 คัดลอกลิงก์หน้านี้</button></div>
+        <ol>
+          <li>กดคัดลอกลิงก์ (หรือกดปุ่มเปิดในเบราว์เซอร์ด้านบน ถ้ามี)</li>
+          <li>เปิดเบราว์เซอร์ที่มีกระเป๋าของคุณ แล้ววางลิงก์ในช่องที่อยู่เว็บ</li>
+          <li>กดแท็บ + เพิ่มกระเป๋า แล้วเลือกกระเป๋าอีกครั้ง</li>
+          <li>แนะนำ: ติดตั้งแอปจากเบราว์เซอร์นั้น (เมนู ⋮ → ติดตั้งแอป) แอปจะเปิดด้วยเบราว์เซอร์นั้นทุกครั้ง และเห็นกระเป๋าเลย</li>
+        </ol>
+        <div class="danger">ถ้ากดเชื่อมแล้วกระเป๋าขึ้นหน้า "Create a new wallet" หรือ "I have an existing wallet" แปลว่ากระเป๋าของคุณไม่ได้อยู่ในเบราว์เซอร์นี้ ให้ปิดหน้านั้นได้เลย <b>อย่านำคำกู้คืน (Seed Phrase) ไปกรอกในเบราว์เซอร์ที่สองเพื่อการนี้</b> ใช้เบราว์เซอร์เดิม หรือวางที่อยู่เองด้านล่างแทน</div>
+      </details>
       <div class="warn" style="margin:6px 0 12px">แอปนี้จะขอแค่ "ดูที่อยู่กระเป๋า" เท่านั้น จะไม่ขอให้เซ็น อนุมัติ (Approve) หรือส่งธุรกรรมใด ๆ ถ้าเห็นคำขอแบบนั้น ให้กดปฏิเสธทันที</div>
       <h3 class="sub">หรือวางที่อยู่เอง</h3>
       <label class="inline">เพิ่มเข้า <select id="a-target"></select></label>
@@ -153,10 +178,10 @@ label.inline select { width: auto; margin: 0; }
       <thead><tr><th>เหรียญ</th><th>เงื่อนไข</th><th>ราคาเป้า</th><th>ราคาล่าสุด</th><th>ห่างอีก</th><th>สถานะ</th><th></th></tr></thead>
       <tbody id="t-rows"></tbody>
     </table></div>
-    <p class="muted">แจ้งเตือนได้เฉพาะตอนที่เปิดแอปอยู่ (หรือตอนเปิดครั้งถัดไป) ถ้าต้องการให้เตือนตอนปิดแอปด้วย ให้ตั้งค่า Telegram ด้านล่าง</p>
+    <p class="muted">แจ้งเตือนได้เฉพาะตอนที่เปิดแอปอยู่ (หรือตอนเปิดครั้งถัดไป)</p>
   </div>
 
-  <div class="card" id="telegram">
+  <div class="card" id="telegram" hidden>
     <h2>แจ้งเตือนเข้า Telegram</h2>
     <p class="muted">ให้แอปส่งแจ้งเตือนเข้า Telegram ของคุณ ทั้งราคาถึงเป้า และเหรียญในพอร์ตขยับแรงเกิน 10% ใน 24 ชม. ตั้งครั้งเดียวต่อเครื่อง</p>
     <ol class="steps">
@@ -226,7 +251,6 @@ label.inline select { width: auto; margin: 0; }
 <script src="js/app.js"></script>
 <script src="js/wallet-panel.js"></script>
 <script src="js/coins.js"></script>
-<script src="js/telegram.js"></script>
 <script src="js/alerts.js"></script>
 <script src="js/portfolio.js"></script>
 </body>
