@@ -1,0 +1,178 @@
+{
+ "id": "base",
+ "name": "Base",
+ "type": "แอร์ดรอป",
+ "emoji": "🔵",
+ "status": "active",
+ "status_text": "ยังไม่มีประกาศเหรียญ BASE หรือวันแจก ทีมบอกว่ากำลังสำรวจการออกเหรียญ จึงสะสมการใช้งานจริงเล็ก ๆ อย่างสม่ำเสมอ",
+ "schedule": "เอเจนต์ตรวจข่าวทุกวันจันทร์",
+ "budget": "$20–50 + ค่าแก๊สไม่กี่เซนต์",
+ "official": [
+  {
+   "t": "base.org",
+   "u": "https://base.org"
+  },
+  {
+   "t": "Basenames",
+   "u": "https://www.base.org/names"
+  },
+  {
+   "t": "Aerodrome",
+   "u": "https://aerodrome.finance"
+  },
+  {
+   "t": "Morpho",
+   "u": "https://app.morpho.org"
+  }
+ ],
+ "warn": "ไม่มีเหรียญ BASE ของจริงขายหรือแจกตอนนี้ เว็บที่ให้เช็กสิทธิ์หรือเคลม BASE คือหลอก",
+ "steps": [
+  {
+   "id": "links",
+   "who": "agent",
+   "kind": "research",
+   "title": "ตรวจเว็บทางการและสถานะเหรียญ",
+   "result": "ตรวจแล้ว: เว็บทางการคือ base.org ชื่อ .base.eth จดที่ base.org/names ยังไม่มีหน้าเช็กสิทธิ์ทางการ (ข้อมูล ณ 23 ต.ค. 2026)"
+  },
+  {
+   "id": "acct2",
+   "who": "you",
+   "kind": "offchain",
+   "title": "สร้าง Account 2 ใน MetaMask สำหรับฟาร์ม",
+   "how": [
+    "เปิด MetaMask แล้วกดชื่อบัญชีด้านบน",
+    "กด \"Add account\" → \"Ethereum account\" ตั้งชื่อว่า Farm",
+    "กดคัดลอกที่อยู่ 0x... แล้ววางในช่อง \"กระเป๋าฟาร์ม\" ด้านบนของหน้านี้"
+   ],
+   "note": "ขั้นนี้ไม่มีการเซ็น และไม่ต้องจดคำกู้คืนใหม่ เพราะใช้ชุดเดิมของกระเป๋าหลัก"
+  },
+  {
+   "id": "fund",
+   "who": "you",
+   "kind": "sign",
+   "title": "เติม ETH เข้า Account 2 บนเครือข่าย Base ($20–50)",
+   "how": [
+    "ที่กระดานเทรด เลือกถอน ETH แล้วเลือกเครือข่าย \"Base\" ถ้ามีให้เลือก",
+    "วางที่อยู่ Account 2 แล้วเทียบ 4 ตัวแรกและ 4 ตัวท้ายให้ตรง",
+    "ลองถอนจำนวนน้อยก่อน 1 ครั้ง"
+   ],
+   "sign": {
+    "site": "กระดานเทรดของคุณ",
+    "network": "Base",
+    "action": "ยืนยันการถอนในแอปกระดานเทรด",
+    "expect": [
+     "เครือข่ายปลายทางเป็น Base",
+     "ที่อยู่ปลายทางตรงกับ Account 2"
+    ],
+    "cost": "ค่าถอนของกระดาน",
+    "reject_if": [
+     "เครือข่ายไม่ใช่ Base (ถ้าส่งผิดเครือข่ายเงินอาจหาย)"
+    ]
+   },
+   "verify": {
+    "chain": "base",
+    "kind": "balance"
+   },
+   "note": "ถ้ากระดานไม่มีเครือข่าย Base บอกผมในแชทได้ ผมจะหาทางที่ปลอดภัยให้"
+  },
+  {
+   "id": "basename",
+   "who": "you",
+   "kind": "sign",
+   "title": "จดชื่อ Basename (.base.eth)",
+   "how": [
+    "เปิด base.org/names จากปุ่มเว็บทางการด้านบน",
+    "กด Connect เลือก MetaMask แล้วเลือก Account 2",
+    "พิมพ์ชื่อที่ต้องการ (5 ตัวอักษรขึ้นไปถูกกว่า) เลือก 1 ปี",
+    "กด Register แล้วดูหน้าต่าง MetaMask ตามรายการด้านล่างก่อนกดยืนยัน"
+   ],
+   "sign": {
+    "site": "base.org",
+    "network": "Base",
+    "action": "ธุรกรรมจ่าย ETH เพื่อจดชื่อ 1 ครั้ง",
+    "expect": [
+     "เว็บที่ขอคือ base.org",
+     "เครือข่าย Base",
+     "จำนวน ETH ตรงกับราคาที่หน้าเว็บแสดง",
+     "ไม่มีคำว่า Approve"
+    ],
+    "cost": "ค่าชื่อตามหน้าเว็บ + แก๊สไม่กี่เซนต์",
+    "reject_if": [
+     "ขอ Approve แบบไม่จำกัด (Unlimited) หรือ SetApprovalForAll",
+     "ชื่อเว็บในหน้าต่าง MetaMask ไม่ตรงกับเว็บทางการ",
+     "จำนวนเงินมากกว่าที่ตั้งใจ",
+     "ขอคำกู้คืน (seed phrase) หรือ private key ไม่ว่ากรณีใด"
+    ]
+   },
+   "verify": {
+    "chain": "base",
+    "kind": "tx"
+   }
+  },
+  {
+   "id": "swap",
+   "who": "you",
+   "kind": "sign",
+   "title": "Swap เล็กน้อยบน Aerodrome (ETH → USDC ประมาณ $5)",
+   "how": [
+    "เปิด aerodrome.finance จากปุ่มเว็บทางการ",
+    "Connect ด้วย MetaMask เลือก Account 2",
+    "เลือก ETH → USDC ใส่ประมาณ $5",
+    "กด Swap แล้วตรวจหน้าต่าง MetaMask"
+   ],
+   "sign": {
+    "site": "aerodrome.finance",
+    "network": "Base",
+    "action": "ธุรกรรม swap 1 ครั้ง (ใช้ ETH จึงไม่ต้อง Approve)",
+    "expect": [
+     "เว็บที่ขอคือ aerodrome.finance",
+     "จำนวน ETH ที่จ่ายประมาณ $5",
+     "ไม่มีขั้น Approve"
+    ],
+    "cost": "แก๊สไม่กี่เซนต์",
+    "reject_if": [
+     "ขอ Approve แบบไม่จำกัด (Unlimited) หรือ SetApprovalForAll",
+     "ชื่อเว็บในหน้าต่าง MetaMask ไม่ตรงกับเว็บทางการ",
+     "จำนวนเงินมากกว่าที่ตั้งใจ",
+     "ขอคำกู้คืน (seed phrase) หรือ private key ไม่ว่ากรณีใด"
+    ]
+   },
+   "verify": {
+    "chain": "base",
+    "kind": "tx"
+   }
+  },
+  {
+   "id": "repeat",
+   "who": "you",
+   "kind": "sign",
+   "repeat_days": 10,
+   "title": "ใช้งานซ้ำ: swap หรือฝากเล็กน้อย ทุก ~10 วัน",
+   "how": [
+    "ทำ swap เล็ก ๆ บน Aerodrome หรือฝาก USDC เล็กน้อยใน Morpho",
+    "ถ้าเว็บขอ Approve USDC ให้แก้จำนวนเป็นเท่าที่จะใช้ (ไม่ใช่ไม่จำกัด)"
+   ],
+   "sign": {
+    "site": "aerodrome.finance หรือ app.morpho.org",
+    "network": "Base",
+    "action": "ธุรกรรม 1–2 ครั้ง",
+    "expect": [
+     "เว็บตรงกับที่เปิดจากปุ่มทางการ",
+     "ถ้ามี Approve จำนวนต้องเท่าที่จะใช้"
+    ],
+    "cost": "แก๊สไม่กี่เซนต์",
+    "reject_if": [
+     "ขอ Approve แบบไม่จำกัด (Unlimited) หรือ SetApprovalForAll",
+     "ชื่อเว็บในหน้าต่าง MetaMask ไม่ตรงกับเว็บทางการ",
+     "จำนวนเงินมากกว่าที่ตั้งใจ",
+     "ขอคำกู้คืน (seed phrase) หรือ private key ไม่ว่ากรณีใด"
+    ]
+   },
+   "verify": {
+    "chain": "base",
+    "kind": "tx"
+   }
+  }
+ ],
+ "updated_at": "2026-10-23T05:45:00Z"
+}

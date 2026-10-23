@@ -1,8 +1,8 @@
 // Network first, so every open shows the latest app and data; the cache is the offline fallback.
-const VERSION = 'v15';
+const VERSION = 'v16';
 const CACHE = 'crypto-radar-' + VERSION;
 const SHELL = [
-  './', 'index.html', 'portfolio.html', 'guide.html', 'coin.html', 'js/portfolio.js', 'js/coin.js', 'js/coins.js', 'js/alerts.js', 'js/i18n.js', 'js/wallet-panel.js', 'safety.json', 'manifest.webmanifest', 'css/app.css',
+  './', 'index.html', 'portfolio.html', 'guide.html', 'coin.html', 'js/portfolio.js', 'js/coin.js', 'js/coins.js', 'js/alerts.js', 'js/i18n.js', 'js/wallet-panel.js', 'agents.html', 'js/agents.js', 'safety.json', 'manifest.webmanifest', 'css/app.css',
   'js/app.js', 'js/dash.js', 'js/version.js', 'vendor/d3.min.js', 'vendor/fonts/noto-sans-thai-looped-thai-wght-normal.woff2', 'vendor/fonts/noto-sans-thai-looped-latin-wght-normal.woff2', 'dashboard/page.html',
   'icons/icon-192.png', 'icons/icon-512.png',
 ];

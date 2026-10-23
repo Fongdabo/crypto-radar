@@ -1,0 +1,40 @@
+{
+ "id": "unlocks",
+ "name": "ปลดล็อกโทเคนและเกม",
+ "type": "เฝ้าดู",
+ "emoji": "🔓",
+ "status": "watch",
+ "status_text": "เฝ้าดูวันปลดล็อกที่อาจกดราคา ถ้าคุณถือเหรียญเหล่านี้ เอเจนต์จะเตือนล่วงหน้า ไม่ต้องทำอะไรกับกระเป๋า",
+ "schedule": "เอเจนต์เช็กวันสำคัญทุกเช้า",
+ "budget": "–",
+ "official": [
+  {
+   "t": "Off The Grid (GUN)",
+   "u": "https://gameoffthegrid.com/faq/"
+  },
+  {
+   "t": "MapleStory Universe (NXPC)",
+   "u": "https://msu.io"
+  }
+ ],
+ "warn": "ซื้อเหรียญจากกระดานใหญ่ และเทียบที่อยู่สัญญากับ CoinGecko ก่อนทุกครั้ง",
+ "steps": [
+  {
+   "id": "gun",
+   "who": "agent",
+   "kind": "watch",
+   "due": "2026-10-31",
+   "title": "GUN ปลดล็อก 31 ต.ค. และ Off The Grid 1.0 เปิดวันเดียวกัน",
+   "result": "ถ้าถือ GUN ระวังราคาผันผวนช่วงนี้"
+  },
+  {
+   "id": "nxpc",
+   "who": "agent",
+   "kind": "watch",
+   "due": "2026-11-15",
+   "title": "NXPC (MapleStory Universe) ปลดล็อก 15 พ.ย.",
+   "result": "ถ้าถือ NXPC ระวังแรงขายช่วงนี้"
+  }
+ ],
+ "updated_at": "2026-10-23T05:45:00Z"
+}

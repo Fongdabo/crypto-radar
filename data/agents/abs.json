@@ -1,0 +1,77 @@
+{
+ "id": "abs",
+ "name": "Abstract",
+ "type": "ถอนเงินก่อนปิด",
+ "emoji": "⛔",
+ "status": "active",
+ "deadline": "2026-12-15",
+ "status_text": "Abstract ประกาศปิดเครือข่าย 15 ธ.ค. 2026 (ข่าว 6 ต.ค. 2026) ไม่พบข่าวเหรียญหรือแอร์ดรอป หยุดฟาร์มแล้ว เหลืองานเดียวคือถอนเงินออกถ้ามี",
+ "schedule": "เอเจนต์เตือนก่อนปิด 30, 14, 7 และ 3 วัน",
+ "budget": "ค่าแก๊สถอน",
+ "official": [
+  {
+   "t": "abs.xyz",
+   "u": "https://abs.xyz"
+  },
+  {
+   "t": "เอกสารทางการ",
+   "u": "https://docs.abs.xyz"
+  },
+  {
+   "t": "ข่าวปิดตัว (The Defiant)",
+   "u": "https://thedefiant.io/news/blockchains/abstract-to-shut-down-ethereum-layer-2-on-dec-15"
+  }
+ ],
+ "warn": "ช่วงปิดตัวจะมีเว็บ \"ย้ายเงิน\" ปลอมเยอะ ใช้ Migration Hub หรือบริดจ์ที่ลิงก์จาก abs.xyz เท่านั้น",
+ "steps": [
+  {
+   "id": "research",
+   "who": "agent",
+   "kind": "research",
+   "title": "ตรวจสถานะ Abstract",
+   "result": "ยืนยันแล้ว: ปิดเครือข่าย 15 ธ.ค. 2026 ให้ถอนผ่าน Migration Hub หรือบริดจ์ทางการ ไม่มีแอร์ดรอปให้ฟาร์ม"
+  },
+  {
+   "id": "check",
+   "who": "you",
+   "kind": "offchain",
+   "due": "2026-12-01",
+   "title": "เช็กว่าคุณมีเงินหรือ NFT อยู่บน Abstract ไหม",
+   "how": [
+    "เปิด abs.xyz จากปุ่มเว็บทางการ แล้วล็อกอินถ้าเคยสมัคร",
+    "ดูยอดในกระเป๋า Abstract",
+    "ถ้าไม่เคยใช้หรือยอดเป็น 0 กด \"ทำแล้ว\" แล้วข้ามขั้นถัดไปได้เลย"
+   ]
+  },
+  {
+   "id": "withdraw",
+   "who": "you",
+   "kind": "sign",
+   "due": "2026-12-01",
+   "title": "ถอนเงินออกจาก Abstract (ทำก่อน 1 ธ.ค. เผื่อเวลา)",
+   "how": [
+    "เข้าผ่าน abs.xyz แล้วหาเมนู Migration Hub หรือ Bridge",
+    "เลือกถอนไป Ethereum หรือเครือข่ายที่หน้าเว็บรองรับ",
+    "ตรวจหน้าต่างยืนยันตามรายการด้านล่าง"
+   ],
+   "sign": {
+    "site": "abs.xyz",
+    "network": "Abstract",
+    "action": "ธุรกรรมถอน 1 ครั้งต่อเหรียญ",
+    "expect": [
+     "เว็บที่ขอคือ abs.xyz",
+     "ที่อยู่ปลายทางเป็นของคุณเอง",
+     "ไม่มี SetApprovalForAll"
+    ],
+    "cost": "ค่าแก๊สถอน",
+    "reject_if": [
+     "ขอ Approve แบบไม่จำกัด (Unlimited) หรือ SetApprovalForAll",
+     "ชื่อเว็บในหน้าต่าง MetaMask ไม่ตรงกับเว็บทางการ",
+     "จำนวนเงินมากกว่าที่ตั้งใจ",
+     "ขอคำกู้คืน (seed phrase) หรือ private key ไม่ว่ากรณีใด"
+    ]
+   }
+  }
+ ],
+ "updated_at": "2026-10-23T05:45:00Z"
+}

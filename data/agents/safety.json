@@ -1,0 +1,61 @@
+{
+ "id": "safety",
+ "name": "ความปลอดภัยกระเป๋า",
+ "type": "ความปลอดภัย",
+ "emoji": "🛡️",
+ "status": "active",
+ "status_text": "กระเป๋าหลักเคยเชื่อมกับ solanabombers.fun (ความเสี่ยง 5/5) ควรตัดการเชื่อมต่อและยกเลิกสิทธิ์ที่เคยอนุมัติ แล้วตรวจซ้ำเดือนละครั้ง",
+ "schedule": "เอเจนต์เตือนตรวจสิทธิ์ทุก 30 วัน",
+ "budget": "ค่าแก๊สต่อการยกเลิก 1 รายการ",
+ "official": [
+  {
+   "t": "revoke.cash",
+   "u": "https://revoke.cash"
+  },
+  {
+   "t": "วิธีตัดการเชื่อมต่อ (MetaMask)",
+   "u": "https://support.metamask.io/more-web3/dapps/disconnect-wallet-from-a-dapp/"
+  }
+ ],
+ "warn": "ระวังเว็บปลอมชื่อคล้าย revoke.cash ใช้ปุ่มด้านบนเท่านั้น",
+ "steps": [
+  {
+   "id": "disconnect",
+   "who": "you",
+   "kind": "offchain",
+   "title": "ตัดการเชื่อมต่อ solanabombers.fun ใน MetaMask",
+   "how": [
+    "เปิด MetaMask → เมนู ⋮ → All Permissions (หรือ Connected sites)",
+    "หา solanabombers.fun แล้วกด Disconnect"
+   ],
+   "note": "ไม่มีการเซ็นในขั้นนี้"
+  },
+  {
+   "id": "revoke",
+   "who": "you",
+   "kind": "sign",
+   "repeat_days": 30,
+   "title": "ตรวจและยกเลิกสิทธิ์ที่ไม่ใช้บน revoke.cash",
+   "how": [
+    "เปิด revoke.cash จากปุ่มทางการ วางที่อยู่กระเป๋าเพื่อดูอย่างเดียวได้โดยไม่ต้องเชื่อม",
+    "ถ้าเจอสิทธิ์ของเว็บที่ไม่รู้จักหรือไม่ใช้แล้ว ค่อยกด Connect แล้วกด Revoke ทีละรายการ"
+   ],
+   "sign": {
+    "site": "revoke.cash",
+    "network": "เครือข่ายของรายการนั้น",
+    "action": "ธุรกรรมยกเลิกสิทธิ์ 1 ครั้งต่อรายการ",
+    "expect": [
+     "ฟังก์ชัน approve ที่จำนวน 0 หรือ setApprovalForAll เป็น false",
+     "ไม่มีการส่งเงินออก นอกจากค่าแก๊ส"
+    ],
+    "cost": "แก๊สต่อรายการ",
+    "reject_if": [
+     "ฟังก์ชันไม่ใช่ approve(…, 0) หรือ setApprovalForAll(…, false)",
+     "ขอส่งเหรียญออก",
+     "ขอคำกู้คืน (seed phrase) หรือ private key ไม่ว่ากรณีใด"
+    ]
+   }
+  }
+ ],
+ "updated_at": "2026-10-23T05:45:00Z"
+}

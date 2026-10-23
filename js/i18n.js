@@ -29,6 +29,13 @@
   const EN = {
     // header, toolbar, menu
     'เรดาร์คริปโต': 'Crypto Radar', 'แดชบอร์ด': 'Dashboard', 'พอร์ต': 'Portfolio', 'กราฟ': 'Charts', 'คู่มือ': 'Guide',
+    // agents page
+    'เอเจนต์': 'Agents', 'เอเจนต์ · เรดาร์คริปโต': 'Agents · Crypto Radar', 'เอเจนต์ทำกิจกรรมแทน': 'Activity agents',
+    'เอเจนต์ 1 ตัวต่อ 1 กิจกรรม หาเงื่อนไข ตรวจลิงก์ เรียงขั้นตอน และทักคุณเมื่อถึงคิว': 'One agent per activity: it finds the requirements, checks the links, lines up the steps and messages you when it is your turn',
+    'กฎ:': 'Rule:', 'เอเจนต์ไม่ถือกุญแจกระเป๋าและไม่เซ็นแทนคุณ ขั้นที่ต้องเซ็นจะมีกรอบสีส้ม บอกว่าหน้าต่าง MetaMask ควรเป็นแบบไหน กด "ฉันพร้อมเซ็น" แล้วทำตาม เซ็นเสร็จเอเจนต์จะตรวจบนเชนให้':
+      'agents never hold your wallet keys and never sign for you. Steps that need a signature have an orange box that says what the MetaMask window should show. Press "I\'m ready to sign", follow it, and the agent checks the chain afterwards.',
+    'กระเป๋าฟาร์ม (ดูอย่างเดียว)': 'Farm wallet (read-only)', 'วางที่อยู่ 0x... ของ Account 2': 'Paste the 0x... address of Account 2',
+    'เก็บไว้ในเครื่องนี้เท่านั้น ใช้ตรวจว่าธุรกรรมสำเร็จ': 'Kept on this device only, used to check that transactions went through',
     'อัปเดต': 'Update', 'ติดตั้งแอป': 'Install app', 'กำลังโหลด…': 'Loading…', 'เมนู': 'Menu',
     'เช็กเวอร์ชันใหม่และดึงข้อมูลล่าสุด': 'Check for a new version and fetch the latest data',
     'ออนไลน์ · ข้อมูลล่าสุด': 'Online · data updated', 'ออนไลน์': 'Online', 'ออฟไลน์ · แสดงข้อมูลที่บันทึกไว้': 'Offline · showing saved data',

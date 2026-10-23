@@ -1,7 +1,8 @@
 // Shared by every page: the top-right toolbar (status, bell, theme, help, language, menu), install and update, offline cache and new-version notice.
 (function () {
-  const APP_VERSION = '15';   // keep in step with VERSION in sw.js; add a CHANGELOG entry for every release
+  const APP_VERSION = '16';   // keep in step with VERSION in sw.js; add a CHANGELOG entry for every release
   const CHANGELOG = [
+    ['16', '23 ต.ค. 2569', ['แท็บเอเจนต์: แชทแบบแอป PM เอเจนต์ 1 ตัวต่อ 1 กิจกรรม (Base, Ink, Abstract, เคลม, ความปลอดภัย, ปลดล็อก, Polymarket) บอกขั้นต่อไปพร้อมปุ่ม ทำแล้ว / ข้าม / ฉันพร้อมเซ็น', 'ขั้นที่ต้องเซ็นบอกว่าหน้าต่าง MetaMask ควรเป็นแบบไหน และเมื่อไรต้องกดปฏิเสธ เซ็นเสร็จเอเจนต์ตรวจบนเชนให้ (คุณเซ็นเอง แอปไม่เซ็นแทน)', 'กระดิ่งแจ้งเมื่อเอเจนต์รอให้คุณเซ็น หรือใกล้ถึงกำหนด']],
     ['15', '23 ต.ค. 2569', ['ปิดการแจ้งเตือน Telegram ไว้ก่อน', 'กดเชื่อมกระเป๋าแล้วถามก่อนว่ากระเป๋าอยู่ในเบราว์เซอร์ไหน (เบราว์เซอร์นี้ / Chrome / Edge / Brave) ถ้าอยู่อีกเบราว์เซอร์ แอปพาไปเปิดที่นั่นให้', 'ปุ่มเดียว "วางที่อยู่กระเป๋าที่คัดลอกไว้" ไม่ต้องเชื่อมต่อ', 'เตือนตอนกดเชื่อม: ถ้ากระเป๋าขึ้นหน้าสร้างกระเป๋าใหม่ ให้ปิด อย่ากรอกคำกู้คืนในเบราว์เซอร์ที่สอง']],
     ['14', '23 ต.ค. 2569', ['กระเป๋าแบบแท็บ: แสดงเฉพาะกระเป๋าที่คุณเพิ่มไว้ สลับได้ทั้งในหน้าพอร์ตและแผงด้านขวา กด + เพื่อเพิ่ม', 'เชื่อม Ronin Wallet และกระเป๋าอื่นที่ติดตั้งในเบราว์เซอร์ได้ (ดูอย่างเดียว)', 'อ่านยอดบนเครือข่าย Ronin: RON, AXS, SLP, WETH และ USDC']],
     ['13', '23 ต.ค. 2569', ['แผงกระเป๋าฝังขวาแบบ MetaMask: บัญชี ยอดรวม เหรียญแยกเครือข่าย (ดูอย่างเดียว)', 'แท็บกิจกรรม: เว็บทางการที่ตรวจแล้ว ตัวตรวจลิงก์ก่อนเชื่อมกระเป๋า และสิ่งที่กดได้/ห้ามกด', 'ฟอนต์ภาษาไทยใหม่ (Noto Sans Thai Looped) อ่านง่ายขึ้น ใช้ได้แม้ออฟไลน์', 'การ์ดนับถอยหลังกดไปเว็บทางการได้']],
@@ -86,7 +87,7 @@
   function bellItems() {
     const week = Date.now() - 7 * 864e5;
     const log = readJson(LOG_KEY, []).filter(x => x && Date.parse(x.at) > week)
-      .map(x => ({ id: 'a:' + x.at + x.title, kind: 'alert', title: x.title, sub: x.body, href: 'portfolio.html#targets', when: Date.parse(x.at) }));
+      .map(x => ({ id: 'a:' + x.at + x.title, kind: x.kind === 'agent' ? 'agent' : 'alert', title: x.title, sub: x.body, href: /^[a-z]+\.html(#[\w-]*)?$/.test(x.href || '') ? x.href : 'portfolio.html#targets', when: Date.parse(x.at) }));
     return log.reverse().concat(dates);
   }
   const bell = dropdown('bell', icon(ICONS.bell) + '<span class="badge" hidden></span>', T('การแจ้งเตือน', 'Notifications'), p => {
@@ -102,6 +103,7 @@
         a.append(t, s); p.append(a);
       }
     };
+    sec(T('เอเจนต์รอคุณ', 'Agents waiting for you'), items.filter(x => x.kind === 'agent'));
     sec(T('แจ้งเตือนราคา', 'Price alerts'), items.filter(x => x.kind === 'alert'));
     sec(T('วันสำคัญใน 7 วัน', 'Key dates in the next 7 days'), items.filter(x => x.kind === 'date'));
     // Opening the list marks everything as read.
