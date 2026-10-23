@@ -1,0 +1,19 @@
+{
+  "name": "เรดาร์คริปโต",
+  "short_name": "เรดาร์คริปโต",
+  "description": "เกม NFT เหรียญต้นน้ำ แอร์ดรอป และพอร์ตส่วนตัว อัปเดตทุกเช้า",
+  "lang": "th",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1016",
+  "theme_color": "#0b1016",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "พอร์ตของฉัน", "url": "portfolio.html", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

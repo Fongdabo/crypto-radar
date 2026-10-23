@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>เรดาร์คริปโต</title>
+<meta name="description" content="เกม NFT เหรียญต้นน้ำ แอร์ดรอป และพอร์ตส่วนตัว อัปเดตทุกเช้า">
+<meta name="theme-color" content="#0b1016">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="เรดาร์คริปโต">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<header class="app-bar">
+  <a class="brand" href="./"><img src="icons/icon-192.png" alt=""><span>เรดาร์คริปโต</span></a>
+  <nav class="tabs">
+    <a href="./" class="on">แดชบอร์ด</a>
+    <a href="portfolio.html">พอร์ตของฉัน</a>
+  </nav>
+  <span class="updated" id="updated"></span>
+  <button class="install" id="install" hidden>ติดตั้งแอป</button>
+</header>
+
+<main id="dash-root" class="app-main"><p class="loading">กำลังโหลด…</p></main>
+
+<footer class="app-foot">
+  ข้อมูลเพื่อการศึกษา ไม่ใช่คำแนะนำการลงทุน · แอปนี้ไม่รับฝากเงิน ไม่เชื่อมกระเป๋า และไม่ขอ seed phrase หรือ private key ใครขอคือมิจฉาชีพ
+</footer>
+
+<script src="js/version.js"></script>
+<script src="vendor/d3.min.js"></script>
+<script src="js/dash.js"></script>
+<script src="js/app.js"></script>
+<script>
+(async () => {
+  const root = document.getElementById('dash-root');
+  try {
+    const r = await fetch('dashboard/page.html?v=' + (window.APP_DATA_VERSION || ''), { cache: 'no-cache' });
+    if (!r.ok) throw new Error(r.status);
+    let html = await r.text();
+    // The page links its portfolio to the claude.ai version; in the app it is the local one.
+    html = html.replace(/https:\/\/claude\.ai\/artifact\/2eUPvnjUQCfss36SJNCmqR"[^>]*>/g, 'portfolio.html">')
+               .replace(/พอร์ตส่วนตัวแยกของแต่ละคน[^<]*/g, 'พอร์ตส่วนตัว เก็บไว้ในเครื่องของคุณเท่านั้น ไม่ส่งขึ้นเซิร์ฟเวอร์');
+    const tpl = document.createElement('template');
+    tpl.innerHTML = html;
+    const scripts = [...tpl.content.querySelectorAll('script')];
+    scripts.forEach(s => s.remove());
+    root.replaceChildren(tpl.content);
+    for (const s of scripts) {
+      const el = document.createElement('script');
+      el.textContent = '(function(){\n' + s.textContent + '\n})();';
+      document.body.append(el);
+    }
+  } catch (e) {
+    root.innerHTML = '<p class="loading">โหลดแดชบอร์ดไม่ได้ ตรวจสอบอินเทอร์เน็ตแล้วลองเปิดใหม่</p>';
+  }
+})();
+</script>
+</body>
+</html>

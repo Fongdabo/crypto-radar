@@ -1,0 +1,812 @@
+<style>
+#dash-root { --dash-gutter: 0; }
+/* Dark console layout: sidebar nav + gradient breadcrumb bar + KPI strip + watch tables + charts */
+.nf {
+  --nf-bg: #0b1016; --nf-panel: #121922; --nf-panel-2: #18212c; --nf-line: #243040;
+  --nf-fg: #e6edf3; --nf-muted: #8b98a8;
+  --nf-teal: #2dd4bf; --nf-blue: #60a5fa; --nf-green: #34d399; --nf-amber: #fbbf24; --nf-pink: #f472b6; --nf-red: #f87171; --nf-grey: #64748b;
+  color-scheme: dark;
+  background: var(--nf-bg); color: var(--nf-fg);
+  font-family: var(--font-anthropic-sans), "Noto Sans Thai", "Leelawadee UI", sans-serif;
+  display: grid; grid-template-columns: 13.5rem minmax(0, 1fr); gap: var(--cds-gap-lg);
+  padding-block: var(--cds-pad-lg);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  border-radius: var(--cds-radius);
+}
+.nf-side { position: sticky; top: 0; align-self: start; display: flex; flex-direction: column; gap: var(--cds-gap-sm); }
+.nf-brand { background: var(--nf-panel); border: 1px solid var(--nf-line); border-radius: 10px; padding: var(--cds-pad-sm) var(--cds-pad-md); }
+.nf-brand b { display: block; font-size: var(--cds-font-size-body); color: var(--nf-fg); }
+.nf-brand span { font-size: var(--cds-font-size-caption); color: var(--nf-muted); letter-spacing: .04em; }
+.nf-nav { display: flex; flex-direction: column; gap: 2px; }
+.nf-nav .grp { font-size: var(--cds-font-size-caption); color: var(--nf-muted); margin: var(--cds-gap-sm) 0 2px var(--cds-pad-sm); }
+.nf-nav button { all: unset; cursor: pointer; display: flex; align-items: center; gap: .55rem; padding: .45rem var(--cds-pad-sm); border-radius: 8px; color: var(--nf-fg); font-size: var(--cds-font-size-body); }
+.nf-nav button::before { content: ""; width: .35rem; height: .35rem; border-radius: 50%; background: var(--nf-muted); flex: none; }
+.nf-nav button:hover, .nf-nav button:focus-visible { background: var(--nf-panel-2); }
+.nf-nav button.on { background: #0f2f33; color: var(--nf-teal); font-weight: 600; }
+.nf-nav button.on::before { background: var(--nf-teal); }
+.nf-main { min-width: 0; display: flex; flex-direction: column; gap: var(--cds-gap-md); }
+.nf-crumb { display: flex; align-items: center; gap: .7rem; padding: .85rem 1rem; border-radius: 12px; background: linear-gradient(90deg, #0e7490 0%, #1d4ed8 70%, #1e3a8a 100%); color: #fff; }
+.nf-crumb .home { width: 2.1rem; height: 2.1rem; border-radius: 8px; background: #fff; display: grid; place-items: center; flex: none; }
+.nf-crumb .home svg { width: 1.1rem; height: 1.1rem; }
+.nf-crumb .path { font-size: var(--cds-font-size-body); opacity: .85; }
+.nf-crumb h1 { font-size: var(--cds-font-size-heading); font-weight: 700; margin: 0; color: #fff; }
+.nf-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 10.5rem), 1fr)); gap: var(--cds-gap-sm); }
+.nf-kpi { background: var(--nf-panel); border: 1px solid var(--nf-line); border-top: 3px solid var(--c); border-radius: 12px; padding: var(--cds-pad-md); display: flex; flex-direction: column; gap: .35rem; min-width: 0; }
+.nf-kpi .l { font-size: var(--cds-font-size-caption); color: var(--nf-muted); }
+.nf-kpi .v { font-size: 1.75rem; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--vc, var(--nf-fg)); }
+.nf-kpi .v small { font-size: var(--cds-font-size-caption); font-weight: 400; color: var(--nf-muted); margin-left: .3rem; }
+.nf-sum { background: var(--nf-panel); border: 1px solid var(--nf-line); border-radius: 12px; padding: var(--cds-pad-md) var(--cds-pad-lg); display: flex; flex-direction: column; gap: var(--cds-gap-sm); }
+.nf-sum h2 { margin: 0; font-size: var(--cds-font-size-heading); font-weight: 700; display: flex; flex-wrap: wrap; align-items: baseline; gap: .3rem .7rem; }
+.nf-sum h2 span { font-size: var(--cds-font-size-caption); font-weight: 400; color: var(--nf-muted); }
+.nf-sum p { margin: 0; line-height: 1.6; max-width: 75ch; }
+.nf-tags { display: flex; flex-wrap: wrap; gap: var(--cds-gap-xs); align-items: center; font-size: var(--cds-font-size-caption); color: var(--nf-muted); }
+.nf-tag { border: 1px solid var(--nf-green); color: var(--nf-green); border-radius: 6px; padding: .2rem .55rem; }
+.nf-tag.w { border-color: var(--nf-line); color: var(--nf-fg); background: var(--nf-panel-2); }
+.nf-card { background: var(--nf-panel); border: 1px solid var(--nf-line); border-radius: 12px; padding: var(--cds-pad-md) var(--cds-pad-lg); min-width: 0; display: flex; flex-direction: column; gap: var(--cds-gap-sm); scroll-margin-top: 1rem; }
+.nf-card h2 { margin: 0; font-size: var(--cds-font-size-heading); font-weight: 700; display: flex; flex-wrap: wrap; align-items: baseline; gap: .3rem .7rem; }
+.nf-card h2 span { font-size: var(--cds-font-size-caption); font-weight: 400; color: var(--nf-muted); }
+.nf-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: var(--cds-gap-md); }
+.nf-tw { overflow-x: auto; border: 1px solid var(--nf-line); border-radius: 10px; }
+.nf-table { width: 100%; border-collapse: collapse; font-size: var(--cds-font-size-body); min-width: 30rem; }
+.nf-table th { text-align: left; font-weight: 400; font-size: var(--cds-font-size-caption); color: var(--nf-muted); padding: .6rem .8rem; border-bottom: 1px solid var(--nf-line); background: var(--nf-panel-2); }
+.nf-table td { padding: .6rem .8rem; border-bottom: 1px solid var(--nf-line); vertical-align: middle; }
+.nf-table tr:last-child td { border-bottom: 0; }
+.nf-table td.dt { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.nf-table td.mut { color: var(--nf-muted); font-size: var(--cds-font-size-caption); }
+.nf-table tr.past td { opacity: .5; }
+.nf-pill { display: inline-flex; align-items: center; gap: .4rem; padding: .2rem .65rem; border-radius: 999px; font-size: var(--cds-font-size-caption); white-space: nowrap; color: var(--pc); background: color-mix(in srgb, var(--pc) 16%, transparent); }
+.nf-pill::before { content: ""; width: .4rem; height: .4rem; border-radius: 50%; background: var(--pc); }
+.nf-meter { display: inline-flex; gap: 3px; vertical-align: middle; margin-right: .5rem; }
+.nf-meter b { width: .9rem; height: .5rem; border-radius: 2px; background: var(--nf-line); }
+.nf-filter { display: flex; flex-wrap: wrap; gap: var(--cds-gap-xs); }
+.nf-filter button { all: unset; cursor: pointer; font-size: var(--cds-font-size-caption); padding: .25rem .7rem; border-radius: 999px; border: 1px solid var(--nf-line); color: var(--nf-muted); }
+.nf-filter button.on { border-color: var(--nf-teal); color: var(--nf-teal); background: #0f2f33; }
+.nf-filter button:focus-visible { outline: 2px solid var(--nf-blue); }
+.nf-revs { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: var(--cds-gap-sm); min-height: 12rem; }
+.nf-rev { background: var(--nf-panel-2); border: 1px solid var(--nf-line); border-left: 3px solid var(--tc); border-radius: 10px; padding: var(--cds-pad-md); display: flex; flex-direction: column; gap: .5rem; min-width: 0; }
+.nf-rev .top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .4rem; }
+.nf-rev h3 { margin: 0; font-size: var(--cds-font-size-body); font-weight: 700; }
+.nf-rev .kd { font-size: var(--cds-font-size-caption); color: var(--nf-muted); }
+.nf-rev p { margin: 0; line-height: 1.55; font-size: var(--cds-font-size-body); }
+.nf-rev .pc { display: grid; gap: .25rem; font-size: var(--cds-font-size-caption); line-height: 1.5; }
+.nf-rev .pc div { display: grid; grid-template-columns: 1.1rem 1fr; }
+.nf-rev .pc .y::before { content: "+"; color: var(--nf-green); font-weight: 700; }
+.nf-rev .pc .n::before { content: "!"; color: var(--nf-red); font-weight: 700; }
+.nf-rev .lk { display: flex; flex-direction: column; gap: .3rem; margin-top: auto; padding-top: .4rem; border-top: 1px solid var(--nf-line); }
+.nf-rev .lk a { color: var(--nf-blue); font-size: var(--cds-font-size-caption); text-decoration: none; overflow-wrap: anywhere; }
+.nf-rev .lk a:hover, .nf-rev .lk a:focus-visible { text-decoration: underline; }
+.nf-rev .lk a::before { content: "▶ "; font-size: .7em; }
+.nf-table th.r, .nf-table td.r { text-align: right; font-variant-numeric: tabular-nums; }
+.nf-up { color: var(--nf-green); } .nf-down { color: var(--nf-red); }
+.nf-scam { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: var(--cds-gap-md); align-items: start; }
+.nf-scam-in { display: flex; flex-direction: column; gap: .5rem; min-width: 0; }
+.nf-lbl { font-size: var(--cds-font-size-caption); color: var(--nf-muted); }
+.nf-scam input[type=text] { background: var(--nf-bg); color: var(--nf-fg); border: 1px solid var(--nf-line); border-radius: 8px; padding: .55rem .7rem; font: inherit; min-width: 0; }
+.nf-scam input[type=text]:focus-visible { outline: 2px solid var(--nf-blue); outline-offset: 1px; }
+.nf-scam-btns { display: flex; flex-wrap: wrap; gap: .4rem; }
+.nf-scam-btns button { all: unset; cursor: pointer; font-size: var(--cds-font-size-caption); padding: .3rem .7rem; border-radius: 6px; border: 1px solid var(--nf-line); color: var(--nf-fg); background: var(--nf-panel-2); }
+.nf-scam-btns button:hover, .nf-scam-btns button:focus-visible { border-color: var(--nf-teal); color: var(--nf-teal); }
+.nf-checks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; min-height: 10rem; }
+.nf-checks label { display: grid; grid-template-columns: 1.2rem 1fr auto; gap: .5rem; align-items: start; padding: .45rem .5rem; border-radius: 8px; cursor: pointer; line-height: 1.45; }
+.nf-checks label:hover { background: var(--nf-panel-2); }
+.nf-checks input { accent-color: #f87171; margin: .2rem 0 0; width: 1rem; height: 1rem; }
+.nf-checks .w { font-size: var(--cds-font-size-caption); color: var(--nf-muted); white-space: nowrap; }
+.nf-scam-out { background: var(--nf-panel-2); border: 1px solid var(--nf-line); border-radius: 10px; padding: var(--cds-pad-md); display: flex; flex-direction: column; gap: .6rem; position: sticky; top: 1rem; }
+.nf-score b { font-size: 2.4rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.nf-score span { color: var(--nf-muted); margin-left: .4rem; }
+.nf-bar { height: .55rem; border-radius: 999px; background: var(--nf-line); overflow: hidden; }
+.nf-bar i { display: block; height: 100%; width: 0; border-radius: 999px; background: var(--nf-red); transition: width .25s ease-out; }
+.nf-scam-tip { margin: 0; line-height: 1.55; font-size: var(--cds-font-size-caption); color: var(--nf-muted); }
+@media (max-width: 760px) { .nf-scam { grid-template-columns: minmax(0, 1fr); } .nf-scam-out { position: static; } }
+@media (prefers-reduced-motion: reduce) { .nf-bar i { transition: none; } }
+.nf-alert { background: #2a1416; border: 1px solid #5c2328; border-left: 4px solid var(--nf-red); border-radius: 10px; padding: var(--cds-pad-md); line-height: 1.6; }
+.nf-alert b:first-child { color: #ffb4b4; }
+.nf-alert ul { margin: .3rem 0 0; padding-left: 1.2rem; display: grid; gap: 2px; }
+.nf-adc .st { background: var(--nf-bg); border-radius: 8px; padding: .55rem .7rem; font-size: var(--cds-font-size-caption); line-height: 1.55; }
+.nf-adc .pg { display: flex; align-items: center; gap: .6rem; font-size: var(--cds-font-size-caption); color: var(--nf-muted); font-variant-numeric: tabular-nums; }
+.nf-adc .pg .nf-bar { flex: 1; }
+.nf-adc ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.nf-adc label { display: flex; gap: .6rem; align-items: flex-start; padding: .35rem .4rem; border-radius: 8px; cursor: pointer; line-height: 1.45; font-size: var(--cds-font-size-body); }
+.nf-adc label:hover { background: var(--nf-panel); }
+.nf-adc input { accent-color: #34d399; margin: .2rem 0 0; width: 1rem; height: 1rem; flex: none; }
+.nf-adc input:checked + span { color: var(--nf-muted); text-decoration: line-through; }
+.nf-adc .wl { font-size: var(--cds-font-size-caption); color: #ffc9a3; border-top: 1px dashed var(--nf-line); padding-top: .5rem; }
+.nf-cd { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 13rem), 1fr)); gap: var(--cds-gap-sm); min-height: 6rem; }
+.nf-cd .it { background: var(--nf-panel-2); border: 1px solid var(--nf-line); border-radius: 10px; padding: .6rem .75rem; display: flex; gap: .7rem; align-items: center; min-width: 0; }
+.nf-cd .it.hot { border-color: var(--nf-red); background: #2a1416; }
+.nf-cd .n { font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; min-width: 2.2rem; text-align: center; }
+.nf-cd .n small { display: block; font-size: .65rem; font-weight: 400; color: var(--nf-muted); margin-top: .2rem; }
+.nf-cd .tx { min-width: 0; font-size: var(--cds-font-size-caption); line-height: 1.45; }
+.nf-cd .tx b { display: block; font-size: var(--cds-font-size-body); font-weight: 600; }
+.nf-wk { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: var(--cds-gap-sm); min-height: 5rem; }
+.nf-wk .col { background: var(--nf-panel-2); border: 1px solid var(--nf-line); border-top: 3px solid var(--wc); border-radius: 10px; padding: .7rem .85rem; line-height: 1.6; }
+.nf-wk .col b { display: block; color: var(--wc); margin-bottom: .2rem; }
+.nf-empty { background: var(--nf-panel-2); border: 1px dashed var(--nf-line); border-radius: 10px; padding: var(--cds-pad-md); line-height: 1.6; color: var(--nf-muted); }
+.nf-empty b { color: var(--nf-fg); }
+.nf-pf-go { display: inline-block; background: var(--nf-teal); color: #04201c; font-weight: 700; padding: .55rem 1rem; border-radius: 8px; text-decoration: none; }
+.nf-links { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: var(--cds-gap-sm); min-height: 6rem; }
+.nf-links .ol { background: var(--nf-panel-2); border: 1px solid var(--nf-line); border-radius: 10px; padding: .7rem .85rem; display: flex; flex-direction: column; gap: .4rem; min-width: 0; }
+.nf-links .ol h3 { margin: 0; font-size: var(--cds-font-size-body); display: flex; justify-content: space-between; gap: .4rem; flex-wrap: wrap; align-items: center; }
+.nf-links .ol p { margin: 0; font-size: var(--cds-font-size-caption); color: var(--nf-muted); line-height: 1.5; }
+.nf-links .ol .sub a { font-size: var(--cds-font-size-caption); color: var(--nf-blue); text-decoration: none; display: block; overflow-wrap: anywhere; }
+.nf-go { display: inline-flex; align-items: center; gap: .35rem; align-self: flex-start; padding: .3rem .75rem; border-radius: 8px; background: #0f2f33; border: 1px solid var(--nf-teal); color: var(--nf-teal); font-size: var(--cds-font-size-caption); font-weight: 600; text-decoration: none; overflow-wrap: anywhere; }
+.nf-go:hover, .nf-go:focus-visible { background: var(--nf-teal); color: #04201d; }
+.nf-chart { position: relative; min-height: 12rem; }
+.nf-chart svg { display: block; }
+.nf-tip { position: absolute; pointer-events: none; background: var(--nf-panel-2); border: 1px solid var(--nf-line); border-radius: 8px; box-shadow: 0 6px 18px rgba(0,0,0,.4); padding: .35rem .6rem; font-size: var(--cds-font-size-caption); white-space: nowrap; color: var(--nf-fg); }
+.nf-tip .k { color: var(--nf-muted); }
+.nf-foot { color: var(--nf-muted); font-size: var(--cds-font-size-caption); line-height: 1.6; margin: 0; }
+.nf-fail { display: flex; align-items: center; justify-content: center; gap: .4rem; min-height: inherit; color: var(--nf-muted); font-size: var(--cds-font-size-caption); padding: 1rem; }
+.nf-fail::before { content: ""; width: .375rem; height: .375rem; border-radius: 50%; background: var(--nf-red); }
+.nf [data-dash-source-state=empty] { color: transparent; }
+.nf [data-dash-source-state=refreshing] { opacity: .5; transition: opacity var(--cds-dur-slow); }
+@media (max-width: 760px) {
+  .nf { grid-template-columns: minmax(0, 1fr); }
+  .nf-side { position: static; }
+  .nf-nav { flex-direction: row; overflow-x: auto; padding-bottom: 2px; }
+  .nf-nav .grp { display: none; }
+  .nf-nav button { white-space: nowrap; }
+}
+</style>
+
+<div class="nf">
+  <aside class="nf-side">
+    <div class="nf-brand"><b>ต้นน้ำ Watch</b><span>เกม NFT · เหรียญใหม่</span></div>
+    <nav class="nf-nav" aria-label="ส่วนต่าง ๆ ของหน้า">
+      <div class="grp">หน้าแรก</div>
+      <button type="button" data-go="overview" class="on">ภาพรวม</button>
+      <button type="button" data-go="countdown">นับถอยหลัง</button>
+      <button type="button" data-go="weekly">สรุปรายสัปดาห์</button>
+      <button type="button" data-go="watch">ต้องดูช่วงนี้</button>
+      <button type="button" data-go="prices">ราคาล่าสุด</button>
+      <button type="button" data-go="reviews">รีวิวและตัวอย่าง</button>
+      <button type="button" data-go="scam">เช็กเหรียญเสี่ยง</button>
+      <div class="grp">ของฉัน</div>
+      <button type="button" data-go="portfolio">พอร์ตของฉัน</button>
+      <div class="grp">ลุ้นของฟรี</div>
+      <button type="button" data-go="airdrop">แอร์ดรอปฟรี</button>
+      <button type="button" data-go="ad-tasks">เช็กลิสต์งาน</button>
+      <button type="button" data-go="ad-deadlines">ใกล้หมดเขต</button>
+      <button type="button" data-go="safety">ลิงก์ทางการและความปลอดภัย</button>
+      <div class="grp">วิเคราะห์</div>
+      <button type="button" data-go="whales">กระเป๋าวาฬ</button>
+      <button type="button" data-go="risk">ระดับความเสี่ยง</button>
+      <button type="button" data-go="drawdown">ราคาโทเคนเกม</button>
+      <button type="button" data-go="closures">เกมปิดตัว</button>
+    </nav>
+  </aside>
+
+  <main class="nf-main">
+    <div class="nf-crumb" id="overview">
+      <span class="home" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg></span>
+      <span class="path">หน้าแรก ›</span>
+      <h1>แดชบอร์ดเกม NFT และเหรียญใหม่</h1>
+    </div>
+
+    <div class="nf-kpis">
+      <div class="nf-kpi" style="--c: var(--nf-blue)"><span class="l">โทเคนเกมที่ติดตาม</span><span class="v"><span class="dash-skeleton" data-source="kpis" data-field="tokens">—</span><small>ตัว</small></span></div>
+      <div class="nf-kpi" style="--c: var(--nf-red); --vc: var(--nf-red)"><span class="l">ร่วงจากจุดสูงสุดมากที่สุด</span><span class="v">−<span class="dash-skeleton" data-source="kpis" data-field="worst_drop">—</span>%<small data-source="kpis" data-field="worst_token">—</small></span></div>
+      <div class="nf-kpi" style="--c: var(--nf-amber)"><span class="l">เกมปิดตัว ครึ่งแรกปี 2026</span><span class="v"><span class="dash-skeleton" data-source="closures" data-field="games_closed" data-where="period=%E0%B8%84%E0%B8%A3%E0%B8%B6%E0%B9%88%E0%B8%87%E0%B9%81%E0%B8%A3%E0%B8%81%E0%B8%9B%E0%B8%B5%202026">—</span><small>เกม</small></span></div>
+      <div class="nf-kpi" style="--c: var(--nf-teal); --vc: var(--nf-green)"><span class="l">เหตุการณ์ที่กำลังจะมาถึง</span><span class="v"><span class="dash-skeleton" data-source="kpis" data-field="upcoming">—</span><small>รายการ</small></span></div>
+      <div class="nf-kpi" style="--c: var(--nf-pink)"><span class="l">โปรเจกต์เสี่ยงสูง (4–5 ขีด)</span><span class="v"><span class="dash-skeleton" data-source="kpis" data-field="high_risk">—</span><small>โปรเจกต์</small></span></div>
+    </div>
+
+    <section class="nf-sum">
+      <h2>สรุปวันนี้ <span>ข้อมูล ณ 22 ต.ค. 2569</span></h2>
+      <p>ตลาดเกม Web3 ยังขาลงหนัก โทเคนเกมใหญ่ร่วงเกือบหมด และปีนี้เกมปิดตัวเร็วกว่าปีที่แล้ว ถ้าจะเข้าตั้งแต่ต้นน้ำ ทางที่เสี่ยงน้อยกว่าคือลุ้นแอร์ดรอปจากการใช้งาน ไม่ใช่ซื้อพรีเซล</p>
+      <div class="nf-tags"><span class="nf-tag">ไว้ศึกษา</span><span class="nf-tag w">ไม่ใช่คำแนะนำการลงทุน</span><span class="nf-tag w">อัปเดตอัตโนมัติทุกเช้า 06:47 น.</span><span>รายละเอียดและลิงก์แหล่งข้อมูลอยู่ในรายงานฉบับเต็ม</span></div>
+    </section>
+
+    <section class="nf-card" id="countdown">
+      <h2>นับถอยหลังวันสำคัญ <span>45 วันข้างหน้า · สีแดงคือเหลือไม่เกิน 2 วัน ผมจะทักเตือนในแชตล่วงหน้า 1–2 วัน</span></h2>
+      <div class="nf-cd dash-skeleton" id="cd-list" data-source="countdown"></div>
+    </section>
+
+    <section class="nf-card" id="weekly">
+      <h2>สรุปรายสัปดาห์ <span id="wk-sub">อัปเดตทุกเช้าวันอาทิตย์</span></h2>
+      <div class="nf-wk dash-skeleton" id="wk-body" data-source="weekly"></div>
+    </section>
+
+    <section class="nf-card" id="watch">
+      <h2>ต้องดูช่วงนี้ <span>เกมเปิดใหม่ แอร์ดรอป และวันสำคัญ ต.ค.–ธ.ค. 2569 · เรียงตามวันที่</span></h2>
+      <div class="nf-tw">
+        <table class="nf-table dash-skeleton" id="watch-table" data-source="timeline" data-row-key="label">
+          <thead><tr><th data-field="kind">เรื่อง</th><th data-field="label">รายการ</th><th data-field="date">กำหนด</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="nf-card" id="prices">
+      <h2>ราคาเหรียญเกมล่าสุด <span>ดึงจาก CoinGecko และ MetaMask · อัปเดตอัตโนมัติทุกเช้า ดูเวลาที่ดึงในคอลัมน์ขวาสุด</span></h2>
+      <div class="nf-tw">
+        <table class="nf-table dash-skeleton" id="price-table" data-source="prices" data-row-key="token">
+          <thead><tr><th data-field="token">เหรียญ</th><th data-field="game">เกม</th><th data-field="price_usd" class="r">ราคา (USD)</th><th data-field="change_24h_pct" class="r">24 ชม.</th><th data-field="mcap_usd" class="r">มูลค่าตลาด</th><th data-field="as_of">ข้อมูล ณ</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="nf-card" id="portfolio">
+      <h2>พอร์ตของฉัน <span>พอร์ตส่วนตัวแยกของแต่ละคน ล็อกอินด้วยบัญชี claude.ai แล้วเห็นเฉพาะของตัวเอง แม้แต่เจ้าของแดชบอร์ดก็มองไม่เห็น</span></h2>
+      <div class="nf-empty">
+        <a class="nf-pf-go" href="https://claude.ai/artifact/2eUPvnjUQCfss36SJNCmqR" target="_blank" rel="noopener noreferrer">เปิดพอร์ตของฉัน →</a>
+        <p>กรอกเหรียญที่ถือ จำนวน และราคาที่ซื้อ ระบบคิดกำไรขาดทุนจากราคาที่อัปเดตทุกเช้าให้เอง ไม่ต้องเชื่อมกระเป๋า และห้ามกรอก seed phrase หรือ private key เด็ดขาด</p>
+      </div>
+    </section>
+
+    <section class="nf-card" id="reviews">
+      <h2>รีวิวและตัวอย่าง <span>สรุปสั้นของแต่ละโปรเจกต์พร้อมลิงก์ไปดูตัวอย่างเกมหรือบทความ · ความเห็นเป็นของ Claude จากข้อมูลที่ค้นได้</span></h2>
+      <div class="nf-filter" role="group" aria-label="กรองตามคำตัดสิน">
+        <button type="button" data-tone="all" class="on">ทั้งหมด</button>
+        <button type="button" data-tone="good">น่าลอง</button>
+        <button type="button" data-tone="warn">ดูไปก่อน</button>
+        <button type="button" data-tone="bad">หลีกเลี่ยง</button>
+      </div>
+      <div class="nf-revs dash-skeleton" id="rev-list" data-source="reviews"></div>
+    </section>
+
+    <section class="nf-card" id="scam">
+      <h2>เช็กเหรียญเสี่ยง <span>ติ๊กข้อที่ตรงกับเหรียญที่สนใจ แล้วดูคะแนนความเสี่ยง · ถ้าอยากให้ Claude เช็กละเอียด วางชื่อหรือที่อยู่สัญญาในแชตได้เลย</span></h2>
+      <div class="nf-scam">
+        <div class="nf-scam-in">
+          <label for="scam-name" class="nf-lbl">ชื่อเหรียญหรือที่อยู่สัญญา</label>
+          <input id="scam-name" type="text" autocomplete="off" spellcheck="false" placeholder="เช่น $BOMBERS หรือ CZiwA6eL...pump" value="Solana Bombers ($BOMBERS)">
+          <div class="nf-scam-btns">
+            <button type="button" id="scam-example">โหลดตัวอย่าง Solana Bombers</button>
+            <button type="button" id="scam-clear">ล้างทั้งหมด</button>
+          </div>
+          <ul class="nf-checks dash-skeleton" id="scam-list" data-source="scam_checks"></ul>
+        </div>
+        <div class="nf-scam-out" aria-live="polite">
+          <span class="nf-lbl" id="scam-for">ตัวอย่าง: Solana Bombers</span>
+          <div class="nf-score"><b id="scam-score">0</b><span id="scam-max">/ 0 คะแนน</span></div>
+          <div class="nf-bar"><i id="scam-bar"></i></div>
+          <div id="scam-band"></div>
+          <p class="nf-scam-tip" id="scam-tip"></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="nf-card nf-ad" id="airdrop">
+      <h2>แอร์ดรอปฟรี <span>โปรเจกต์ใหญ่ที่ยังไม่มีเหรียญ และสิ่งที่ทำได้ตอนนี้เพื่อลุ้นแอร์ดรอป · โอกาสเป็นการประเมินจากสิ่งที่ทีมพูดต่อสาธารณะ</span></h2>
+      <div class="nf-kpis">
+        <div class="nf-kpi" style="--c: var(--nf-blue)"><span class="l">งานที่ติ๊กแล้ว</span><span class="v"><span id="ad-done">0</span><small id="ad-total">จาก — งาน</small></span><div class="nf-bar"><i id="ad-bar" style="background: var(--nf-blue)"></i></div></div>
+        <div class="nf-kpi" style="--c: var(--nf-green); --vc: var(--nf-green)"><span class="l">ทีมยืนยันว่าจะมีเหรียญ</span><span class="v"><span class="dash-skeleton" data-source="airdrop_kpis" data-field="confirmed">—</span><small>โปรเจกต์</small></span></div>
+        <div class="nf-kpi" style="--c: var(--nf-amber)"><span class="l">มีวันแจกที่ประกาศแล้ว</span><span class="v"><span class="dash-skeleton" data-source="airdrop_kpis" data-field="dated">—</span><small>โปรเจกต์ ทุกตัวยังเป็นการลุ้น</small></span></div>
+        <div class="nf-kpi" style="--c: var(--nf-red); --vc: var(--nf-red)"><span class="l">หมดเขตเคลมใน 7 วัน</span><span class="v"><span class="dash-skeleton" data-source="airdrop_kpis" data-field="soon">—</span><small>รายการ</small></span></div>
+      </div>
+      <div class="nf-alert" role="note">
+        <b>กฎเหล็ก ก่อนทำแอร์ดรอปทุกตัว</b>
+        <ul>
+          <li><b>ห้ามบอก seed phrase หรือ private key กับใคร</b> และห้ามพิมพ์ลงเว็บไหน แอร์ดรอปจริงไม่เคยขอ</li>
+          <li>แอร์ดรอปจริง<b>ไม่ให้จ่ายเงินก่อน</b> ถ้าต้องโอนค่าปลดล็อกหรือค่าธรรมเนียมเคลม คือโกง</li>
+          <li>ข่าว "MASK airdrop now live" ที่วนอยู่<b>เป็นข่าวปลอม</b> หน้าทางการของ MetaMask (13 ส.ค. 2026) ยังบอกว่าไม่มีแผนออกเหรียญ</li>
+          <li>เข้าเว็บจากบุ๊กมาร์กหรือบัญชี X ทางการเท่านั้น ระวังเว็บโคลน เช่น ink-airdrop.vercel.app และลิงก์ใน DM</li>
+          <li>ใช้กระเป๋าแยกสำหรับฟาร์ม อย่าเก็บเงินก้อนใหญ่ไว้ในนั้น และเพิกเฉยเหรียญแปลกที่โผล่ในกระเป๋า</li>
+          <li>อย่าทำหลายกระเป๋าเพื่อปั่น ระบบจับ Sybil จะตัดสิทธิ์ทุกกระเป๋า และอย่าใช้ VPN เลี่ยงประเทศที่ถูกบล็อก</li>
+        </ul>
+      </div>
+      <div class="nf-tw">
+        <table class="nf-table dash-skeleton" id="ad-table" data-source="airdrops" data-row-key="project">
+          <thead><tr><th data-field="project">โปรเจกต์</th><th data-field="kind">ประเภท</th><th data-field="token_status">สถานะเหรียญ</th><th data-field="chance">โอกาสแอร์ดรอป</th><th data-field="cost">ค่าใช้จ่าย</th><th data-field="risk">ความเสี่ยง</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="nf-card" id="ad-tasks">
+      <h2>เช็กลิสต์งานรายโปรเจกต์ <span>ติ๊กงานที่ทำแล้วเพื่อดูความคืบหน้า · หน้านี้ยังจำการติ๊กข้ามครั้งไม่ได้</span></h2>
+      <div class="nf-scam-btns"><button type="button" id="ad-reset">ล้างเครื่องหมายทั้งหมด</button></div>
+      <div class="nf-revs dash-skeleton" id="ad-cards" data-source="airdrops official_links"></div>
+    </section>
+
+    <section class="nf-card" id="ad-deadlines">
+      <h2>เคลมได้แล้ว ใกล้หมดเขต <span>มีผลเฉพาะคนที่เคยร่วมกิจกรรมก่อนหน้า ถ้าไม่เคยใช้ข้ามได้เลย</span></h2>
+      <div class="nf-tw">
+        <table class="nf-table dash-skeleton" id="dl-table" data-source="airdrop_deadlines" data-row-key="project">
+          <thead><tr><th data-field="project">โปรเจกต์</th><th data-field="reward">ได้อะไร</th><th data-field="who">ใครมีสิทธิ์</th><th data-field="date_text">วันสำคัญ</th><th data-source="deadline_status" data-field="days_left">สถานะ</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="nf-card" id="safety">
+      <h2>ลิงก์ทางการและความปลอดภัย <span>แดชบอร์ดนี้ไม่มีปุ่มเชื่อมกระเป๋าโดยตั้งใจ ให้กดลิงก์ไปเว็บทางการแล้วเชื่อม MetaMask ที่นั่นเอง · ลิงก์ตรวจกับแหล่งทางการหรือสื่อที่เชื่อถือได้แล้ว</span></h2>
+      <div class="nf-alert" role="note">
+        <b>ถ้าเคยเชื่อม MetaMask กับเว็บเสี่ยง (เช่น solanabombers.fun) ให้ทำ 3 ขั้นนี้</b>
+        <ul>
+          <li><b>ตัดการเชื่อมต่อ:</b> เปิด MetaMask › เมนู ☰ มุมขวาบน › Permissions › เลือกเว็บนั้น › กดไอคอนออกมุมขวาบน › Disconnect</li>
+          <li><b>ยกเลิกสิทธิ์ใช้เหรียญ:</b> การตัดการเชื่อมต่อไม่ได้ยกเลิกสิทธิ์ที่เคยอนุมัติ เข้า revoke.cash ใส่ที่อยู่กระเป๋า แล้วกด Revoke รายการที่ไม่รู้จัก</li>
+          <li><b>แยกกระเป๋า:</b> ใช้กระเป๋าแยกที่ใส่เงินน้อย ๆ สำหรับฟาร์มแอร์ดรอปและลองเกมใหม่ เก็บเงินก้อนใหญ่ไว้อีกกระเป๋าที่ไม่เคยเชื่อมเว็บแปลก</li>
+          <li>ห้ามบอก seed phrase หรือ private key กับใครหรือเว็บไหนเด็ดขาด รวมถึงผมด้วย</li>
+        </ul>
+      </div>
+      <div class="nf-links dash-skeleton" id="ol-list" data-source="official_links"></div>
+    </section>
+
+    <section class="nf-card" id="whales">
+      <h2>กระเป๋าวาฬและเงินกองทุน <span>สัญญาณจากเงินก้อนใหญ่ ทั้งซื้อ ขาย ปลดล็อกให้นักลงทุน และการระดมทุน · ยังไม่พบรายงานวาฬซื้อเหรียญเกมที่ยืนยันได้ในเดือน ต.ค. 2569</span></h2>
+      <div class="nf-tw">
+        <table class="nf-table dash-skeleton" id="wh-table" data-source="whales" data-row-key="asset,date">
+          <thead><tr><th data-field="date">วันที่</th><th data-field="asset">เหรียญ / โปรเจกต์</th><th data-field="signal">สัญญาณ</th><th data-field="detail">รายละเอียด</th><th data-field="source">แหล่ง</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="nf-card" id="risk">
+      <h2>ระดับความเสี่ยง <span>1–5 ขีด ยิ่งมากยิ่งเสี่ยง · Claude ประเมินจากข้อมูลในรายงาน ไม่ใช่เรตติ้งทางการ</span></h2>
+      <div class="nf-tw">
+        <table class="nf-table dash-skeleton" id="risk-table" data-source="risk" data-row-key="project">
+          <thead><tr><th data-field="level_label">ความเสี่ยง</th><th data-field="project">โปรเจกต์</th><th data-field="reason">เหตุผล</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="nf-grid">
+      <section class="nf-card" id="drawdown">
+        <h2>ราคาโทเคนเกมร่วงจากจุดสูงสุด <span>ราคา ณ 26 ก.ย. 2569</span></h2>
+        <div class="nf-chart dash-skeleton" id="dd-chart" data-source="drawdown"></div>
+      </section>
+      <section class="nf-card" id="closures">
+        <h2>จำนวนเกม Web3 ที่ปิดตัว <span>ครึ่งปีแรก 2569 ปิดมากกว่าทั้งปี 2568</span></h2>
+        <div class="nf-chart dash-skeleton" id="cl-chart" data-source="closures"></div>
+      </section>
+    </div>
+
+    <p class="nf-foot">แหล่งข้อมูล: CryptoTicker (Web3 Gaming 2026, Airdrops week 43), PlayToEarn News, EGamers, CoinGabbar, CoinCodex, BitPinas, CoinGecko</p>
+  </main>
+</div>
+
+<script>
+dash.calc('kpis', {
+  inputs: ['drawdown', 'timeline', 'risk'],
+  title: 'ตัวเลขสรุปด้านบน',
+  description: 'จำนวนโทเคนเกม, โทเคนที่ร่วงมากที่สุด, เหตุการณ์ตั้งแต่วันนี้เป็นต้นไป และโปรเจกต์ที่ความเสี่ยง 4 ขึ้นไป',
+  fn: (drawdown, timeline, risk) => {
+    const worst = drawdown.reduce((a, r) => Math.abs(Number(r.drawdown_pct)) > Math.abs(Number(a.drawdown_pct)) ? r : a);
+    return [{
+      tokens: drawdown.length,
+      worst_drop: Math.abs(Number(worst.drawdown_pct)),
+      worst_token: worst.token,
+      upcoming: timeline.filter(r => r.date >= new Date().toISOString().slice(0, 10)).length,
+      high_risk: risk.filter(r => Number(r.level) >= 4).length
+    }];
+  }
+});
+
+dash.calc('airdrop_kpis', {
+  inputs: ['airdrops', 'airdrop_deadlines'],
+  title: 'สรุปแอร์ดรอป',
+  description: 'จำนวนโปรเจกต์ที่ทีมยืนยันว่าจะมีเหรียญ, ที่ประกาศวันแจกแล้ว และแอร์ดรอปที่หมดเขตภายใน 7 วันจากวันนี้',
+  fn: (airdrops, airdrop_deadlines) => [{
+    soon: airdrop_deadlines.filter(r => { const d = (new Date(r.key_date + 'T00:00:00Z') - new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00Z')) / 864e5; return d >= 0 && d <= 7; }).length,
+    confirmed: airdrops.filter(r => r.confirmed === true || r.confirmed === 'true').length,
+    dated: airdrops.filter(r => r.airdrop_date).length
+  }]
+});
+dash.calc('deadline_status', {
+  inputs: ['airdrop_deadlines'],
+  title: 'จำนวนวันก่อนหมดเขต',
+  description: 'จำนวนวันจากวันนี้ถึงวันสำคัญของแต่ละแอร์ดรอป (ติดลบคือผ่านไปแล้ว)',
+  fn: (airdrop_deadlines) => {
+    const today = new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00Z');
+    return airdrop_deadlines.map(r => ({ project: r.project, days_left: Math.round((new Date(r.key_date + 'T00:00:00Z') - today) / 864e5) }));
+  }
+});
+
+dash.calc('countdown', {
+  inputs: ['timeline', 'airdrop_deadlines'],
+  title: 'วันสำคัญ 45 วันข้างหน้า',
+  description: 'รวมวันที่แน่นอนจากปฏิทินและวันหมดเขตแอร์ดรอป แล้วนับจำนวนวันจากวันนี้',
+  fn: (timeline, airdrop_deadlines) => {
+    const today = new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00Z');
+    const days = (d) => Math.round((new Date(d + 'T00:00:00Z') - today) / 864e5);
+    const a = timeline.filter(r => !(r.approx === true || r.approx === 'true')).map(r => ({ label: r.label, kind: r.kind, date: r.date, days_left: days(r.date) }));
+    const b = airdrop_deadlines.map(r => ({ label: r.project + ' · ' + r.date_text, kind: 'แอร์ดรอป', date: r.key_date, days_left: days(r.key_date) }));
+    return a.concat(b).filter(r => r.days_left >= 0 && r.days_left <= 45).sort((x, y) => x.days_left - y.days_left);
+  }
+});
+(function () {
+  const root = document.querySelector('.nf');
+  const go = (id) => { const el = document.getElementById(id); if (!el) return; el.scrollIntoView({ block: 'start' }); dash.setLink(id); setOn(id); };
+  const setOn = (id) => root.querySelectorAll('.nf-nav button').forEach(b => b.classList.toggle('on', b.dataset.go === id));
+  root.querySelectorAll('.nf-nav button').forEach(b => b.addEventListener('click', () => go(b.dataset.go)));
+
+  const fail = (el) => { el.classList.remove('dash-skeleton'); const tb = el.tagName === 'TABLE' ? el.querySelector('tbody') : el; tb.innerHTML = ''; const d = document.createElement(el.tagName === 'TABLE' ? 'tr' : 'div'); if (el.tagName === 'TABLE') { const td = document.createElement('td'); td.colSpan = 3; td.className = 'nf-fail'; td.textContent = 'Failed to load'; d.appendChild(td); } else { d.className = 'nf-fail'; d.textContent = 'Failed to load'; } tb.appendChild(d); };
+  const bad = (s) => s.status === 'error' || s.status === 'connect';
+  const C = (n) => getComputedStyle(root).getPropertyValue(n).trim();
+
+  const kindColor = { 'เกม': '--nf-blue', 'แอร์ดรอป': '--nf-teal', 'อัปเกรด': '--nf-amber', 'ปิดตัว': '--nf-grey', 'พรีเซลเสี่ยง': '--nf-red', 'ปลดล็อก': '--nf-pink' };
+  const dayFmt = new Intl.DateTimeFormat('th-TH', { day: 'numeric', month: 'short', year: '2-digit', timeZone: 'UTC' });
+  const monFmt = new Intl.DateTimeFormat('th-TH', { month: 'short', year: '2-digit', timeZone: 'UTC' });
+  const pill = (text, colorVar) => { const p = document.createElement('span'); p.className = 'nf-pill'; p.style.setProperty('--pc', `var(${colorVar})`); p.textContent = text; return p; };
+
+  function drawWatch() {
+    const t = document.getElementById('watch-table'), tb = t.querySelector('tbody');
+    const s = dash.data('timeline');
+    if (bad(s)) return fail(t);
+    if (s.status !== 'ok') { tb.innerHTML = ''; t.classList.add('dash-skeleton'); return; }
+    t.classList.remove('dash-skeleton'); tb.innerHTML = '';
+    s.data.map(r => ({ ...r, dt: new Date(r.date + 'T00:00:00Z'), approx: r.approx === true || r.approx === 'true' }))
+      .sort((a, b) => a.dt - b.dt).forEach(r => {
+        const tr = document.createElement('tr'); if (r.date < new Date().toISOString().slice(0, 10)) tr.className = 'past';
+        const a = document.createElement('td'); a.appendChild(pill(r.kind, kindColor[r.kind] || '--nf-grey'));
+        const b = document.createElement('td'); b.textContent = r.label;
+        const c = document.createElement('td'); c.className = 'dt'; c.textContent = r.approx ? 'ภายใน ' + monFmt.format(r.dt) : dayFmt.format(r.dt);
+        tr.append(a, b, c); tb.appendChild(tr);
+      });
+  }
+
+  function drawRisk() {
+    const t = document.getElementById('risk-table'), tb = t.querySelector('tbody');
+    const s = dash.data('risk');
+    if (bad(s)) return fail(t);
+    if (s.status !== 'ok') { tb.innerHTML = ''; t.classList.add('dash-skeleton'); return; }
+    t.classList.remove('dash-skeleton'); tb.innerHTML = '';
+    const col = (lv) => lv >= 4 ? '--nf-red' : lv === 3 ? '--nf-amber' : '--nf-green';
+    s.data.map(r => ({ ...r, level: Number(r.level) })).sort((a, b) => b.level - a.level).forEach(r => {
+      const tr = document.createElement('tr');
+      const a = document.createElement('td'); a.style.whiteSpace = 'nowrap';
+      const m = document.createElement('span'); m.className = 'nf-meter';
+      for (let i = 1; i <= 5; i++) { const b = document.createElement('b'); if (i <= r.level) b.style.background = `var(${col(r.level)})`; m.appendChild(b); }
+      a.append(m, pill(r.level_label, col(r.level)));
+      const b = document.createElement('td'); b.textContent = r.project;
+      const c = document.createElement('td'); c.className = 'mut'; c.textContent = r.reason;
+      tr.append(a, b, c); tb.appendChild(tr);
+    });
+  }
+
+  function drawPrices() {
+    const t = document.getElementById('price-table'), tb = t.querySelector('tbody');
+    const s = dash.data('prices');
+    if (bad(s)) return fail(t);
+    if (s.status !== 'ok') { tb.innerHTML = ''; t.classList.add('dash-skeleton'); return; }
+    t.classList.remove('dash-skeleton'); tb.innerHTML = '';
+    const pf = (p) => p < 0.01 ? '$' + p.toFixed(4) : p < 1 ? '$' + p.toFixed(4) : '$' + p.toFixed(2);
+    const mf = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 });
+    s.data.map(r => ({ ...r, price: Number(r.price_usd), ch: Number(r.change_24h_pct), mc: Number(r.mcap_usd) }))
+      .sort((a, b) => b.mc - a.mc).forEach(r => {
+        const tr = document.createElement('tr');
+        const cells = [
+          [r.token, ''], [r.game, 'mut'], [pf(r.price), 'r'],
+          [(r.ch > 0 ? '+' : '') + r.ch.toFixed(2) + '%', 'r ' + (r.ch >= 0 ? 'nf-up' : 'nf-down')],
+          ['$' + mf.format(r.mc), 'r'], [`${r.as_of} · ${r.source}`, 'mut']
+        ];
+        cells.forEach(([txt, cls]) => { const td = document.createElement('td'); td.className = cls; td.textContent = txt; tr.appendChild(td); });
+        tr.firstChild.style.fontWeight = '700';
+        tb.appendChild(tr);
+      });
+  }
+
+  // Scam checker: state lives only in the page
+  const checked = new Set();
+  let exampleLoaded = true, scamRows = [];
+  const nameIn = document.getElementById('scam-name');
+  function scamScore() {
+    const max = scamRows.reduce((a, r) => a + Number(r.weight), 0);
+    const sc = scamRows.filter(r => checked.has(r.id)).reduce((a, r) => a + Number(r.weight), 0);
+    document.getElementById('scam-score').textContent = sc;
+    document.getElementById('scam-max').textContent = `/ ${max} คะแนน`;
+    document.getElementById('scam-bar').style.width = max ? (sc / max * 100) + '%' : '0';
+    const band = sc >= 15 ? ['สูงมาก', '--nf-red', 'สัญญาณอันตรายหลายข้อพร้อมกัน ควรหลีกเลี่ยง และระวังลิงก์หรือแอร์ดรอปที่ขอ seed phrase']
+      : sc >= 9 ? ['สูง', '--nf-red', 'เสี่ยงสูง ถ้าจะลองให้ใช้เงินที่เสียได้ทั้งหมด และเช็กสัญญาให้ตรงกับเว็บทางการ']
+      : sc >= 4 ? ['ปานกลาง', '--nf-amber', 'มีจุดน่าห่วงบางข้อ ควรหาข้อมูลเพิ่มก่อนตัดสินใจ']
+      : ['ต่ำ', '--nf-green', 'ยังไม่เจอสัญญาณอันตรายจากเช็กลิสต์นี้ แต่ไม่ได้แปลว่าปลอดภัย'];
+    const bd = document.getElementById('scam-band'); bd.innerHTML = ''; bd.appendChild(pill('ความเสี่ยง' + band[0], band[1]));
+    document.getElementById('scam-tip').textContent = band[2];
+    document.getElementById('scam-bar').style.background = `var(${band[1]})`;
+    const nm = nameIn.value.trim();
+    document.getElementById('scam-for').textContent = exampleLoaded ? 'ตัวอย่าง: Solana Bombers' : (nm ? 'กำลังเช็ก: ' + nm : 'ยังไม่ได้ใส่ชื่อเหรียญ');
+  }
+  function drawScam() {
+    const el = document.getElementById('scam-list');
+    const s = dash.data('scam_checks');
+    if (bad(s)) return fail(el);
+    if (s.status !== 'ok') { el.innerHTML = ''; el.classList.add('dash-skeleton'); return; }
+    el.classList.remove('dash-skeleton'); el.innerHTML = '';
+    const first = scamRows.length === 0;
+    scamRows = s.data;
+    if (first) scamRows.forEach(r => { if (r.example === true || r.example === 'true') checked.add(r.id); });
+    scamRows.forEach(r => {
+      const li = document.createElement('li'); const lb = document.createElement('label');
+      const cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'chk-' + r.id; cb.checked = checked.has(r.id);
+      cb.addEventListener('change', () => { cb.checked ? checked.add(r.id) : checked.delete(r.id); scamScore(); });
+      const tx = document.createElement('span'); tx.textContent = r.check;
+      const w = document.createElement('span'); w.className = 'w'; w.textContent = '+' + r.weight;
+      lb.append(cb, tx, w); li.appendChild(lb); el.appendChild(li);
+    });
+    scamScore();
+  }
+  const syncBoxes = () => scamRows.forEach(r => { const cb = document.getElementById('chk-' + r.id); if (cb) cb.checked = checked.has(r.id); });
+  document.getElementById('scam-example').addEventListener('click', () => {
+    checked.clear(); scamRows.forEach(r => { if (r.example === true || r.example === 'true') checked.add(r.id); });
+    nameIn.value = 'Solana Bombers ($BOMBERS)'; exampleLoaded = true; syncBoxes(); scamScore();
+  });
+  document.getElementById('scam-clear').addEventListener('click', () => {
+    checked.clear(); nameIn.value = ''; exampleLoaded = false; syncBoxes(); scamScore(); nameIn.focus();
+  });
+  nameIn.addEventListener('input', () => { exampleLoaded = false; scamScore(); });
+
+  // Airdrops
+  const toneMap = { good: '--nf-green', warn: '--nf-amber', bad: '--nf-red', mute: '--nf-grey' };
+  const adChecked = new Set();
+  let adRows = [];
+  const tasksOf = (r) => typeof r.tasks === 'string' ? JSON.parse(r.tasks) : (r.tasks || []);
+  function adProgress() {
+    const total = adRows.reduce((a, r) => a + tasksOf(r).length, 0);
+    document.getElementById('ad-done').textContent = adChecked.size;
+    document.getElementById('ad-total').textContent = `จาก ${total} งาน`;
+    document.getElementById('ad-bar').style.width = total ? (adChecked.size / total * 100) + '%' : '0';
+    adRows.forEach(r => {
+      const n = tasksOf(r).length, d = tasksOf(r).filter((_, i) => adChecked.has(r.id + '-' + i)).length;
+      const b = document.getElementById('adbar-' + r.id), c = document.getElementById('adcnt-' + r.id);
+      if (b) b.style.width = (d / n * 100) + '%';
+      if (c) c.textContent = `${d}/${n}`;
+    });
+  }
+  function drawAirdrops() {
+    const t = document.getElementById('ad-table'), tb = t.querySelector('tbody'), cards = document.getElementById('ad-cards');
+    const s = dash.data('airdrops');
+    if (bad(s)) { fail(t); fail(cards); return; }
+    if (s.status !== 'ok') { tb.innerHTML = ''; cards.innerHTML = ''; t.classList.add('dash-skeleton'); cards.classList.add('dash-skeleton'); return; }
+    t.classList.remove('dash-skeleton'); cards.classList.remove('dash-skeleton'); tb.innerHTML = ''; cards.innerHTML = '';
+    adRows = s.data;
+    adRows.forEach(r => {
+      const tr = document.createElement('tr');
+      const td = (node, cls) => { const c = document.createElement('td'); if (cls) c.className = cls; if (typeof node === 'string') c.textContent = node; else c.appendChild(node); tr.appendChild(c); return c; };
+      td(r.project).style.fontWeight = '700'; td(r.kind, 'mut');
+      td(pill(r.token_status, toneMap[r.token_tone] || '--nf-grey')); td(pill(r.chance, toneMap[r.chance_tone] || '--nf-grey'));
+      td(r.cost); td(pill(r.risk, toneMap[r.risk_tone] || '--nf-grey'));
+      tb.appendChild(tr);
+
+      const c = document.createElement('article'); c.className = 'nf-rev nf-adc'; c.style.setProperty('--tc', `var(${toneMap[r.token_tone] || '--nf-grey'})`);
+      const top = document.createElement('div'); top.className = 'top';
+      const h = document.createElement('h3'); h.textContent = r.project; top.append(h, pill(r.token_status, toneMap[r.token_tone] || '--nf-grey'));
+      const kd = document.createElement('div'); kd.className = 'kd'; kd.textContent = `${r.kind} · ค่าใช้จ่าย ${r.cost} · โอกาส${r.chance}`;
+      const st = document.createElement('div'); st.className = 'st'; st.textContent = r.status;
+      const pg = document.createElement('div'); pg.className = 'pg';
+      const bar = document.createElement('div'); bar.className = 'nf-bar'; const bi = document.createElement('i'); bi.id = 'adbar-' + r.id; bi.style.background = 'var(--nf-green)'; bar.appendChild(bi);
+      const cnt = document.createElement('span'); cnt.id = 'adcnt-' + r.id; pg.append(bar, cnt);
+      const ul = document.createElement('ul');
+      tasksOf(r).forEach((task, i) => {
+        const k = r.id + '-' + i;
+        const li = document.createElement('li'); const lb = document.createElement('label');
+        const cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'ad-' + k; cb.checked = adChecked.has(k);
+        cb.addEventListener('change', () => { cb.checked ? adChecked.add(k) : adChecked.delete(k); adProgress(); });
+        const sp = document.createElement('span'); sp.textContent = task;
+        lb.append(cb, sp); li.appendChild(lb); ul.appendChild(li);
+      });
+      const wl = document.createElement('div'); wl.className = 'wl'; wl.textContent = 'ระวัง: ' + r.warn;
+      c.append(top, kd, st);
+      const ol = dash.data('official_links');
+      const off = ol.status === 'ok' ? ol.data.find(x => x.airdrop_id === r.id) : null;
+      const go = off && safeLink(off.site, 'ไปเว็บทางการ ' + hostOf(off.site) + ' ↗', 'nf-go');
+      if (go) c.appendChild(go);
+      c.append(pg, ul, wl); cards.appendChild(c);
+    });
+    adProgress();
+  }
+  const resetBtn = document.getElementById('ad-reset');
+  resetBtn.addEventListener('click', () => {
+    if (resetBtn.dataset.confirm !== '1') { resetBtn.dataset.confirm = '1'; resetBtn.textContent = 'กดอีกครั้งเพื่อยืนยัน'; setTimeout(() => { resetBtn.dataset.confirm = ''; resetBtn.textContent = 'ล้างเครื่องหมายทั้งหมด'; }, 3000); return; }
+    resetBtn.dataset.confirm = ''; resetBtn.textContent = 'ล้างเครื่องหมายทั้งหมด';
+    adChecked.clear(); document.querySelectorAll('#ad-cards input[type=checkbox]').forEach(cb => { cb.checked = false; }); adProgress();
+  });
+  function drawDeadlines() {
+    const t = document.getElementById('dl-table'), tb = t.querySelector('tbody');
+    const s = dash.data('airdrop_deadlines'), st = dash.data('deadline_status');
+    if (bad(s)) return fail(t);
+    if (s.status !== 'ok') { tb.innerHTML = ''; t.classList.add('dash-skeleton'); return; }
+    t.classList.remove('dash-skeleton'); tb.innerHTML = '';
+    const left = new Map((st.status === 'ok' ? st.data : []).map(r => [r.project, Number(r.days_left)]));
+    s.data.slice().sort((a, b) => a.key_date.localeCompare(b.key_date)).forEach(r => {
+      const tr = document.createElement('tr');
+      const d = left.get(r.project);
+      if (d !== undefined && d < 0) tr.className = 'past';
+      [[r.project, ''], [r.reward, ''], [r.who, 'mut'], [r.date_text, 'dt']].forEach(([x, cls]) => { const c = document.createElement('td'); c.className = cls; c.textContent = x; tr.appendChild(c); });
+      tr.firstChild.style.fontWeight = '700';
+      const c = document.createElement('td');
+      if (d === undefined) c.textContent = '—';
+      else if (d < 0) c.appendChild(pill('หมดเขตแล้ว', '--nf-grey'));
+      else if (d === 0) c.appendChild(pill('วันนี้', '--nf-red'));
+      else c.appendChild(pill(`อีก ${d} วัน`, d <= 7 ? '--nf-red' : '--nf-green'));
+      tr.appendChild(c); tb.appendChild(tr);
+    });
+  }
+
+  function drawCountdown() {
+    const el = document.getElementById('cd-list'); const s = dash.data('countdown');
+    if (bad(s)) return fail(el);
+    if (s.status !== 'ok') { el.innerHTML = ''; el.classList.add('dash-skeleton'); return; }
+    el.classList.remove('dash-skeleton'); el.innerHTML = '';
+    if (!s.data.length) { const e = document.createElement('div'); e.className = 'nf-empty'; e.textContent = 'ยังไม่มีวันสำคัญใน 45 วันข้างหน้า'; el.appendChild(e); return; }
+    s.data.forEach(r => {
+      const d = Number(r.days_left);
+      const it = document.createElement('div'); it.className = 'it' + (d <= 2 ? ' hot' : '');
+      const n = document.createElement('div'); n.className = 'n'; n.textContent = d === 0 ? 'วันนี้' : d;
+      n.style.color = `var(${d <= 2 ? '--nf-red' : d <= 7 ? '--nf-amber' : '--nf-fg'})`;
+      if (d) { const sm = document.createElement('small'); sm.textContent = 'วัน'; n.appendChild(sm); }
+      const tx = document.createElement('div'); tx.className = 'tx';
+      const b = document.createElement('b'); b.textContent = r.label;
+      tx.append(b, pill(r.kind, kindColor[r.kind] || '--nf-grey'), document.createTextNode(' ' + dayFmt.format(new Date(r.date + 'T00:00:00Z'))));
+      it.append(n, tx); el.appendChild(it);
+    });
+  }
+  function drawWeekly() {
+    const el = document.getElementById('wk-body'); const s = dash.data('weekly');
+    if (bad(s)) return fail(el);
+    if (s.status !== 'ok') { el.innerHTML = ''; el.classList.add('dash-skeleton'); return; }
+    el.classList.remove('dash-skeleton'); el.innerHTML = '';
+    const w = s.data.slice().sort((a, b) => b.posted.localeCompare(a.posted))[0];
+    if (!w) return;
+    document.getElementById('wk-sub').textContent = `สัปดาห์ ${w.week} · อัปเดตทุกเช้าวันอาทิตย์`;
+    [['มีอะไรใหม่', w.new, '--nf-blue'], ['ควรจับตา', w.watch, '--nf-amber'], ['ควรหลีกเลี่ยง', w.avoid, '--nf-red']].forEach(([h, t, c]) => {
+      const col = document.createElement('div'); col.className = 'col'; col.style.setProperty('--wc', `var(${c})`);
+      const b = document.createElement('b'); b.textContent = h; col.append(b, document.createTextNode(t)); el.appendChild(col);
+    });
+  }
+  const safeLink = (u, text, cls) => { if (typeof u !== 'string' || !u.startsWith('https://')) return null; const a = document.createElement('a'); a.href = u; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = text; if (cls) a.className = cls; return a; };
+  const hostOf = (u) => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return u; } };
+  function drawOfficial() {
+    const el = document.getElementById('ol-list'); const s = dash.data('official_links');
+    if (bad(s)) return fail(el);
+    if (s.status !== 'ok') { el.innerHTML = ''; el.classList.add('dash-skeleton'); return; }
+    el.classList.remove('dash-skeleton'); el.innerHTML = '';
+    s.data.forEach(r => {
+      const c = document.createElement('div'); c.className = 'ol';
+      const h = document.createElement('h3'); const nm = document.createElement('span'); nm.textContent = r.project; h.append(nm, pill(r.kind, r.kind === 'เกม' ? '--nf-blue' : r.kind === 'แอร์ดรอป' ? '--nf-teal' : '--nf-amber'));
+      c.appendChild(h);
+      const go = safeLink(r.site, 'เว็บทางการ: ' + hostOf(r.site) + ' ↗', 'nf-go'); if (go) c.appendChild(go);
+      const links = typeof r.links === 'string' ? JSON.parse(r.links) : (r.links || []);
+      if (links.length) { const sub = document.createElement('div'); sub.className = 'sub'; links.forEach(l => { const a = safeLink(l.u, '▶ ' + l.t); if (a) sub.appendChild(a); }); c.appendChild(sub); }
+      const p = document.createElement('p'); p.textContent = r.note; c.appendChild(p);
+      el.appendChild(c);
+    });
+  }
+  function drawWhales() {
+    const t = document.getElementById('wh-table'), tb = t.querySelector('tbody'); const s = dash.data('whales');
+    if (bad(s)) return fail(t);
+    if (s.status !== 'ok') { tb.innerHTML = ''; t.classList.add('dash-skeleton'); return; }
+    t.classList.remove('dash-skeleton'); tb.innerHTML = '';
+    const dirC = { buy: '--nf-green', sell: '--nf-red', neutral: '--nf-grey' };
+    const monFull = new Intl.DateTimeFormat('th-TH', { month: 'short', year: '2-digit', timeZone: 'UTC' });
+    s.data.slice().sort((a, b) => b.date.localeCompare(a.date)).forEach(r => {
+      const tr = document.createElement('tr'); tr.dataset.key = encodeURIComponent(r.asset) + ',' + encodeURIComponent(r.date);
+      const c1 = document.createElement('td'); c1.className = 'dt'; c1.textContent = r.date.length === 7 ? monFull.format(new Date(r.date + '-01T00:00:00Z')) : dayFmt.format(new Date(r.date + 'T00:00:00Z'));
+      const c2 = document.createElement('td'); c2.textContent = r.asset; c2.style.fontWeight = '700';
+      const c3 = document.createElement('td'); c3.appendChild(pill(r.signal, dirC[r.direction] || '--nf-grey'));
+      const c4 = document.createElement('td'); c4.textContent = r.detail;
+      const c5 = document.createElement('td'); c5.className = 'mut';
+      if (typeof r.url === 'string' && r.url.startsWith('https://')) { const a = document.createElement('a'); a.href = r.url; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = r.source; a.style.color = 'var(--nf-blue)'; c5.appendChild(a); } else c5.textContent = r.source;
+      tr.append(c1, c2, c3, c4, c5); tb.appendChild(tr);
+    });
+  }
+
+  let tone = 'all';
+  root.querySelectorAll('.nf-filter button').forEach(b => b.addEventListener('click', () => {
+    tone = b.dataset.tone;
+    root.querySelectorAll('.nf-filter button').forEach(x => x.classList.toggle('on', x === b));
+    drawReviews();
+  }));
+  const toneVar = { good: '--nf-green', warn: '--nf-amber', bad: '--nf-red' };
+  function drawReviews() {
+    const el = document.getElementById('rev-list');
+    const s = dash.data('reviews');
+    if (bad(s)) return fail(el);
+    if (s.status !== 'ok') { el.innerHTML = ''; el.classList.add('dash-skeleton'); return; }
+    el.classList.remove('dash-skeleton'); el.innerHTML = '';
+    s.data.map(r => ({ ...r, risk: Number(r.risk), links: typeof r.links === 'string' ? JSON.parse(r.links) : (r.links || []) }))
+      .filter(r => tone === 'all' || r.tone === tone)
+      .forEach(r => {
+        const c = document.createElement('article'); c.className = 'nf-rev'; c.style.setProperty('--tc', `var(${toneVar[r.tone] || '--nf-grey'})`);
+        const top = document.createElement('div'); top.className = 'top';
+        const h = document.createElement('h3'); h.textContent = r.project;
+        top.append(h, pill(r.verdict, toneVar[r.tone] || '--nf-grey'));
+        const kd = document.createElement('div'); kd.className = 'kd';
+        const m = document.createElement('span'); m.className = 'nf-meter';
+        const rc = r.risk >= 4 ? '--nf-red' : r.risk === 3 ? '--nf-amber' : '--nf-green';
+        for (let i = 1; i <= 5; i++) { const b = document.createElement('b'); if (i <= r.risk) b.style.background = `var(${rc})`; m.appendChild(b); }
+        kd.append(m, document.createTextNode(`ความเสี่ยง ${r.risk}/5 · ${r.kind}`));
+        const p = document.createElement('p'); p.textContent = r.review;
+        const pc = document.createElement('div'); pc.className = 'pc';
+        const y = document.createElement('div'); y.className = 'y'; const ys = document.createElement('span'); ys.textContent = r.pro; y.appendChild(ys);
+        const n = document.createElement('div'); n.className = 'n'; const ns = document.createElement('span'); ns.textContent = r.con; n.appendChild(ns);
+        pc.append(y, n);
+        const lk = document.createElement('div'); lk.className = 'lk';
+        r.links.filter(l => typeof l.u === 'string' && l.u.startsWith('https://')).forEach(l => {
+          const a = document.createElement('a'); a.href = l.u; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = l.t; lk.appendChild(a);
+        });
+        c.append(top, kd, p, pc, lk); el.appendChild(c);
+      });
+  }
+
+  function chartBox(id, src) {
+    const el = document.getElementById(id); const s = dash.data(src);
+    if (bad(s)) { fail(el); return null; }
+    if (s.status !== 'ok') { el.innerHTML = ''; el.classList.add('dash-skeleton'); return null; }
+    el.classList.remove('dash-skeleton'); el.innerHTML = ''; return { el, s };
+  }
+
+  function drawDrawdown() {
+    const b = chartBox('dd-chart', 'drawdown'); if (!b) return; const { el, s } = b;
+    const fg = C('--nf-fg'), mu = C('--nf-muted'), ln = C('--nf-line'), red = C('--nf-red');
+    const rows = s.data.map(r => ({ token: r.token, game: r.game, price: Number(r.price_usd), drop: Math.abs(Number(r.drawdown_pct)) })).sort((a, b) => b.drop - a.drop);
+    const W = Math.max(280, el.clientWidth), barH = 24, gap = 14, top = 6, H = top + rows.length * (barH + gap) + 22;
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+    const names = svg.append('g').selectAll('text').data(rows).join('text')
+      .attr('x', 0).attr('y', (d, i) => top + i * (barH + gap) + barH / 2).attr('dy', '0.35em')
+      .attr('fill', fg).attr('font-size', 12).text(d => `${d.token} · ${d.game}`);
+    let lw = 0; names.each(function () { lw = Math.max(lw, this.getComputedTextLength()); });
+    const x0 = lw + 10, x = d3.scaleLinear([0, 100], [x0, W - 56]);
+    svg.insert('g', ':first-child').selectAll('line').data([0, 25, 50, 75, 100]).join('line')
+      .attr('x1', d => x(d)).attr('x2', d => x(d)).attr('y1', top - 4).attr('y2', H - 20).attr('stroke', ln);
+    svg.append('g').selectAll('text').data([0, 50, 100]).join('text')
+      .attr('x', d => x(d)).attr('y', H - 4).attr('text-anchor', 'middle').attr('fill', mu).attr('font-size', 11).text(d => d + '%');
+    const tip = d3.select(el).append('div').attr('class', 'nf-tip').style('display', 'none');
+    const bars = svg.append('g').selectAll('rect').data(rows).join('rect')
+      .attr('x', x0).attr('y', (d, i) => top + i * (barH + gap)).attr('height', barH)
+      .attr('width', d => x(d.drop) - x0).attr('rx', 4).attr('fill', red);
+    svg.append('g').selectAll('text').data(rows).join('text')
+      .attr('x', d => x(d.drop) + 6).attr('y', (d, i) => top + i * (barH + gap) + barH / 2).attr('dy', '0.35em')
+      .attr('fill', fg).attr('font-size', 12).style('font-variant-numeric', 'tabular-nums').text(d => '−' + d.drop + '%');
+    const pf = (p) => p < 0.01 ? '$' + p.toFixed(4) : p < 1 ? '$' + p.toFixed(3) : '$' + p.toFixed(2);
+    bars.on('pointermove', function (ev, d) {
+      d3.select(this).attr('opacity', .8);
+      const [mx, my] = d3.pointer(ev, el);
+      tip.style('display', null).html('');
+      tip.append('div').attr('class', 'k').text(`${d.token} · ${d.game}`);
+      tip.append('div').text(`ร่วงจากจุดสูงสุด −${d.drop}%`);
+      tip.append('div').text(`ราคา ${pf(d.price)}`);
+      const tw = tip.node().offsetWidth;
+      tip.style('left', Math.max(0, Math.min(mx + 12, el.clientWidth - tw)) + 'px').style('top', (my + 12) + 'px');
+    }).on('pointerleave', function () { d3.select(this).attr('opacity', 1); tip.style('display', 'none'); });
+  }
+
+  function drawClosures() {
+    const b = chartBox('cl-chart', 'closures'); if (!b) return; const { el, s } = b;
+    const fg = C('--nf-fg'), mu = C('--nf-muted'), ln = C('--nf-line'), amber = C('--nf-amber'), grey = C('--nf-grey');
+    const rows = s.data.map(r => ({ period: r.period, n: Number(r.games_closed) }));
+    const W = Math.max(260, el.clientWidth), H = 200, padT = 28, padB = 28;
+    const x = d3.scaleBand(rows.map(r => r.period), [0, W]).padding(0.45);
+    const y = d3.scaleLinear([0, d3.max(rows, r => r.n) * 1.1], [H - padB, padT]);
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+    svg.append('line').attr('x1', 0).attr('x2', W).attr('y1', H - padB).attr('y2', H - padB).attr('stroke', ln);
+    const bw = Math.min(x.bandwidth(), 72), bx = d => x(d.period) + (x.bandwidth() - bw) / 2;
+    svg.append('g').selectAll('rect').data(rows).join('rect')
+      .attr('x', bx).attr('width', bw).attr('y', d => y(d.n)).attr('height', d => y(0) - y(d.n)).attr('rx', 4)
+      .attr('fill', (d, i) => i === rows.length - 1 ? amber : grey);
+    svg.append('g').selectAll('text').data(rows).join('text')
+      .attr('x', d => bx(d) + bw / 2).attr('y', d => y(d.n) - 8).attr('text-anchor', 'middle')
+      .attr('fill', fg).attr('font-size', 16).attr('font-weight', 700).text(d => d.n + ' เกม');
+    svg.append('g').selectAll('text').data(rows).join('text')
+      .attr('x', d => x(d.period) + x.bandwidth() / 2).attr('y', H - 8).attr('text-anchor', 'middle')
+      .attr('fill', mu).attr('font-size', 12).text(d => d.period);
+  }
+
+  function fillMarks() {
+    root.querySelectorAll('.nf-kpis [data-source]').forEach(n => {
+      const s = dash.data(n.dataset.source);
+      let v;
+      if (s.status === 'ok' && s.data.length) {
+        if (n.dataset.where) { const [k, val] = n.dataset.where.split('='); const r = s.data.find(r => String(r[k]) === decodeURIComponent(val)); v = r && r[n.dataset.field]; }
+        else v = s.data[0][n.dataset.field];
+      }
+      if (v !== undefined) { n.classList.remove('dash-skeleton'); n.textContent = String(v); }
+      else { n.textContent = '—'; n.classList.toggle('dash-skeleton', !bad(s)); }
+    });
+  }
+
+  let first = true;
+  dash.onData(() => {
+    fillMarks(); drawCountdown(); drawWeekly(); drawOfficial(); drawWhales(); drawWatch(); drawPrices(); drawReviews(); drawScam(); drawAirdrops(); drawDeadlines(); drawRisk(); drawDrawdown(); drawClosures();
+    if (first && dash.data('timeline').status === 'ok') {
+      first = false;
+      const named = location.hash.slice(1);
+      if (named && document.getElementById(named)) go(named);
+    }
+  });
+})();
+</script>
