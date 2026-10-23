@@ -139,8 +139,16 @@
     const a = agents.find(x => x.id === openId);
     shell.classList.toggle('open', !!a);
     if (!a) { box.replaceChildren(h('div', 'empty', T('เลือกเอเจนต์ทางซ้ายเพื่อดูแชท', 'Pick an agent on the left to open its chat'))); return; }
+    const back = h('a', 'back', '‹'); back.href = '#';
+    const [head, body] = chatView(a, back);
+    box.replaceChildren(head, body);
+    body.scrollTop = body.scrollHeight;
+  }
+
+  // The conversation with one agent: a header and the message list. `back` is the element that leads back to the list.
+  function chatView(a, back) {
     const head = h('div', 'chead');
-    const back = h('a', 'back', '‹'); back.href = '#'; back.title = T('กลับ', 'Back');
+    back.title = T('กลับ', 'Back');
     const t = h('div', 'ct'); t.append(data('b', '', (a.emoji ? a.emoji + ' ' : '') + T('เอเจนต์ ', 'Agent ') + a.name), data('span', 'meta', [a.type, a.schedule].filter(Boolean).join(' · ')));
     head.append(back, t, badge(a));
     const body = h('div', 'cbody');
@@ -182,8 +190,7 @@
                                btn(T('ข้าม', 'Skip'), 'ghost', () => { setSt(a, s, { done_at: new Date().toISOString(), skipped: true }); rerender(); })));
     }
     if (!cur) body.append(bot(a, h('p', '', a.status === 'paused' ? T('ตอนนี้หยุดไว้ก่อน ถ้าสถานการณ์เปลี่ยนผมจะทักมาครับ', 'Paused for now. I will message you if things change.') : T('ตอนนี้ไม่มีงานรอคุณ มีข่าวหรือขั้นใหม่เมื่อไรผมจะทักมาครับ', 'Nothing waiting for you. I will message you when there is news or a new step.'))));
-    box.replaceChildren(head, body);
-    body.scrollTop = body.scrollHeight;
+    return [head, body];
   }
   const dueText = due => { const d = daysTo(due); return d < 0 ? T('เลยกำหนดแล้ว', 'Past its date') : d === 0 ? T('⏰ วันนี้วันสุดท้าย', '⏰ Today is the last day') : T('⏰ เหลือ ' + d + ' วัน', '⏰ ' + d + ' days left'); };
   const replies = (...b) => { const r = h('div', 'replies'); r.append(...b); return r; };
@@ -224,7 +231,93 @@
     body.append(replies(...rs));
   }
 
-  function rerender() { renderList(); renderChat(); }
+  function rerender() {
+    if (document.getElementById('ag-list')) { renderList(); renderChat(); }
+    renderPop();
+  }
+
+  // ---- floating chat (every page except the agents page): a round button bottom-right that opens the agents in a popup ----
+  const ICON = '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13v-1a8 8 0 0 1 16 0v1"/><rect x="3" y="13" width="4" height="6" rx="1.5"/><rect x="17" y="13" width="4" height="6" rx="1.5"/><path d="M19 19c0 1.5-1.5 2.5-4 2.5h-2"/></svg>';
+  const POP_KEY = 'crypto-radar:agents-pop:v1';
+  let fab = null, pop = null, popView = 'home', popAgent = null, popFilter = '', popQuery = '';
+  const waiting = a => !!nextStep(a);
+  const needsSign = a => { const s = nextStep(a); return !!s && s.kind === 'sign'; };
+  function initPop() {
+    if (document.getElementById('ag-list') || fab) return;
+    fab = h('button', 'agfab'); fab.type = 'button'; fab.innerHTML = ICON + '<span class="badge" hidden></span>';
+    fab.title = T('คุยกับเอเจนต์', 'Chat with agents'); fab.setAttribute('aria-label', fab.title);
+    pop = h('div', 'agpop agc'); pop.hidden = true; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', fab.title);
+    fab.onclick = () => { pop.hidden = !pop.hidden; if (!pop.hidden) { popView = 'home'; popFilter = ''; renderPop(); } };
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && pop && !pop.hidden) pop.hidden = true; });
+    document.body.append(pop, fab);
+    renderPop();
+  }
+  function renderPop() {
+    if (!fab) return;
+    const n = agents.filter(waiting).length, b = fab.querySelector('.badge');
+    b.hidden = !n; b.textContent = n > 9 ? '9+' : String(n);
+    if (pop.hidden) return;
+    const a = popView === 'chat' && agents.find(x => x.id === popAgent);
+    if (a) {
+      const back = h('button', 'back', '‹'); back.type = 'button'; back.onclick = () => { popView = 'home'; readyStep = null; lastCheck = null; renderPop(); };
+      const [head, body] = chatView(a, back);
+      const close = h('button', 'x', '×'); close.type = 'button'; close.title = T('ปิด', 'Close'); close.onclick = () => { pop.hidden = true; };
+      head.append(close);
+      pop.replaceChildren(head, body);
+      body.scrollTop = body.scrollHeight;
+      return;
+    }
+    const top = h('div', 'pophead');
+    const close = h('button', 'x', '×'); close.type = 'button'; close.title = T('ปิด', 'Close'); close.onclick = () => { pop.hidden = true; };
+    top.append(h('span', 'hi', T('สวัสดีครับ 👋', 'Hello 👋')), h('b', '', T('คุยกับเอเจนต์ของคุณ', 'Chat with your agents')), close);
+    const body = h('div', 'popbody');
+    // Ask once whether to pop device notifications.
+    let dismissed = false; try { dismissed = localStorage.getItem(POP_KEY) === 'no-notify'; } catch (e) {}
+    if ('Notification' in window && Notification.permission === 'default' && !dismissed && window.CRAlerts) {
+      const ask = h('div', 'ask');
+      ask.append(h('span', '', T('🔔 ให้เด้งแจ้งเตือนบนหน้าจอเมื่อเอเจนต์รอคุณไหม', '🔔 Show a notification on screen when an agent is waiting for you?')));
+      ask.append(btn(T('เปิด', 'Turn on'), 'pri', async () => { await window.CRAlerts.enableNotifications(); renderPop(); }),
+        btn(T('ไม่ตอนนี้', 'Not now'), 'ghost', () => { try { localStorage.setItem(POP_KEY, 'no-notify'); } catch (e) {} renderPop(); }));
+      body.append(ask);
+    }
+    const tiles = h('div', 'tiles');
+    const tile = (icon, title, sub, on, fn) => { const t = h('button', 'tile' + (on ? ' on' : '')); t.type = 'button'; t.append(h('span', 'ti', icon), h('b', '', title), h('span', 'meta', sub)); t.onclick = fn; return t; };
+    const signN = agents.filter(needsSign).length;
+    const safety = agents.find(x => x.id === 'safety');
+    tiles.append(
+      tile('🖊️', T('รอคุณเซ็น', 'To sign'), T(signN + ' เอเจนต์', signN + ' agents'), popFilter === 'sign', () => { popFilter = popFilter === 'sign' ? '' : 'sign'; renderPop(); }),
+      tile('🤖', T('เอเจนต์ทั้งหมด', 'All agents'), T(agents.length + ' ตัว', agents.length + ' agents'), !popFilter, () => { popFilter = ''; renderPop(); }),
+      tile('🛡️', T('ความปลอดภัย', 'Safety'), T('เช็กกระเป๋า', 'Wallet check'), false, () => { if (safety) { popView = 'chat'; popAgent = safety.id; renderPop(); } }));
+    const search = h('input', 'search'); search.type = 'search'; search.placeholder = T('ค้นหาเอเจนต์หรือขั้นตอน', 'Search agents or steps'); search.value = popQuery;
+    search.oninput = () => { popQuery = search.value; drawRows(); };
+    const rows = h('div', 'rows');
+    function drawRows() {
+      const q = popQuery.trim().toLowerCase();
+      const match = a => !q || [a.name, a.type, a.status_text, ...(a.steps || []).map(s => s.title)].join(' ').toLowerCase().includes(q);
+      const list = agents.filter(match).filter(a => popFilter !== 'sign' || needsSign(a)).sort((x, y) => order(x) - order(y));
+      rows.replaceChildren();
+      const sec = (title, items) => {
+        if (!items.length) return;
+        rows.append(h('div', 'sec', title));
+        for (const a of items) {
+          const r = h('button', 'row'); r.type = 'button';
+          const s = nextStep(a), mid = h('span', 'mid');
+          mid.append(data('b', '', a.name), data('span', 'last', s ? s.title : a.status_text || ''));
+          r.append(data('span', 'av', a.emoji || '🤖'), mid, badge(a));
+          r.onclick = () => { popView = 'chat'; popAgent = a.id; readyStep = null; lastCheck = null; renderPop(); };
+          rows.append(r);
+        }
+      };
+      sec(T('รอคุณ', 'Waiting for you'), list.filter(waiting));
+      sec(T('เอเจนต์อื่น', 'Other agents'), list.filter(a => !waiting(a)));
+      if (!rows.children.length) rows.append(h('p', 'meta', T('ไม่พบเอเจนต์', 'No agents found')));
+    }
+    drawRows();
+    const more = h('a', 'more', T('เปิดหน้าเอเจนต์แบบเต็ม →', 'Open the full agents page →')); more.href = 'agents.html';
+    body.append(tiles, search, rows, more);
+    pop.replaceChildren(top, body);
+  }
+
 
   function initPage() {
     const inp = document.getElementById('farm'), msg = document.getElementById('farm-msg');
@@ -246,11 +339,12 @@
   }
 
   window.CRAgents = { nextStep, isOpen };
-  window.addEventListener('storage', e => { if (e.key === KEY) { state = load(); if (document.getElementById('ag-list')) rerender(); } });
+  window.addEventListener('storage', e => { if (e.key === KEY) { state = load(); rerender(); } });
 
   fetchAgents().then(list => {
     agents = list;
     if (document.getElementById('ag-list')) initPage();
+    initPop();
     setTimeout(() => checkDue(agents), 2500);
   }).catch(() => {
     const g = document.getElementById('ag-list');
