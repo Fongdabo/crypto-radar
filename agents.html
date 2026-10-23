@@ -20,51 +20,16 @@
 .rule { border-left: 3px solid var(--teal); background: var(--panel2); padding: 8px 12px; border-radius: 8px; margin: 0 0 10px; font-size: 13px; }
 .farm { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; font-size: 14px; }
 .farm input { flex: 1 1 260px; min-width: 0; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; color: var(--fg); font: inherit; font-size: 14px; padding: 7px 10px; }
-.btn { border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; background: var(--panel2); color: var(--fg); font: inherit; font-size: 14px; cursor: pointer; }
-.btn.pri { background: var(--teal); color: var(--on-accent); border-color: var(--teal); font-weight: 600; }
-.btn.warn { background: #f59e0b; color: #1f1300; border-color: #f59e0b; font-weight: 600; }
-.btn.ghost { background: none; }
-.btn:disabled { opacity: .6; cursor: wait; }
-.meta { color: var(--muted); font-size: 13px; }
-.pill { font-size: 12px; border-radius: 999px; padding: 2px 8px; background: var(--panel2); color: var(--muted); white-space: nowrap; }
-.pill.sign { background: #3b2a06; color: #fbbf24; }
-.pill.ok { background: var(--accent-bg); color: var(--teal); }
-.pill.stop { background: #2a1416; color: #f87171; }
 /* PM-style chat: agents on the left, the open conversation on the right; one pane at a time on a phone. */
 .shell { display: grid; grid-template-columns: 320px 1fr; height: calc(100vh - 150px); min-height: 480px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
 .alist { border-right: 1px solid var(--line); overflow-y: auto; }
-.row { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--line); color: var(--fg); text-decoration: none; }
-.row:hover { background: var(--panel2); }
-.row.on { background: var(--accent-bg); }
-.av { flex: none; width: 36px; height: 36px; border-radius: 50%; background: var(--panel2); display: grid; place-items: center; font-size: 18px; }
-.mid { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.mid .last { color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chat { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .chat .empty { margin: auto; color: var(--muted); }
-.chead { display: flex; gap: 10px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--line); }
-.chead .ct { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.back { display: none; color: var(--fg); text-decoration: none; font-size: 26px; line-height: 1; padding: 0 6px 0 0; }
-.cbody { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
-.msg { display: flex; gap: 8px; align-items: flex-end; max-width: 760px; }
-.msg.me { align-self: flex-end; justify-content: flex-end; }
-.bub { background: var(--panel2); border: 1px solid var(--line); border-radius: 14px 14px 14px 4px; padding: 9px 12px; font-size: 14px; min-width: 0; }
-.msg.me .bub { background: var(--teal); color: var(--on-accent); border-color: var(--teal); border-radius: 14px 14px 4px 14px; }
-.bub p { margin: 4px 0; }
-.bub ol, .bub ul { margin: 6px 0; padding-left: 20px; }
-.bub .tm { display: block; font-size: 11px; opacity: .75; text-align: right; }
-.bub a { color: var(--blue); }
-.links { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
-.links a { background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; font-size: 13px; text-decoration: none; }
-.danger { border-left: 3px solid #f87171; background: var(--panel); padding: 6px 10px; border-radius: 8px; margin: 6px 0; }
-.facts { border: 1px solid #f59e0b; border-radius: 10px; padding: 8px 10px; margin-top: 6px; }
-.chk { display: block; margin: 4px 0; }
-.no { color: #f87171; margin-top: 6px; }
-.replies { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
 @media (max-width: 759px) {
   .shell { grid-template-columns: 1fr; height: calc(100vh - 120px); }
   .shell.open .alist { display: none; }
   .shell:not(.open) .chat { display: none; }
-  .back { display: block; }
+  .agc .back { display: block; }
   .rule, .ag .lead { display: none; }
 }
 </style>
@@ -81,7 +46,7 @@
   </nav>
 </header>
 
-<main class="ag">
+<main class="ag agc">
   <h1>เอเจนต์ทำกิจกรรมแทน</h1>
   <p class="lead">เอเจนต์ 1 ตัวต่อ 1 กิจกรรม หาเงื่อนไข ตรวจลิงก์ เรียงขั้นตอน และทักคุณเมื่อถึงคิว</p>
   <div class="rule"><b>กฎ:</b> เอเจนต์ไม่ถือกุญแจกระเป๋าและไม่เซ็นแทนคุณ ขั้นที่ต้องเซ็นจะมีกรอบสีส้ม บอกว่าหน้าต่าง MetaMask ควรเป็นแบบไหน กด "ฉันพร้อมเซ็น" แล้วทำตาม เซ็นเสร็จเอเจนต์จะตรวจบนเชนให้</div>
