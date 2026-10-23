@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>คู่มือ · เรดาร์คริปโต</title>
+<meta name="theme-color" content="#0b1016">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="css/app.css">
+<style>
+.guide { max-width: 820px; margin: 0 auto; padding: 16px 16px 8px; }
+.guide h1 { font-size: 22px; margin: 8px 0 4px; }
+.guide .lead { color: var(--muted); margin: 0 0 16px; }
+.toc { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.toc a { color: var(--fg); text-decoration: none; background: var(--panel2); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; font-size: 13px; }
+details { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 10px; scroll-margin-top: 70px; }
+summary { cursor: pointer; padding: 14px 16px; font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; color: var(--muted); font-weight: 400; }
+details[open] summary::after { content: "−"; }
+.body { padding: 0 16px 14px; }
+.body h3 { font-size: 15px; margin: 14px 0 4px; color: var(--teal); }
+.body ol, .body ul { margin: 6px 0; padding-left: 22px; }
+.body li { margin: 4px 0; }
+.body p { margin: 6px 0; }
+.danger { border-left: 3px solid #f87171; background: var(--panel2); padding: 10px 12px; border-radius: 8px; margin: 10px 0; }
+.tip { border-left: 3px solid var(--teal); background: var(--panel2); padding: 10px 12px; border-radius: 8px; margin: 10px 0; }
+.body a { color: var(--blue); }
+table.sec { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.sec td { padding: 7px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.sec td:first-child { white-space: nowrap; font-weight: 600; padding-right: 12px; }
+</style>
+</head>
+<body>
+<header class="app-bar">
+  <a class="brand" href="./"><img src="icons/icon-192.png" alt=""><span>เรดาร์คริปโต</span></a>
+  <nav class="tabs">
+    <a href="./">แดชบอร์ด</a>
+    <a href="portfolio.html">พอร์ตของฉัน</a>
+    <a href="guide.html" class="on">คู่มือ</a>
+  </nav>
+  <span class="updated" id="updated"></span>
+  <button class="refresh" id="refresh" type="button" title="เช็กเวอร์ชันใหม่และดึงข้อมูลล่าสุด">↻ อัปเดต</button>
+  <button class="install" id="install" hidden>ติดตั้งแอป</button>
+</header>
+
+<div class="guide">
+  <h1>คู่มือการใช้งาน</h1>
+  <p class="lead">อ่านเฉพาะหัวข้อที่ต้องการได้เลย กดที่หัวข้อเพื่อเปิดอ่าน</p>
+
+  <div class="danger"><b>กฎข้อเดียวที่ห้ามลืม:</b> ห้ามบอก seed phrase (คำกู้กระเป๋า 12/24 คำ) หรือ private key กับใครหรือกรอกลงเว็บไหนเด็ดขาด แอปนี้ไม่เคยขอ ใครขอคือมิจฉาชีพ 100%</div>
+
+  <nav class="toc">
+    <a href="#install">ติดตั้งแอป</a>
+    <a href="#update">ปุ่มอัปเดต</a>
+    <a href="#dashboard">อ่านแดชบอร์ด</a>
+    <a href="#portfolio">พอร์ตของฉัน</a>
+    <a href="#wallet">ใส่ที่อยู่กระเป๋า</a>
+    <a href="#backup">สำรองข้อมูล</a>
+    <a href="#buy">ซื้อเหรียญและโอนเข้ากระเป๋า</a>
+    <a href="#airdrop">กระเป๋าแยกสำหรับแอร์ดรอป</a>
+    <a href="#safety">ตัดการเชื่อมต่อเว็บ</a>
+  </nav>
+
+  <details id="install">
+    <summary>1. ติดตั้งแอปลงคอมและมือถือ</summary>
+    <div class="body">
+      <h3>คอม (Chrome หรือ Edge)</h3>
+      <ol>
+        <li>เปิด <b>fongdabo.github.io/crypto-radar</b></li>
+        <li>กดปุ่ม <b>ติดตั้งแอป</b> มุมขวาบน (หรือไอคอนจอคอมที่มีลูกศรในช่องที่อยู่เว็บ)</li>
+        <li>กด <b>ติดตั้ง</b> แอปจะมีไอคอนบนเดสก์ท็อปและเมนู Start</li>
+      </ol>
+      <h3>Android (Chrome)</h3>
+      <ol>
+        <li>เปิดลิงก์ใน Chrome</li>
+        <li>กด <b>⋮</b> มุมขวาบน แล้วเลือก <b>ติดตั้งแอป</b> หรือ <b>เพิ่มลงในหน้าจอหลัก</b></li>
+      </ol>
+      <h3>iPhone / iPad (ต้องใช้ Safari)</h3>
+      <ol>
+        <li>เปิดลิงก์ใน <b>Safari</b></li>
+        <li>กดปุ่ม <b>แชร์</b> (สี่เหลี่ยมมีลูกศรชี้ขึ้น) ด้านล่าง</li>
+        <li>เลื่อนลงแล้วกด <b>เพิ่มไปยังหน้าจอโฮม</b> แล้วกด <b>เพิ่ม</b></li>
+      </ol>
+      <div class="tip">ติดตั้งแล้วเปิดดูได้แม้ไม่มีเน็ต (จะแสดงข้อมูลล่าสุดที่เคยโหลดไว้)</div>
+    </div>
+  </details>
+
+  <details id="update">
+    <summary>2. ปุ่มอัปเดต ↻</summary>
+    <div class="body">
+      <p>ข้อมูลในแอปอัปเดตเองทุกเช้าประมาณ <b>07:17 น.</b> และแอปจะดึงเวอร์ชันใหม่เองทุกครั้งที่เปิด</p>
+      <p>ถ้าอยากได้ข้อมูลล่าสุดทันที กด <b>↻ อัปเดต</b> ที่แถบด้านบน แอปจะเช็กเวอร์ชันใหม่ ดึงข้อมูลล่าสุด และอ่านยอดกระเป๋าใหม่</p>
+      <p>ถ้ามีแถบ <b>"มีเวอร์ชันใหม่ กดอัปเดต"</b> ขึ้นมาด้านล่าง กดได้เลย</p>
+      <p>เวลาข้อมูลล่าสุดและเลขเวอร์ชันแอปดูได้ที่มุมขวาบน (บนคอม)</p>
+    </div>
+  </details>
+
+  <details id="dashboard">
+    <summary>3. อ่านแดชบอร์ดแต่ละส่วน</summary>
+    <div class="body">
+      <p>บนคอมกดเมนูด้านซ้าย บนมือถือเลื่อนแถบเมนูด้านบนไปทางซ้าย-ขวา</p>
+      <table class="sec">
+        <tr><td>ภาพรวม</td><td>ตัวเลขสำคัญและสรุปวันนี้ อ่านอันนี้ก่อนทุกเช้า</td></tr>
+        <tr><td>นับถอยหลัง</td><td>วันสำคัญ 45 วันข้างหน้า กล่องสีแดง = เหลือไม่เกิน 2 วัน</td></tr>
+        <tr><td>สรุปรายสัปดาห์</td><td>อัปเดตทุกเช้าวันอาทิตย์</td></tr>
+        <tr><td>ต้องดูช่วงนี้</td><td>เกมเปิดใหม่ แอร์ดรอป ปลดล็อกเหรียญ เรียงตามวันที่</td></tr>
+        <tr><td>ราคาล่าสุด</td><td>ราคาเหรียญเกม การเปลี่ยนแปลง 24 ชม. และมูลค่าตลาด</td></tr>
+        <tr><td>รีวิวและตัวอย่าง</td><td>สรุปสั้นแต่ละโปรเจกต์ พร้อมลิงก์ดูตัวอย่างเกม</td></tr>
+        <tr><td>เช็กเหรียญเสี่ยง</td><td>เช็กสัญญาณสแกมก่อนซื้อเหรียญหรือเชื่อมกระเป๋ากับเว็บใหม่</td></tr>
+        <tr><td>แอร์ดรอปฟรี</td><td>โปรเจกต์ที่อาจแจกเหรียญฟรีจากการใช้งาน ไม่ต้องลงเงินซื้อ</td></tr>
+        <tr><td>เช็กลิสต์งาน</td><td>สิ่งที่ต้องทำในแต่ละโปรเจกต์เพื่อลุ้นแอร์ดรอป</td></tr>
+        <tr><td>ใกล้หมดเขต</td><td>แอร์ดรอปที่เคลมได้แล้วแต่ใกล้หมดเวลา รีบเคลม</td></tr>
+        <tr><td>ลิงก์ทางการ</td><td>เว็บจริงของแต่ละโปรเจกต์ ใช้ลิงก์จากตรงนี้เท่านั้น อย่ากดลิงก์จากแชตหรือโฆษณา</td></tr>
+        <tr><td>กระเป๋าวาฬ</td><td>ความเคลื่อนไหวของรายใหญ่และกองทุน</td></tr>
+        <tr><td>ระดับความเสี่ยง</td><td>1 ขีด = เสี่ยงน้อย, 5 ขีด = เสี่ยงมาก ระวังเป็นพิเศษตั้งแต่ 4 ขีด</td></tr>
+        <tr><td>ราคาร่วง / เกมปิดตัว</td><td>เตือนให้รู้ว่าเหรียญเกมส่วนใหญ่ร่วงหนัก อย่าลงเงินเกินที่เสียได้</td></tr>
+      </table>
+    </div>
+  </details>
+
+  <details id="portfolio">
+    <summary>4. พอร์ตของฉัน (กรอกเหรียญเอง)</summary>
+    <div class="body">
+      <ol>
+        <li>ไปที่แท็บ <b>พอร์ตของฉัน</b></li>
+        <li>ในกล่อง <b>เพิ่มเหรียญที่ถือ</b> เลือกเหรียญ (ถ้าไม่มีในรายการ เลือก <b>เหรียญอื่น</b> แล้วพิมพ์ชื่อเอง)</li>
+        <li>ใส่ <b>จำนวน</b> และ <b>ราคาที่ซื้อ</b> (ดอลลาร์ต่อเหรียญ) แล้วกด <b>เพิ่ม</b></li>
+        <li>แอปจะคิดกำไร/ขาดทุนจากราคาล่าสุดให้เอง กด <b>ลบ</b> เพื่อเอาออก</li>
+      </ol>
+      <div class="tip">ข้อมูลพอร์ตเก็บไว้ <b>ในเครื่องนี้เท่านั้น</b> ไม่ส่งขึ้นเซิร์ฟเวอร์ คนอื่นมองไม่เห็น แต่ถ้าล้างข้อมูลเบราว์เซอร์หรือเปลี่ยนเครื่อง ข้อมูลจะหาย ให้สำรองข้อมูลไว้ (ข้อ 6)</div>
+    </div>
+  </details>
+
+  <details id="wallet">
+    <summary>5. ใส่ที่อยู่กระเป๋าให้แอปอ่านยอดเอง</summary>
+    <div class="body">
+      <p>แอปอ่านยอดแบบ <b>ดูอย่างเดียว</b> ใช้แค่ <b>ที่อยู่กระเป๋า</b> (เหมือนเลขบัญชีที่ให้คนอื่นโอนเข้า) ไม่ต้องเชื่อมกระเป๋า ไม่ต้องกดเซ็นอะไร และขยับเงินในกระเป๋าไม่ได้</p>
+      <h3>MetaMask (ขึ้นต้นด้วย 0x)</h3>
+      <ol>
+        <li>เปิด MetaMask แล้วกดที่ชื่อบัญชีด้านบน (หรือไอคอนคัดลอก) เพื่อคัดลอกที่อยู่</li>
+        <li>วางในช่อง <b>ที่อยู่กระเป๋า</b> ในแอป แล้วกด <b>เพิ่มกระเป๋า</b></li>
+        <li>แอปจะอ่าน Ethereum, Base, Polygon, Arbitrum และ Optimism ให้พร้อมกัน</li>
+      </ol>
+      <h3>Phantom หรือกระเป๋า Solana</h3>
+      <ol>
+        <li>ใน Phantom กดชื่อบัญชีแล้วเลือกคัดลอกที่อยู่ <b>Solana</b> (ยาว 32–44 ตัว ไม่มี 0x)</li>
+        <li>วางในช่องเดียวกันแล้วกด <b>เพิ่มกระเป๋า</b></li>
+      </ol>
+      <ul>
+        <li>ใส่ได้สูงสุด 5 กระเป๋า</li>
+        <li>เหรียญที่มี <b>⚠</b> คือเหรียญที่ยังไม่ได้รับการยืนยันหรือซื้อขายน้อย มักเป็นเหรียญสแกมที่ถูกส่งเข้ากระเป๋าเอง <b>ห้ามกด ห้ามแลก ห้ามเข้าเว็บที่ชื่อเหรียญบอก</b> แอปไม่นับเหรียญพวกนี้ในยอดรวม</li>
+        <li>ถ้าขึ้นว่า "อ่านไม่สำเร็จ" ให้รอสักครู่แล้วกด <b>อ่านยอดใหม่</b></li>
+      </ul>
+      <div class="danger">ถ้าเผลอวาง seed phrase หรือ private key แอปจะไม่บันทึกและจะเตือนทันที ถ้าเคยให้ใครเห็นคำพวกนี้ ให้สร้างกระเป๋าใหม่แล้วย้ายเงินออกทันที</div>
+    </div>
+  </details>
+
+  <details id="backup">
+    <summary>6. สำรองข้อมูลและย้ายไปเครื่องใหม่</summary>
+    <div class="body">
+      <ol>
+        <li>ในแท็บพอร์ต เลื่อนลงไปที่กล่อง <b>สำรองและย้ายข้อมูล</b></li>
+        <li>กด <b>สำรองข้อมูล</b> จะได้ไฟล์ชื่อ crypto-radar-portfolio-วันที่.json</li>
+        <li>ส่งไฟล์ไปเครื่องใหม่ (เช่น ส่งเข้า LINE หรืออีเมลตัวเอง)</li>
+        <li>ที่เครื่องใหม่ เปิดแท็บพอร์ตแล้วกด <b>นำเข้าไฟล์สำรอง</b> เลือกไฟล์นั้น</li>
+      </ol>
+      <div class="tip">ไฟล์สำรองมีแค่รายการเหรียญและที่อยู่กระเป๋า ไม่มีรหัสหรือกุญแจกระเป๋า แต่ก็ไม่ควรแชร์ให้คนอื่น เพราะจะบอกได้ว่าคุณถือเหรียญอะไรเท่าไหร่</div>
+    </div>
+  </details>
+
+  <details id="buy">
+    <summary>7. ซื้อเหรียญและโอนเข้ากระเป๋า MetaMask</summary>
+    <div class="body">
+      <h3>ซื้อที่กระดานเทรดไทย</h3>
+      <p>ใช้กระดานที่ได้รับอนุญาตจาก ก.ล.ต. เช่น <b>Bitkub</b>, <b>Binance TH</b>, <b>Bitazza</b> สมัครและยืนยันตัวตน (KYC) โอนเงินบาทเข้า แล้วซื้อเหรียญที่ต้องการ</p>
+      <h3>ถอนเข้ากระเป๋าตัวเอง</h3>
+      <ol>
+        <li>ในกระดานเทรด เลือกเหรียญแล้วกด <b>ถอน</b></li>
+        <li>คัดลอกที่อยู่จาก MetaMask มาวาง <b>อย่าพิมพ์เอง</b> และเช็กตัวอักษร 4 ตัวแรกกับ 4 ตัวท้ายให้ตรงทุกครั้ง</li>
+        <li><b>เลือกเครือข่าย (Network) ให้ตรงกับกระเป๋า</b> เช่น จะใช้บน Base ต้องเลือก Base, จะใช้บน Ethereum ต้องเลือก ERC20/Ethereum ถ้าเลือกผิด เงินอาจหายและเอาคืนไม่ได้</li>
+        <li>ครั้งแรกให้ <b>โอนจำนวนน้อยก่อน</b> เพื่อทดสอบ เมื่อเข้าแล้วค่อยโอนส่วนที่เหลือ</li>
+        <li>ใน MetaMask สลับไปเครือข่ายเดียวกับที่ถอนมา ถึงจะเห็นยอด</li>
+      </ol>
+      <div class="tip">ค่าธรรมเนียมถอนแต่ละเครือข่ายไม่เท่ากัน Ethereum มักแพงสุด ส่วน Base, Arbitrum, Polygon ถูกกว่ามาก ดูค่าธรรมเนียมก่อนกดยืนยัน</div>
+    </div>
+  </details>
+
+  <details id="airdrop">
+    <summary>8. ใช้กระเป๋าแยกสำหรับลุ้นแอร์ดรอป</summary>
+    <div class="body">
+      <p>เวลาไปลองเกมหรือเว็บใหม่เพื่อลุ้นแอร์ดรอป ให้ใช้ <b>กระเป๋าใบที่ 2</b> ที่ใส่เงินไว้นิดเดียว แยกจากกระเป๋าเก็บเงินหลัก ถ้าเว็บนั้นเป็นสแกม จะเสียแค่เงินในกระเป๋าใบเล็ก</p>
+      <ol>
+        <li>ใน MetaMask กดชื่อบัญชีด้านบน แล้วเลือก <b>เพิ่มบัญชี</b> ตั้งชื่อเช่น "แอร์ดรอป"</li>
+        <li>โอนเงินเข้าแค่พอจ่ายค่าธรรมเนียม</li>
+        <li>เชื่อมเว็บใหม่ด้วยบัญชีนี้เท่านั้น กระเป๋าหลักไม่ต้องเชื่อมกับเว็บไหนเลย</li>
+      </ol>
+    </div>
+  </details>
+
+  <details id="safety">
+    <summary>9. ตัดการเชื่อมต่อเว็บและยกเลิกสิทธิ์ (revoke.cash)</summary>
+    <div class="body">
+      <h3>ตัดการเชื่อมต่อเว็บใน MetaMask</h3>
+      <ol>
+        <li>เปิด MetaMask แล้วกด <b>⋮</b> มุมขวาบน</li>
+        <li>เลือก <b>All Permissions</b> หรือ <b>เว็บไซต์ที่เชื่อมต่อ</b></li>
+        <li>เลือกเว็บที่ไม่ใช้หรือไม่แน่ใจ แล้วกด <b>ตัดการเชื่อมต่อ (Disconnect)</b></li>
+      </ol>
+      <h3>ยกเลิกสิทธิ์ใช้เหรียญด้วย revoke.cash</h3>
+      <p>การตัดการเชื่อมต่อแค่ทำให้เว็บไม่เห็นกระเป๋า แต่ถ้าเคยกด <b>Approve</b> ให้เว็บใช้เหรียญ สิทธิ์นั้นยังอยู่ ต้องยกเลิกเพิ่ม</p>
+      <ol>
+        <li>พิมพ์ <b>revoke.cash</b> เองในช่องที่อยู่เว็บ (อย่ากดลิงก์จากแชตหรือโฆษณา เพราะมีเว็บปลอม)</li>
+        <li>วางที่อยู่กระเป๋าเพื่อดูสิทธิ์ทั้งหมด (ดูได้โดยไม่ต้องเชื่อมกระเป๋า)</li>
+        <li>ถ้าเจอเว็บที่ไม่รู้จักหรือได้สิทธิ์ "Unlimited" ให้เชื่อมกระเป๋าแล้วกด <b>Revoke</b> ทีละรายการ (เสียค่าธรรมเนียมเล็กน้อย)</li>
+      </ol>
+      <div class="danger">สัญญาณสแกมที่เจอบ่อย: เว็บให้กด "Claim" ของฟรีแล้วขอ Approve หรือเซ็นข้อความที่อ่านไม่รู้เรื่อง, คนทักมาช่วยแก้ปัญหากระเป๋า, เหรียญแปลกโผล่ในกระเป๋าเอง ถ้าไม่แน่ใจ อย่ากด</div>
+    </div>
+  </details>
+
+  <p class="lead" style="margin-top:16px">มีคำถามหรืออยากให้เพิ่มหัวข้อ บอกในแชตได้เลย</p>
+</div>
+
+<footer class="app-foot">ข้อมูลเพื่อการศึกษา ไม่ใช่คำแนะนำการลงทุน · แอปนี้ไม่รับฝากเงินและไม่เชื่อมกระเป๋า</footer>
+
+<script src="js/app.js"></script>
+<script>
+// Open the section named in the link (guide.html#wallet) or tapped in the contents.
+(function () {
+  const open = () => { const d = document.getElementById(location.hash.slice(1)); if (d && d.tagName === 'DETAILS') { d.open = true; d.scrollIntoView({ block: 'start' }); } };
+  window.addEventListener('hashchange', open); open();
+})();
+</script>
+</body>
+</html>

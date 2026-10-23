@@ -45,3 +45,4 @@ body {
 .new-version { display: flex; align-items: center; gap: 10px; }
 .new-version button { border: 0; border-radius: 6px; padding: 5px 10px; background: var(--teal); color: #04201c; font: inherit; font-weight: 600; cursor: pointer; }
 @media (max-width: 520px) { .app-bar .refresh { margin-left: auto; } }
+@media (max-width: 430px) { .app-bar { gap: 8px; padding: 10px 12px; } .tabs a { padding: 6px 9px; font-size: 13px; } .refresh { padding: 6px 9px; font-size: 13px; } }
