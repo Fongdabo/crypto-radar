@@ -522,6 +522,41 @@
   $('t-notify').onclick = async () => { await window.CRAlerts.enableNotifications(); renderTargets(); };
   if (window.CRAlerts) window.CRAlerts.onChange(renderTargets);
 
+  // ---- Telegram ----
+  function renderTelegram() {
+    const c = window.CRTelegram && window.CRTelegram.get();
+    $('tg-token').value = c ? c.token.slice(0, 6) + '••••••••' : '';
+    $('tg-token').dataset.saved = c ? '1' : '';
+    $('tg-chat').value = c ? c.chat : '';
+    $('tg-clear').hidden = !c;
+    if (c) $('tg-msg').textContent = 'ตั้งค่าแล้ว แอปจะส่งแจ้งเตือนเข้า Telegram';
+  }
+  const tgToken = () => { const v = $('tg-token').value.trim(); const c = window.CRTelegram.get(); return $('tg-token').dataset.saved && c && v.includes('••') ? c.token : v; };
+  $('tg-token').addEventListener('input', () => { $('tg-token').dataset.saved = ''; });
+  $('tg-find').onclick = async () => {
+    const m = $('tg-msg'), token = tgToken();
+    if (!window.CRTelegram.tokenOk(token)) { m.textContent = 'token ไม่ถูกต้อง คัดลอกจาก @BotFather ทั้งบรรทัด (หน้าตาแบบ 123456789:AA...)'; return; }
+    m.textContent = 'กำลังหา…';
+    try {
+      const r = await window.CRTelegram.findChatId(token);
+      if (!r) { m.textContent = 'ยังไม่เจอ กดเข้าไปที่บอทใน Telegram แล้วกด Start หรือส่งข้อความหาบอท 1 ครั้ง แล้วกดปุ่มนี้อีกครั้ง'; return; }
+      $('tg-chat').value = r.id; m.textContent = 'เจอแล้ว' + (r.name ? ': ' + r.name : '') + ' กด "บันทึก + ทดสอบส่ง" ต่อได้เลย';
+    } catch (e) { m.textContent = 'ติดต่อ Telegram ไม่ได้: ' + e.message; }
+  };
+  $('tg-save').onclick = async () => {
+    const m = $('tg-msg'), token = tgToken(), chat = $('tg-chat').value.trim();
+    if (!window.CRTelegram.tokenOk(token)) { m.textContent = 'token ไม่ถูกต้อง'; return; }
+    if (!/^-?\d{3,20}$/.test(chat)) { m.textContent = 'ใส่ Chat ID (กด "หา Chat ID ให้")'; return; }
+    m.textContent = 'กำลังส่งข้อความทดสอบ…';
+    try {
+      await window.CRTelegram.send('✅ เชื่อมเรดาร์คริปโตกับ Telegram แล้ว จะได้รับแจ้งเตือนราคาเป้าหมายและเหรียญที่ขยับแรงที่นี่', { token, chat });
+      window.CRTelegram.set(token, chat); renderTelegram();
+      m.textContent = 'ส่งสำเร็จ เช็กใน Telegram ได้เลย บันทึกการตั้งค่าแล้ว';
+    } catch (e) { m.textContent = 'ส่งไม่สำเร็จ: ' + e.message + ' (เช็ก token และกด Start ที่บอทแล้วหรือยัง)'; }
+  };
+  $('tg-clear').onclick = () => { if (!confirm('ลบการตั้งค่า Telegram ในเครื่องนี้?')) return; window.CRTelegram.clear(); renderTelegram(); $('tg-msg').textContent = 'ลบแล้ว'; };
+  if (window.CRTelegram) renderTelegram();
+
   // ---- Trade log ----
   const money = (n, cur) => n == null || !isFinite(n) ? '–' : (cur === 'THB' ? '฿' : '$') + (Math.abs(n) < 1 && n !== 0 ? n.toPrecision(4) : n.toLocaleString('en-US', { maximumFractionDigits: 2 }));
   const sortedTrades = () => store.trades.slice().sort((a, b) => (a.date + a.id).localeCompare(b.date + b.id));

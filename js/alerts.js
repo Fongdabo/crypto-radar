@@ -62,6 +62,32 @@
     } catch (e) {}
     return lastPrices;
   }
+  // Coins I hold (manual holdings, and wallet coins worth $10+) that moved 10%+ in 24h: one alert per coin per day.
+  const MOVES_KEY = 'crypto-radar:moves:v1';
+  function heldSyms() {
+    const out = new Set();
+    try { for (const h of (JSON.parse(localStorage.getItem('crypto-radar:portfolio:v1') || '{}').holdings || [])) if (h && h.asset) out.add(String(h.asset)); } catch (e) {}
+    try { for (const v of Object.values(JSON.parse(localStorage.getItem('crypto-radar:wallet-cache:v1') || '{}'))) for (const r of (v && v.rows) || []) if (!r.unverified && (r.value || 0) >= 10 && !/^(USDT|USDC|DAI)$/.test(r.sym)) out.add(String(r.sym)); } catch (e) {}
+    return [...out].filter(x => /^[A-Z0-9.$_-]{1,20}$/.test(x)).slice(0, 40);
+  }
+  async function checkMoves() {
+    if (!window.CR) return;
+    const syms = heldSyms();
+    if (!syms.length) return;
+    const ids = {};
+    for (const s of syms) { try { const id = await window.CR.resolveId(s); if (id) ids[s] = id; } catch (e) {} }
+    const px = await window.CR.livePrices(Object.values(ids)).catch(() => ({}));
+    let sent = {}; try { sent = JSON.parse(localStorage.getItem(MOVES_KEY) || '{}'); } catch (e) {}
+    const day = new Date().toISOString().slice(0, 10);
+    for (const [s, id] of Object.entries(ids)) {
+      const c = px[id] && px[id].change24;
+      if (c == null || Math.abs(c) < 10 || sent[s] === day) continue;
+      sent[s] = day;
+      notify(s + (c > 0 ? ' ขึ้นแรง +' : ' ลงแรง ') + c.toFixed(1) + '% ใน 24 ชม.', 'ราคาตอนนี้ $' + fmt(px[id].usd) + ' · เป็นเหรียญที่คุณถืออยู่');
+    }
+    try { localStorage.setItem(MOVES_KEY, JSON.stringify(sent)); } catch (e) {}
+  }
+
   const fmt = n => (n < 1 ? n.toPrecision(4) : n.toLocaleString('en-US', { maximumFractionDigits: 2 }));
 
   async function enableNotifications() {
@@ -81,7 +107,8 @@
   };
   window.addEventListener('storage', e => { if (e.key === KEY) for (const fn of listeners) fn(load()); });
 
-  setTimeout(check, 1500);
-  setInterval(() => { if (document.visibilityState === 'visible') check(); }, CHECK_MS);
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') check(); });
+  const tick = () => { check(); checkMoves().catch(() => {}); };
+  setTimeout(tick, 1500);
+  setInterval(() => { if (document.visibilityState === 'visible') tick(); }, CHECK_MS);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') tick(); });
 })();

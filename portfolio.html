@@ -38,6 +38,8 @@ th { color: var(--muted); font-weight: 500; font-size: 13px; }
 .msg { min-height: 1.4em; font-size: 13px; margin-top: 8px; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; }
 .hidden { display: none; }
+.steps { margin: 6px 0 12px; padding-left: 20px; font-size: 14px; } .steps li { margin: 4px 0; }
+code { background: var(--panel2); padding: 1px 5px; border-radius: 4px; }
 .sub { font-size: 14px; margin: 18px 0 6px; color: var(--muted); font-weight: 600; }
 label.inline { display: inline-flex; align-items: center; gap: 8px; }
 label.inline select { width: auto; margin: 0; }
@@ -155,6 +157,26 @@ label.inline select { width: auto; margin: 0; }
     <p class="muted">แจ้งเตือนได้เฉพาะตอนที่เปิดแอปอยู่ (หรือตอนเปิดครั้งถัดไป) ถ้าต้องการให้เตือนตอนปิดแอปด้วย ให้ตั้งค่า Telegram ด้านล่าง</p>
   </div>
 
+  <div class="card" id="telegram">
+    <h2>แจ้งเตือนเข้า Telegram</h2>
+    <p class="muted">ให้แอปส่งแจ้งเตือนเข้า Telegram ของคุณ ทั้งราคาถึงเป้า และเหรียญในพอร์ตขยับแรงเกิน 10% ใน 24 ชม. ตั้งครั้งเดียวต่อเครื่อง</p>
+    <ol class="steps">
+      <li>ใน Telegram ค้นหา <b>@BotFather</b> (มีเครื่องหมายถูกสีฟ้า) พิมพ์ <code>/newbot</code> ตั้งชื่อบอท แล้วคัดลอก <b>token</b> ที่ได้มาวางด้านล่าง</li>
+      <li>กดเข้าไปที่บอทที่เพิ่งสร้าง แล้วกด <b>Start</b> (หรือพิมพ์อะไรก็ได้ส่งไป 1 ข้อความ)</li>
+      <li>กลับมากด <b>หา Chat ID ให้</b> แล้วกด <b>ทดสอบส่ง</b></li>
+    </ol>
+    <div class="grid">
+      <label style="grid-column:1/-1">Bot token<input id="tg-token" placeholder="123456789:AA..." autocomplete="off" spellcheck="false"></label>
+      <label>Chat ID<input id="tg-chat" placeholder="กดปุ่มหาให้" autocomplete="off"></label>
+      <button class="plain" id="tg-find" type="button">หา Chat ID ให้</button>
+      <button id="tg-save" type="button">บันทึก + ทดสอบส่ง</button>
+      <button class="ghost" id="tg-clear" type="button" style="padding:9px 14px">ลบการตั้งค่า</button>
+    </div>
+    <div class="msg muted" id="tg-msg"></div>
+    <div class="warn" style="margin-top:8px">token ของบอทเก็บไว้ในเครื่องนี้เท่านั้น ไม่อยู่ในไฟล์สำรอง อย่าส่ง token ให้ใคร ถ้าหลุดให้กด /revoke ใน @BotFather แล้วสร้างใหม่</div>
+    <p class="muted">แอปส่งได้ตอนที่เปิดอยู่เท่านั้น ส่วน <b>สรุปทุกเช้า 07:35 น.</b> (วันปิดแอร์ดรอป วันปลดล็อก และเหรียญที่ติดตามขยับแรง) ส่งเองได้แม้ปิดแอป ถ้าตั้งค่าใน GitHub ตามคู่มือ</p>
+  </div>
+
   <div class="card" id="trades">
     <h2>บันทึกซื้อขาย</h2>
     <p class="muted">จดทุกครั้งที่ซื้อหรือขาย แอปสรุปจำนวนที่ถือ ต้นทุนเฉลี่ย และกำไรที่ขายไปแล้วให้ ส่งออกเป็นไฟล์ CSV เปิดใน Excel หรือ Google Sheets ได้</p>
@@ -204,6 +226,7 @@ label.inline select { width: auto; margin: 0; }
 
 <script src="js/app.js"></script>
 <script src="js/coins.js"></script>
+<script src="js/telegram.js"></script>
 <script src="js/alerts.js"></script>
 <script src="js/portfolio.js"></script>
 </body>
