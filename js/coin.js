@@ -11,25 +11,7 @@
   };
   const num = n => n == null || !isFinite(n) ? '–' : (n >= 1e9 ? (n / 1e9).toFixed(2) + 'B' : n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : n.toLocaleString('en-US', { maximumFractionDigits: 0 }));
   const pct = n => n == null || !isFinite(n) ? '–' : (n >= 0 ? '+' : '') + n.toFixed(1) + '%';
-  const CG = 'https://api.coingecko.com/api/v3';
-
-  // Common symbols, so most coins need no search call.
-  const KNOWN = {
-    BTC: 'bitcoin', ETH: 'ethereum', SOL: 'solana', TRX: 'tron', XLM: 'stellar', USDT: 'tether', USDC: 'usd-coin',
-    BNB: 'binancecoin', POL: 'polygon-ecosystem-token', MATIC: 'matic-network', ARB: 'arbitrum', OP: 'optimism',
-    SAND: 'the-sandbox', AXS: 'axie-infinity', MANA: 'decentraland', GALA: 'gala', IMX: 'immutable-x', ILV: 'illuvium',
-    APE: 'apecoin', RON: 'ronin', BEAM: 'beam-2', YGG: 'yield-guild-games', PIXEL: 'pixels', SUPER: 'superfarm',
-  };
-
-  async function getJson(u) {
-    const key = 'cr-cache:' + u;
-    try { const c = JSON.parse(sessionStorage.getItem(key) || 'null'); if (c && Date.now() - c.at < 5 * 60e3) return c.data; } catch (e) {}
-    const r = await fetch(u, { headers: { accept: 'application/json' } });
-    if (!r.ok) { const e = new Error(String(r.status)); e.status = r.status; throw e; }
-    const data = await r.json();
-    try { sessionStorage.setItem(key, JSON.stringify({ at: Date.now(), data })); } catch (e) {}
-    return data;
-  }
+  const { CG, getJson } = window.CR;
 
   let analysis = [], tracked = [];
   const ready = Promise.all([
@@ -45,18 +27,7 @@
     } catch (e) { return []; }
   }
 
-  async function resolve(sym) {
-    const S = sym.toUpperCase();
-    const a = analysis.find(x => String(x.token).toUpperCase() === S && x.coingecko_id);
-    if (a) return a.coingecko_id;
-    if (KNOWN[S]) return KNOWN[S];
-    try { const m = JSON.parse(localStorage.getItem('cr-ids') || '{}'); if (m[S]) return m[S]; } catch (e) {}
-    const j = await getJson(CG + '/search?query=' + encodeURIComponent(sym));
-    const hit = (j.coins || []).filter(c => String(c.symbol).toUpperCase() === S).sort((x, y) => (x.market_cap_rank || 1e9) - (y.market_cap_rank || 1e9))[0];
-    if (!hit) return null;
-    try { const m = JSON.parse(localStorage.getItem('cr-ids') || '{}'); m[S] = hit.id; localStorage.setItem('cr-ids', JSON.stringify(m)); } catch (e) {}
-    return hit.id;
-  }
+  const resolve = sym => window.CR.resolveId(sym);
 
   function renderChips(cur) {
     const box = $('chips'); box.textContent = '';

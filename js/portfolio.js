@@ -56,7 +56,10 @@
     }));
     if (!accounts.length) accounts = [{ id: 'a1', name: 'บัญชี 1', addresses: [] }];
     const connected = (Array.isArray(s.connected) ? s.connected : []).filter(a => seen.has(a));
-    return { holdings, accounts, connected };
+    const trades = (Array.isArray(s.trades) ? s.trades : []).filter(t => t && /^\d{4}-\d{2}-\d{2}$/.test(t.date) && (t.type === 'buy' || t.type === 'sell')
+      && /^[A-Z0-9.$_-]{1,20}$/.test(t.sym) && t.amount > 0 && t.price >= 0 && (t.cur === 'THB' || t.cur === 'USD'))
+      .map(t => ({ id: String(t.id || Math.random().toString(36).slice(2)), date: t.date, type: t.type, sym: t.sym, amount: Number(t.amount), price: Number(t.price), cur: t.cur, fee: Number(t.fee) || 0, ex: String(t.ex || '').slice(0, 30), note: String(t.note || '').slice(0, 80) }));
+    return { holdings, accounts, connected, trades };
   }
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify(store)); return true; }
@@ -482,6 +485,121 @@
   renderConnect();
   fillTargets();
 
+
+  // ---- Price targets (stored by alerts.js under their own key) ----
+  const symOk = s => /^[A-Z0-9.$_-]{1,20}$/.test(s);
+  function renderTargets() {
+    const A = window.CRAlerts; if (!A) return;
+    const perm = A.permission();
+    $('t-perm').textContent = perm === 'granted' ? 'เปิดแจ้งเตือนแล้ว' : perm === 'denied' ? 'เบราว์เซอร์บล็อกการแจ้งเตือนไว้ เปิดได้ในการตั้งค่าเว็บไซต์' : perm === 'unsupported' ? 'เครื่องนี้ไม่รองรับ (iPhone ต้องติดตั้งแอปลงหน้าจอโฮมก่อน)' : '';
+    $('t-notify').hidden = perm === 'granted';
+    const tb = $('t-rows'); tb.textContent = '';
+    const list = A.list();
+    if (!list.length) { const tr = el('tr'), td = el('td', 'muted', 'ยังไม่ได้ตั้งราคาเป้าหมาย'); td.colSpan = 7; tr.append(td); tb.append(tr); return; }
+    for (const t of list) {
+      const tr = el('tr');
+      const gap = t.last ? (t.price - t.last) / t.last * 100 : null;
+      const cells = [null, t.dir === 'above' ? 'ขึ้นถึง' : 'ลงถึง', usd(t.price), t.last ? usd(t.last) : '…', t.hit_at ? '–' : gap == null ? '–' : (gap >= 0 ? '+' : '') + gap.toFixed(1) + '%',
+        t.hit_at ? 'ถึงแล้ว ' + new Date(t.hit_at).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' }) : 'รอ'];
+      for (const c of cells) tr.append(el('td', '', c));
+      tr.cells[0].append(coinLink(t.sym)); if (t.note) tr.cells[0].append(el('div', 'muted', t.note));
+      if (t.hit_at) tr.cells[5].className = 'pos';
+      const td = el('td');
+      if (t.hit_at) { const re = el('button', 'plain', 'ตั้งใหม่'); re.type = 'button'; re.style.padding = '5px 10px'; re.onclick = () => A.rearm(t.key); td.append(re, ' '); }
+      const rm = el('button', 'ghost', 'ลบ'); rm.type = 'button'; rm.onclick = () => A.remove(t.key);
+      td.append(rm); tr.append(td); tb.append(tr);
+    }
+  }
+  $('t-add').onclick = () => {
+    const m = $('t-msg'), sym = $('t-sym').value.trim().toUpperCase(), price = Number($('t-price').value);
+    if (!symOk(sym)) { m.textContent = 'ใส่ชื่อเหรียญ เช่น SAND หรือ BTC'; return; }
+    if (!(price > 0)) { m.textContent = 'ใส่ราคาเป้าหมายเป็นดอลลาร์'; return; }
+    if (window.CRAlerts.list().length >= 30) { m.textContent = 'ตั้งได้สูงสุด 30 รายการ'; return; }
+    window.CRAlerts.add({ sym, dir: $('t-dir').value, price, note: $('t-note').value.trim().slice(0, 60) });
+    $('t-sym').value = ''; $('t-price').value = ''; $('t-note').value = '';
+    m.textContent = 'ตั้งเป้า ' + sym + ' แล้ว' + (window.CRAlerts.permission() === 'granted' ? '' : ' · กด "เปิดการแจ้งเตือน" ด้วย เพื่อให้เด้งเตือนบนเครื่อง');
+  };
+  $('t-notify').onclick = async () => { await window.CRAlerts.enableNotifications(); renderTargets(); };
+  if (window.CRAlerts) window.CRAlerts.onChange(renderTargets);
+
+  // ---- Trade log ----
+  const money = (n, cur) => n == null || !isFinite(n) ? '–' : (cur === 'THB' ? '฿' : '$') + (Math.abs(n) < 1 && n !== 0 ? n.toPrecision(4) : n.toLocaleString('en-US', { maximumFractionDigits: 2 }));
+  const sortedTrades = () => store.trades.slice().sort((a, b) => (a.date + a.id).localeCompare(b.date + b.id));
+  // Average-cost method, per coin and currency.
+  function summarize() {
+    const by = new Map();
+    for (const t of sortedTrades()) {
+      const k = t.sym + '|' + t.cur;
+      const s = by.get(k) || { sym: t.sym, cur: t.cur, qty: 0, cost: 0, realized: 0, oversold: false };
+      if (t.type === 'buy') { s.qty += t.amount; s.cost += t.amount * t.price + (t.fee || 0); }
+      else {
+        const avg = s.qty > 0 ? s.cost / s.qty : 0, q = Math.min(t.amount, s.qty);
+        if (t.amount > s.qty + 1e-12) s.oversold = true;
+        s.realized += t.amount * t.price - (t.fee || 0) - avg * q;
+        s.cost -= avg * q; s.qty -= q;
+      }
+      by.set(k, s);
+    }
+    return [...by.values()];
+  }
+  function renderTrades() {
+    const sb = $('r-sum'); sb.textContent = '';
+    const sums = summarize();
+    if (!sums.length) { const tr = el('tr'), td = el('td', 'muted', 'ยังไม่มีรายการ'); td.colSpan = 6; tr.append(td); sb.append(tr); }
+    for (const s of sums) {
+      const tr = el('tr');
+      for (const c of [null, s.cur, s.qty.toLocaleString('en-US', { maximumFractionDigits: 8 }), s.qty > 0 ? money(s.cost / s.qty, s.cur) : '–', money(s.cost, s.cur), (s.realized >= 0 ? '+' : '') + money(s.realized, s.cur)]) tr.append(el('td', '', c));
+      tr.cells[0].append(coinLink(s.sym));
+      if (s.oversold) tr.cells[0].append(el('div', 'muted', 'ขายมากกว่าที่บันทึกว่าซื้อ'));
+      tr.cells[5].className = s.realized >= 0 ? 'pos' : 'neg';
+      sb.append(tr);
+    }
+    const tb = $('r-rows'); tb.textContent = '';
+    const list = sortedTrades().reverse();
+    if (!list.length) { const tr = el('tr'), td = el('td', 'muted', 'ยังไม่มีรายการ'); td.colSpan = 9; tr.append(td); tb.append(tr); }
+    for (const t of list) {
+      const tr = el('tr');
+      const total = t.type === 'buy' ? t.amount * t.price + (t.fee || 0) : t.amount * t.price - (t.fee || 0);
+      for (const c of [t.date, t.type === 'buy' ? 'ซื้อ' : 'ขาย', t.sym, t.amount.toLocaleString('en-US', { maximumFractionDigits: 8 }), money(t.price, t.cur), money(t.fee || 0, t.cur), money(total, t.cur), t.ex || '']) tr.append(el('td', '', c));
+      tr.cells[1].className = t.type === 'buy' ? 'pos' : 'neg';
+      if (t.note) tr.cells[7].append(el('div', 'muted', t.note));
+      const td = el('td'), rm = el('button', 'ghost', 'ลบ'); rm.type = 'button';
+      rm.onclick = () => { if (!confirm('ลบรายการนี้?')) return; store.trades = store.trades.filter(x => x.id !== t.id); save(); renderTrades(); };
+      td.append(rm); tr.append(td); tb.append(tr);
+    }
+  }
+  $('r-date').value = new Date().toISOString().slice(0, 10);
+  $('r-add').onclick = () => {
+    const m = $('r-msg');
+    const t = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), date: $('r-date').value, type: $('r-type').value, sym: $('r-sym').value.trim().toUpperCase(),
+      amount: Number($('r-amount').value), price: Number($('r-price').value), cur: $('r-cur').value, fee: Number($('r-fee').value || 0), ex: $('r-ex').value, note: $('r-note').value.trim().slice(0, 80) };
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(t.date)) { m.textContent = 'ใส่วันที่'; return; }
+    if (!symOk(t.sym)) { m.textContent = 'ใส่ชื่อเหรียญ เช่น BTC'; return; }
+    if (!(t.amount > 0) || !(t.price >= 0) || $('r-price').value === '' || !(t.fee >= 0)) { m.textContent = 'ใส่จำนวนเหรียญและราคาให้ถูกต้อง'; return; }
+    store.trades.push(t);
+    if (save()) { m.textContent = 'บันทึก' + (t.type === 'buy' ? 'การซื้อ' : 'การขาย') + ' ' + t.sym + ' แล้ว'; $('r-amount').value = ''; $('r-price').value = ''; $('r-fee').value = ''; $('r-note').value = ''; }
+    renderTrades();
+  };
+  $('r-csv').onclick = () => {
+    const q = v => { const s = String(v == null ? '' : v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    // A leading = + - @ would make Excel treat a cell as a formula.
+    const safe = v => { const s = String(v == null ? '' : v); return /^[=+\-@]/.test(s) && isNaN(Number(s)) ? "'" + s : s; };
+    const head = ['date', 'type', 'coin', 'amount', 'price_per_coin', 'currency', 'fee', 'total', 'exchange', 'note'];
+    const lines = [head.join(',')];
+    for (const t of sortedTrades()) {
+      const total = t.type === 'buy' ? t.amount * t.price + (t.fee || 0) : t.amount * t.price - (t.fee || 0);
+      lines.push([t.date, t.type, t.sym, t.amount, t.price, t.cur, t.fee || 0, +total.toFixed(8), t.ex, t.note].map(v => q(safe(v))).join(','));
+    }
+    lines.push('');
+    lines.push(['summary_coin', 'currency', 'holding', 'avg_cost', 'cost_of_holding', 'realized_pl'].join(','));
+    for (const s of summarize()) lines.push([s.sym, s.cur, s.qty, s.qty > 0 ? +(s.cost / s.qty).toFixed(8) : '', +s.cost.toFixed(8), +s.realized.toFixed(8)].map(v => q(safe(v))).join(','));
+    const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'crypto-trades-' + new Date().toISOString().slice(0, 10) + '.csv'; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    $('r-msg').textContent = 'ดาวน์โหลดไฟล์ CSV แล้ว';
+  };
+
   function fillSelect() {
     const sel = $('f-asset'), cur = sel.value;
     sel.textContent = '';
@@ -557,7 +675,7 @@
   };
 
   $('b-export').onclick = () => {
-    const blob = new Blob([JSON.stringify({ app: 'crypto-radar', version: 2, exported_at: new Date().toISOString(), ...store }, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify({ app: 'crypto-radar', version: 3, exported_at: new Date().toISOString(), ...store, targets: window.CRAlerts ? window.CRAlerts.list() : [] }, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = 'crypto-radar-portfolio-' + new Date().toISOString().slice(0, 10) + '.json';
@@ -570,15 +688,17 @@
     const f = e.target.files[0]; e.target.value = '';
     if (!f) return;
     try {
-      const next = clean(JSON.parse(await f.text()));
-      if (!confirm(`นำเข้า ${next.holdings.length} เหรียญ และ ${next.accounts.reduce((t, x) => t + x.addresses.length, 0)} ที่อยู่ใน ${next.accounts.length} บัญชี แทนข้อมูลเดิมในเครื่องนี้?`)) return;
-      store = next; save(); fillTargets(); renderConnect(); render(); loadWallets();
+      const raw = JSON.parse(await f.text());
+      const next = clean(raw);
+      if (!confirm(`นำเข้า ${next.holdings.length} เหรียญ และ ${next.accounts.reduce((t, x) => t + x.addresses.length, 0)} ที่อยู่ใน ${next.accounts.length} บัญชี และ ${next.trades.length} รายการซื้อขาย แทนข้อมูลเดิมในเครื่องนี้?`)) return;
+      store = next; save(); fillTargets(); renderConnect(); render(); renderTrades(); loadWallets();
+      if (Array.isArray(raw.targets)) { try { localStorage.setItem('crypto-radar:targets:v1', JSON.stringify(raw.targets)); } catch (e2) {} renderTargets(); }
       $('b-msg').textContent = 'นำเข้าเรียบร้อย';
     } catch (err) { $('b-msg').textContent = 'ไฟล์นี้ไม่ใช่ไฟล์สำรองของแอปนี้'; }
   };
 
   // Another tab or window changed the portfolio.
-  window.addEventListener('storage', e => { if (e.key === KEY) { store = read(); fillTargets(); renderConnect(); render(); loadWallets(); } });
+  window.addEventListener('storage', e => { if (e.key === KEY) { store = read(); fillTargets(); renderConnect(); render(); renderTrades(); loadWallets(); } });
 
   fetch('data/prices.json', { cache: 'no-cache' }).then(r => r.json()).then(j => {
     const rows = Array.isArray(j) ? j : (j && j.rows) || [];
@@ -588,5 +708,5 @@
     fillSelect(); render();
   }).catch(() => { $('asof').textContent = 'โหลดราคาไม่ได้'; fillSelect(); render(); });
 
-  render(); loadWallets();
+  render(); renderTargets(); renderTrades(); loadWallets();
 })();

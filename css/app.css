@@ -51,3 +51,4 @@ a.toast { color: var(--fg); text-decoration: none; }
 #price-table tbody tr:hover td { background: rgba(45, 212, 191, .06); }
 .coinlink { color: inherit; text-decoration: underline dotted; text-underline-offset: 3px; }
 @media (max-width: 400px) { .brand { display: none; } }
+.alert-toast { border-color: var(--teal); }

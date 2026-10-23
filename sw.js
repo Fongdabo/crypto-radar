@@ -1,8 +1,8 @@
 // Network first, so every open shows the latest app and data; the cache is the offline fallback.
-const VERSION = 'v7';
+const VERSION = 'v8';
 const CACHE = 'crypto-radar-' + VERSION;
 const SHELL = [
-  './', 'index.html', 'portfolio.html', 'guide.html', 'coin.html', 'js/portfolio.js', 'js/coin.js', 'manifest.webmanifest', 'css/app.css',
+  './', 'index.html', 'portfolio.html', 'guide.html', 'coin.html', 'js/portfolio.js', 'js/coin.js', 'js/coins.js', 'js/alerts.js', 'manifest.webmanifest', 'css/app.css',
   'js/app.js', 'js/dash.js', 'js/version.js', 'vendor/d3.min.js', 'dashboard/page.html',
   'icons/icon-192.png', 'icons/icon-512.png',
 ];
@@ -32,4 +32,13 @@ self.addEventListener('fetch', e => {
       return res;
     }).catch(() => caches.match(req.url.split('?')[0]).then(r => r || caches.match('index.html')))
   );
+});
+
+// Tapping a price alert opens (or focuses) the app on the targets list.
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+    for (const c of list) if ('focus' in c) { c.navigate && c.navigate('portfolio.html#targets'); return c.focus(); }
+    return self.clients.openWindow('portfolio.html#targets');
+  }));
 });

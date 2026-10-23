@@ -63,6 +63,7 @@ table.sec td:first-child { white-space: nowrap; font-weight: 600; padding-right:
     <a href="#wallet">ใส่ที่อยู่กระเป๋า</a>
     <a href="#backup">สำรองข้อมูล</a>
     <a href="#chart">ดูกราฟเหรียญ</a>
+    <a href="#targets-guide">ราคาเป้าหมาย / บันทึกซื้อขาย</a>
     <a href="#buy">ซื้อเหรียญและโอนเข้ากระเป๋า</a>
     <a href="#airdrop">กระเป๋าแยกสำหรับแอร์ดรอป</a>
     <a href="#safety">ตัดการเชื่อมต่อเว็บ</a>
@@ -191,6 +192,26 @@ table.sec td:first-child { white-space: nowrap; font-weight: 600; padding-right:
     </div>
   </details>
 
+  <details id="targets-guide">
+    <summary>ตั้งราคาเป้าหมายและบันทึกซื้อขาย</summary>
+    <div class="body">
+      <h3>ราคาเป้าหมาย</h3>
+      <ol>
+        <li>ในแท็บ <b>พอร์ต</b> เลื่อนไปที่ <b>ราคาเป้าหมาย</b> ใส่ชื่อเหรียญ เลือก <b>ขึ้นถึง</b> (เช่น ราคาที่อยากขาย) หรือ <b>ลงถึง</b> (เช่น ราคาที่อยากซื้อ) แล้วใส่ราคาเป็นดอลลาร์</li>
+        <li>กด <b>🔔 เปิดการแจ้งเตือนบนเครื่องนี้</b> แล้วกดอนุญาต (iPhone ต้องติดตั้งแอปลงหน้าจอโฮมก่อนถึงจะเปิดได้)</li>
+        <li>เมื่อราคาถึง แอปจะเด้งเตือนและขึ้นว่า <b>ถึงแล้ว</b> กด <b>ตั้งใหม่</b> ถ้าอยากให้เตือนอีก</li>
+      </ol>
+      <div class="tip">แอปเช็กราคาตอนเปิดแอป และทุก 5 นาทีระหว่างเปิดอยู่ ถ้าอยากให้เตือนตอนปิดแอป ให้ใช้ Telegram</div>
+      <h3>บันทึกซื้อขาย</h3>
+      <ol>
+        <li>ทุกครั้งที่ซื้อหรือขาย ใส่วันที่ เหรียญ จำนวน ราคาต่อเหรียญ สกุลเงิน (บาทหรือดอลลาร์) ค่าธรรมเนียม และที่ที่ซื้อขาย</li>
+        <li>แอปสรุปให้ว่าแต่ละเหรียญถืออยู่เท่าไหร่ ต้นทุนเฉลี่ยเท่าไหร่ และกำไรจากที่ขายไปแล้วเท่าไหร่</li>
+        <li>กด <b>⬇ ส่งออก CSV</b> เพื่อเอาไฟล์ไปเปิดใน Excel หรือ Google Sheets</li>
+      </ol>
+      <div class="tip">ข้อมูลนี้ช่วยรวบรวมไว้ใช้ตอนยื่นภาษี แต่กฎภาษีคริปโตของไทยมีข้อยกเว้นบางกรณี ควรเช็กกับกรมสรรพากรหรือผู้เชี่ยวชาญอีกครั้ง</div>
+    </div>
+  </details>
+
   <details id="chart">
     <summary>7. ดูกราฟและบทวิเคราะห์รายเหรียญ</summary>
     <div class="body">
@@ -268,6 +289,8 @@ table.sec td:first-child { white-space: nowrap; font-weight: 600; padding-right:
 <footer class="app-foot">ข้อมูลเพื่อการศึกษา ไม่ใช่คำแนะนำการลงทุน · แอปนี้ไม่รับฝากเงินและไม่เชื่อมกระเป๋า</footer>
 
 <script src="js/app.js"></script>
+<script src="js/coins.js"></script>
+<script src="js/alerts.js"></script>
 <script>
 (function () {
   const box = document.getElementById('changelog');
