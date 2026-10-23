@@ -288,6 +288,20 @@ body.wp-resizing { user-select: none; cursor: col-resize; }
 .agc .links { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
 .agc .links a { background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; font-size: 13px; text-decoration: none; }
 .agc .danger { border-left: 3px solid #f87171; background: var(--panel); padding: 6px 10px; border-radius: 8px; margin: 6px 0; }
+.agc .round { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; }
+.agc .round > .meta { margin: 2px 0 8px; }
+.agc .task { border-top: 1px solid var(--line); padding: 10px 0 4px; }
+.agc .msg .task { border-top: 0; padding: 0; }
+.agc .task .tline { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: 13px; }
+.agc .task .tav { font-size: 16px; }
+.agc .task .ttl { display: block; margin: 4px 0 2px; }
+.agc .pill.need { background: #3b2a06; color: #fbbf24; }
+.agc .task .found { background: var(--panel2); border-radius: 8px; padding: 6px 10px; margin: 6px 0; font-size: 13px; }
+.agc .task a.btn { display: inline-block; text-decoration: none; }
+.agc .task .replies { justify-content: flex-start; margin: 6px 0 0; }
+.agc details.how { margin: 6px 0 2px; font-size: 13px; }
+.agc details.how summary { cursor: pointer; color: var(--muted); }
+.agpop .round { border: 0; padding: 4px 2px 8px; margin: 0; }
 .agc .facts { border: 1px solid #f59e0b; border-radius: 10px; padding: 8px 10px; margin-top: 6px; }
 .agc .chk { display: block; margin: 4px 0; }
 .agc .no { color: #f87171; margin-top: 6px; }

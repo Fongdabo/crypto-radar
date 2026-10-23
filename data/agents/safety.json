@@ -28,17 +28,24 @@
     "เปิด MetaMask → เมนู ⋮ → All Permissions (หรือ Connected sites)",
     "หา solanabombers.fun แล้วกด Disconnect"
    ],
-   "note": "ไม่มีการเซ็นในขั้นนี้"
+   "note": "เอเจนต์มองไม่เห็นการตั้งค่าในเครื่องคุณ ขั้นนี้จึงต้องกด \"เสร็จแล้ว\" เอง ไม่มีการเซ็น",
+   "need": "setting",
+   "mins": 1,
+   "open": {
+    "u": "https://support.metamask.io/more-web3/dapps/disconnect-wallet-from-a-dapp/",
+    "t": "ดูวิธีใน MetaMask"
+   }
   },
   {
    "id": "revoke",
    "who": "you",
    "kind": "sign",
    "repeat_days": 30,
-   "title": "ตรวจและยกเลิกสิทธิ์ที่ไม่ใช้บน revoke.cash",
+   "title": "ยกเลิกสิทธิ์ Approve ที่ยังค้างในกระเป๋าหลัก",
    "how": [
-    "เปิด revoke.cash จากปุ่มทางการ วางที่อยู่กระเป๋าเพื่อดูอย่างเดียวได้โดยไม่ต้องเชื่อม",
-    "ถ้าเจอสิทธิ์ของเว็บที่ไม่รู้จักหรือไม่ใช้แล้ว ค่อยกด Connect แล้วกด Revoke ทีละรายการ"
+    "เอเจนต์ตรวจ Ethereum, Base, Optimism, Arbitrum, Polygon ให้เอง ถ้าไม่มีสิทธิ์ค้างจะปิดงานนี้ให้",
+    "ถ้าเจอ: กดปุ่มเปิด revoke.cash (ใส่ที่อยู่ไว้ให้แล้ว) กด Connect แล้วกด Revoke รายการที่ไม่รู้จักหรือไม่ใช้แล้ว",
+    "revoke เสร็จเอเจนต์จะเห็นเองและปิดงาน"
    ],
    "sign": {
     "site": "revoke.cash",
@@ -54,6 +61,25 @@
      "ขอส่งเหรียญออก",
      "ขอคำกู้คืน (seed phrase) หรือ private key ไม่ว่ากรณีใด"
     ]
+   },
+   "need": "sign",
+   "mins": 5,
+   "auto": {
+    "kind": "no-approvals",
+    "chains": [
+     "eth",
+     "base",
+     "optimism",
+     "arbitrum",
+     "polygon"
+    ],
+    "wallets": [
+     "main"
+    ]
+   },
+   "open": {
+    "u": "https://revoke.cash/address/{main}",
+    "t": "เปิดรายการสิทธิ์ใน revoke.cash"
    }
   }
  ],
