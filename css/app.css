@@ -276,6 +276,8 @@ body.wp-resizing { user-select: none; cursor: col-resize; }
 .agc .chead { display: flex; gap: 10px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--line); }
 .agc .chead .ct { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .agc .back { display: none; color: var(--fg); text-decoration: none; font-size: 26px; line-height: 1; padding: 0 6px 0 0; }
+.agc .askf { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); }
+.agc .askf input { flex: 1; min-width: 0; background: var(--panel2); border: 1px solid var(--line); border-radius: 999px; color: var(--fg); font: inherit; font-size: 14px; padding: 8px 14px; }
 .agc .cbody { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
 .agc .msg { display: flex; gap: 8px; align-items: flex-end; max-width: 760px; }
 .agc .msg.me { align-self: flex-end; justify-content: flex-end; }
