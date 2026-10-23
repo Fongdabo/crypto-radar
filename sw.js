@@ -1,5 +1,5 @@
 // Network first, so every open shows the latest app and data; the cache is the offline fallback.
-const VERSION = 'v4';
+const VERSION = 'v5';
 const CACHE = 'crypto-radar-' + VERSION;
 const SHELL = [
   './', 'index.html', 'portfolio.html', 'guide.html', 'js/portfolio.js', 'manifest.webmanifest', 'css/app.css',

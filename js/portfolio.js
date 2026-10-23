@@ -17,14 +17,15 @@
     try {
       const s = JSON.parse(localStorage.getItem(KEY) || '{}');
       return clean(s);
-    } catch (e) { return { holdings: [], addresses: [] }; }
+    } catch (e) { return { holdings: [], addresses: [], connected: [] }; }
   }
   function clean(s) {
     const holdings = (Array.isArray(s.holdings) ? s.holdings : [])
       .filter(h => h && typeof h.asset === 'string' && /^[A-Z0-9.$_-]{1,20}$/.test(h.asset) && isFinite(h.amount) && isFinite(h.buy_price_usd))
       .map(h => ({ id: String(h.id || Math.random().toString(36).slice(2)), asset: h.asset, amount: Number(h.amount), buy_price_usd: Number(h.buy_price_usd), manual_price_usd: h.manual_price_usd == null ? undefined : Number(h.manual_price_usd), added_at: String(h.added_at || '') }));
     const addresses = (Array.isArray(s.addresses) ? s.addresses : []).filter(a => typeof a === 'string' && (/^0x[0-9a-f]{40}$/.test(a) || /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(a))).slice(0, 5);
-    return { holdings, addresses };
+    const connected = (Array.isArray(s.connected) ? s.connected : []).filter(a => addresses.includes(a));
+    return { holdings, addresses, connected };
   }
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify(store)); return true; }
@@ -175,7 +176,7 @@
       const row = document.createElement('div'); row.className = 'muted'; row.style.margin = '6px 0';
       row.append(document.createTextNode('กระเป๋า ' + (isEvm(a) ? 'EVM ' : 'Solana ') + short(a) + ' '));
       const b = document.createElement('button'); b.className = 'ghost'; b.type = 'button'; b.textContent = 'เอาออก';
-      b.onclick = () => { store.addresses = store.addresses.filter(x => x !== a); save(); loadWallets(); };
+      b.onclick = () => { store.addresses = store.addresses.filter(x => x !== a); store.connected = store.connected.filter(x => x !== a); save(); renderConnect(); loadWallets(); };
       row.append(b); list.append(row);
     }
     const tb = $('w-rows'); tb.textContent = '';
@@ -211,6 +212,95 @@
     store.addresses.push(a); save(); loadWallets();
   };
   $('w-refresh').onclick = loadWallets;
+
+  // Wallet connect, read-only: the app asks the wallet for its address and nothing else.
+  // Only these methods are ever sent to a wallet; signing, transactions and approvals are never requested.
+  const ALLOWED = new Set(['eth_requestAccounts', 'wallet_revokePermissions']);
+  const ask = (provider, method, params) => {
+    if (!ALLOWED.has(method)) throw new Error('blocked method ' + method);
+    return provider.request(params ? { method, params } : { method });
+  };
+  const announced = [];
+  window.addEventListener('eip6963:announceProvider', e => { if (e.detail && e.detail.provider) announced.push(e.detail); });
+  window.dispatchEvent(new Event('eip6963:requestProvider'));
+  function evmProvider() {
+    const mm = announced.find(d => d.info && d.info.rdns === 'io.metamask');
+    if (mm) return { provider: mm.provider, name: 'MetaMask' };
+    if (announced[0]) return { provider: announced[0].provider, name: (announced[0].info && announced[0].info.name) || 'กระเป๋า' };
+    if (window.ethereum && window.ethereum.request) return { provider: window.ethereum, name: window.ethereum.isMetaMask ? 'MetaMask' : 'กระเป๋า' };
+    return null;
+  }
+  function solProvider() {
+    const p = (window.phantom && window.phantom.solana) || window.solana;
+    return p && p.connect ? p : null;
+  }
+  const here = location.href.split('#')[0];
+  function noWallet(kind) {
+    const m = $('c-msg'); m.textContent = '';
+    const mobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    m.append(mobile
+      ? 'บนมือถือต้องเปิดแอปนี้จากเบราว์เซอร์ในแอป' + kind + ' หรือวางที่อยู่กระเป๋าเองในช่องด้านล่าง: '
+      : 'ไม่พบ ' + kind + ' ในเบราว์เซอร์นี้ ติดตั้งส่วนขยายก่อน หรือวางที่อยู่กระเป๋าเองในช่องด้านล่าง ');
+    if (mobile) {
+      const a = document.createElement('a');
+      a.href = kind === 'MetaMask'
+        ? 'https://metamask.app.link/dapp/' + here.replace(/^https?:\/\//, '')
+        : 'https://phantom.app/ul/browse/' + encodeURIComponent(here) + '?ref=' + encodeURIComponent(location.origin);
+      a.textContent = 'เปิดในแอป ' + kind;
+      a.style.color = 'var(--blue)';
+      m.append(a);
+    }
+  }
+  function addConnected(list) {
+    let added = 0;
+    for (const a of list) {
+      if (store.addresses.length >= 5) break;
+      if (!store.addresses.includes(a)) { store.addresses.push(a); added++; }
+      if (!store.connected.includes(a)) store.connected.push(a);
+    }
+    save(); renderConnect(); loadWallets();
+    return added;
+  }
+  $('c-evm').onclick = async () => {
+    const w = evmProvider();
+    if (!w) return noWallet('MetaMask');
+    $('c-msg').textContent = 'กดยืนยันการเชื่อมต่อใน ' + w.name + ' (เป็นการขอดูที่อยู่เท่านั้น)';
+    try {
+      const accts = await ask(w.provider, 'eth_requestAccounts');
+      const list = (Array.isArray(accts) ? accts : []).map(a => String(a).toLowerCase()).filter(isEvm);
+      if (!list.length) { $('c-msg').textContent = 'ไม่ได้รับที่อยู่จากกระเป๋า'; return; }
+      evmConn = w.provider;
+      const n = addConnected(list);
+      $('c-msg').textContent = 'เชื่อม ' + w.name + ' แล้ว (ดูอย่างเดียว)' + (n ? '' : ' · กระเป๋านี้มีในรายการอยู่แล้ว');
+    } catch (e) { $('c-msg').textContent = e && e.code === 4001 ? 'ยกเลิกการเชื่อมต่อแล้ว' : 'เชื่อมต่อไม่สำเร็จ ลองใหม่ หรือวางที่อยู่เองด้านล่าง'; }
+  };
+  $('c-sol').onclick = async () => {
+    const p = solProvider();
+    if (!p) return noWallet('Phantom');
+    $('c-msg').textContent = 'กดยืนยันการเชื่อมต่อใน Phantom (เป็นการขอดูที่อยู่เท่านั้น)';
+    try {
+      const r = await p.connect();
+      const a = String((r && r.publicKey) || p.publicKey || '');
+      if (!isSol(a)) { $('c-msg').textContent = 'ไม่ได้รับที่อยู่จากกระเป๋า'; return; }
+      solConn = p;
+      const n = addConnected([a]);
+      $('c-msg').textContent = 'เชื่อม Phantom แล้ว (ดูอย่างเดียว)' + (n ? '' : ' · กระเป๋านี้มีในรายการอยู่แล้ว');
+    } catch (e) { $('c-msg').textContent = e && e.code === 4001 ? 'ยกเลิกการเชื่อมต่อแล้ว' : 'เชื่อมต่อไม่สำเร็จ ลองใหม่ หรือวางที่อยู่เองด้านล่าง'; }
+  };
+  let evmConn = null, solConn = null;
+  $('c-off').onclick = async () => {
+    const w = evmConn || (evmProvider() || {}).provider;
+    if (w && store.connected.some(isEvm)) { try { await ask(w, 'wallet_revokePermissions', [{ eth_accounts: {} }]); } catch (e) {} }
+    const s = solConn || solProvider();
+    if (s && s.disconnect && store.connected.some(a => !isEvm(a))) { try { await s.disconnect(); } catch (e) {} }
+    store.addresses = store.addresses.filter(a => !store.connected.includes(a));
+    store.connected = [];
+    evmConn = solConn = null;
+    save(); renderConnect(); loadWallets();
+    $('c-msg').textContent = 'ตัดการเชื่อมต่อแล้ว และเอากระเป๋าที่เชื่อมไว้ออกจากรายการ';
+  };
+  function renderConnect() { $('c-off').hidden = !store.connected.length; }
+  renderConnect();
 
   function fillSelect() {
     const sel = $('f-asset'), cur = sel.value;

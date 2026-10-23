@@ -1,6 +1,6 @@
 // Install and update buttons, offline cache and new-version notice shared by every page.
 (function () {
-  const APP_VERSION = '4';   // keep in step with VERSION in sw.js
+  const APP_VERSION = '5';   // keep in step with VERSION in sw.js
   const btn = document.getElementById('install');
   let prompt = null;
   window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); prompt = e; if (btn) btn.hidden = false; });

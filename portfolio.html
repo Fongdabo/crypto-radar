@@ -65,9 +65,16 @@ th { color: var(--muted); font-weight: 500; font-size: 13px; }
 
   <div class="card">
     <h2>อ่านยอดจากกระเป๋าอัตโนมัติ</h2>
-    <p class="muted">ใส่ที่อยู่กระเป๋าสาธารณะ (public address) แอปจะอ่านยอดแบบดูอย่างเดียว ไม่ต้องเชื่อมกระเป๋า ไม่ต้องเซ็นอะไร รองรับกระเป๋า EVM ที่ขึ้นต้นด้วย 0x เช่น MetaMask (Ethereum, Base, Polygon, Arbitrum, Optimism) และกระเป๋า Solana เช่น Phantom</p>
+    <p class="muted">กดเชื่อมกระเป๋าเพื่อให้แอปรู้ที่อยู่ หรือวางที่อยู่เองก็ได้ แอปอ่านยอดแบบดูอย่างเดียว รองรับกระเป๋า EVM เช่น MetaMask (Ethereum, Base, Polygon, Arbitrum, Optimism) และกระเป๋า Solana เช่น Phantom</p>
+    <div class="row">
+      <button id="c-evm" type="button">🦊 เชื่อม MetaMask (ดูอย่างเดียว)</button>
+      <button id="c-sol" type="button">👻 เชื่อม Phantom (ดูอย่างเดียว)</button>
+      <button id="c-off" type="button" class="plain" hidden>ตัดการเชื่อมต่อ</button>
+    </div>
+    <div class="msg muted" id="c-msg"></div>
+    <div class="warn" style="margin:6px 0 12px">แอปนี้จะขอแค่ "ดูที่อยู่กระเป๋า" เท่านั้น จะไม่ขอให้เซ็น อนุมัติ (Approve) หรือส่งธุรกรรมใด ๆ ถ้าเห็นคำขอแบบนั้น ให้กดปฏิเสธทันที</div>
     <div class="grid">
-      <label style="grid-column:1/-2">ที่อยู่กระเป๋า<input id="w-addr" maxlength="120" placeholder="0x... หรือที่อยู่ Solana" autocomplete="off" spellcheck="false"></label>
+      <label style="grid-column:1/-2">หรือวางที่อยู่กระเป๋าเอง<input id="w-addr" maxlength="120" placeholder="0x... หรือที่อยู่ Solana" autocomplete="off" spellcheck="false"></label>
       <button id="w-add" type="button">เพิ่มกระเป๋า</button>
     </div>
     <div class="msg muted" id="w-msg"></div>
