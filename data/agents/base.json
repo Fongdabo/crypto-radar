@@ -52,7 +52,8 @@
     "กด \"Add account\" → \"Ethereum account\" ตั้งชื่อว่า Farm",
     "กดคัดลอกที่อยู่ 0x... แล้ววางในช่อง \"กระเป๋าฟาร์ม\" ด้านบนของหน้านี้"
    ],
-   "note": "ขั้นนี้ไม่มีการเซ็น และไม่ต้องจดคำกู้คืนใหม่ เพราะใช้ชุดเดิมของกระเป๋าหลัก"
+   "note": "ขั้นนี้ไม่มีการเซ็น และไม่ต้องจดคำกู้คืนใหม่ เพราะใช้ชุดเดิมของกระเป๋าหลัก",
+   "need": "setting"
   },
   {
    "id": "fund",
@@ -87,7 +88,8 @@
     "chain": "base",
     "kind": "balance"
    },
-   "note": "เงินเข้า Base แล้ว กด \"เซ็นเสร็จแล้ว ให้เอเจนต์ตรวจ\" แอปจะเช็กยอดบน Base ให้"
+   "note": "เงินเข้า Base แล้ว กด \"เซ็นเสร็จแล้ว ให้เอเจนต์ตรวจ\" แอปจะเช็กยอดบน Base ให้",
+   "need": "sign"
   },
   {
    "id": "basename",
@@ -121,7 +123,8 @@
    "verify": {
     "chain": "base",
     "kind": "tx"
-   }
+   },
+   "need": "sign"
   },
   {
    "id": "swap",
@@ -154,16 +157,19 @@
    "verify": {
     "chain": "base",
     "kind": "tx"
-   }
+   },
+   "need": "sign"
   },
   {
    "id": "repeat",
    "who": "you",
    "kind": "sign",
-   "repeat_days": 10, "first_wait": true,
+   "repeat_days": 10,
+   "first_wait": true,
    "title": "ใช้งานซ้ำ: swap หรือฝากเล็กน้อย ทุก ~10 วัน",
    "how": [
-    "ทำ swap เล็ก ๆ บน Aerodrome หรือฝาก USDC เล็กน้อยใน Morpho",
+    "กดปุ่มเปิดหน้า Swap (กรอกเหรียญไว้ให้แล้ว) แล้ว Connect ด้วย Account 2",
+    "ใส่ประมาณ $2 แล้วกด Swap",
     "ถ้าเว็บขอ Approve USDC ให้แก้จำนวนเป็นเท่าที่จะใช้ (ไม่ใช่ไม่จำกัด)"
    ],
    "sign": {
@@ -185,6 +191,12 @@
    "verify": {
     "chain": "base",
     "kind": "tx"
+   },
+   "need": "sign",
+   "mins": 3,
+   "open": {
+    "u": "https://aerodrome.finance/swap?from=0x833589fcd6edb6e08f4c7c32d4f71b54bda02913&to=eth",
+    "t": "เปิดหน้า Swap USDC → ETH"
    }
   }
  ],

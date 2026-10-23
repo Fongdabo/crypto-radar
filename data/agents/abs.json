@@ -36,12 +36,29 @@
    "who": "you",
    "kind": "offchain",
    "due": "2026-12-01",
-   "title": "เช็กว่าคุณมีเงินหรือ NFT อยู่บน Abstract ไหม",
+   "title": "ตรวจว่ามีเงินหรือ NFT ค้างอยู่บน Abstract ไหม",
    "how": [
-    "เปิด abs.xyz จากปุ่มเว็บทางการ แล้วล็อกอินถ้าเคยสมัคร",
-    "ดูยอดในกระเป๋า Abstract",
-    "ถ้าไม่เคยใช้หรือยอดเป็น 0 กด \"ทำแล้ว\" แล้วข้ามขั้นถัดไปได้เลย"
-   ]
+    "เอเจนต์ตรวจจากที่อยู่กระเป๋าให้เอง ถ้าไม่เคยใช้ Abstract จะปิดงานนี้และงานถอนให้ทันที",
+    "ถ้าเจอยอด งานถัดไปคือถอนออกก่อน 1 ธ.ค."
+   ],
+   "need": "connect",
+   "mins": 2,
+   "auto": {
+    "kind": "unused",
+    "chain": "abstract",
+    "wallets": [
+     "main",
+     "farm"
+    ],
+    "skip": [
+     "withdraw"
+    ],
+    "found_done": true
+   },
+   "open": {
+    "u": "https://abscan.org/address/{main}",
+    "t": "ดูกระเป๋าหลักบน Abstract"
+   }
   },
   {
    "id": "withdraw",
@@ -70,6 +87,12 @@
      "จำนวนเงินมากกว่าที่ตั้งใจ",
      "ขอคำกู้คืน (seed phrase) หรือ private key ไม่ว่ากรณีใด"
     ]
+   },
+   "need": "sign",
+   "mins": 5,
+   "open": {
+    "u": "https://portal.abs.xyz",
+    "t": "เปิด Abstract Portal"
    }
   }
  ],

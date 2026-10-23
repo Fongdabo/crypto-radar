@@ -18,7 +18,10 @@
 .ag h1 { font-size: 20px; margin: 4px 0 2px; }
 .ag .lead { color: var(--muted); margin: 0 0 10px; font-size: 14px; }
 .rule { border-left: 3px solid var(--teal); background: var(--panel2); padding: 8px 12px; border-radius: 8px; margin: 0 0 10px; font-size: 13px; }
-.farm { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; font-size: 14px; }
+.farm { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; margin-bottom: 10px; font-size: 14px; }
+.farm summary { cursor: pointer; color: var(--muted); }
+.farm label { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+.farm label span { min-width: 92px; }
 .farm input { flex: 1 1 260px; min-width: 0; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; color: var(--fg); font: inherit; font-size: 14px; padding: 7px 10px; }
 /* PM-style chat: agents on the left, the open conversation on the right; one pane at a time on a phone. */
 .shell { display: grid; grid-template-columns: 320px 1fr; height: calc(100vh - 150px); min-height: 480px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
@@ -48,15 +51,17 @@
 
 <main class="ag agc">
   <h1>เอเจนต์ทำกิจกรรมแทน</h1>
-  <p class="lead">เอเจนต์ 1 ตัวต่อ 1 กิจกรรม หาเงื่อนไข ตรวจลิงก์ เรียงขั้นตอน และทักคุณเมื่อถึงคิว</p>
-  <div class="rule"><b>กฎ:</b> เอเจนต์ไม่ถือกุญแจกระเป๋าและไม่เซ็นแทนคุณ ขั้นที่ต้องเซ็นจะมีกรอบสีส้ม บอกว่าหน้าต่าง MetaMask ควรเป็นแบบไหน กด "ฉันพร้อมเซ็น" แล้วทำตาม เซ็นเสร็จเอเจนต์จะตรวจบนเชนให้</div>
+  <p class="lead">เอเจนต์หาข้อมูล ตรวจบนเชน และปิดงานให้เอง เหลือให้คุณเฉพาะสิ่งที่ต้องใช้กระเป๋าหรือบัญชีของคุณ</p>
+  <div class="rule"><b>กฎ:</b> เอเจนต์ไม่ถือกุญแจกระเป๋าและไม่เซ็นแทนคุณ อ่านข้อมูลจากที่อยู่กระเป๋าอย่างเดียว</div>
 
-  <div class="farm">
-    <span>กระเป๋าฟาร์ม (ดูอย่างเดียว)</span>
-    <input id="farm" placeholder="วางที่อยู่ 0x... ของ Account 2" autocomplete="off" spellcheck="false">
-    <button class="btn" id="farm-save" type="button">บันทึก</button>
-    <span class="meta" id="farm-msg">เก็บไว้ในเครื่องนี้เท่านั้น ใช้ตรวจว่าธุรกรรมสำเร็จ</span>
-  </div>
+  <section id="ag-tasks"></section>
+
+  <details class="farm" id="wallets">
+    <summary>กระเป๋าที่เอเจนต์ดูอยู่ (อ่านอย่างเดียว)</summary>
+    <label><span>กระเป๋าฟาร์ม</span><input id="farm" placeholder="วางที่อยู่ 0x... ของ Account 2" autocomplete="off" spellcheck="false"></label>
+    <label><span>กระเป๋าหลัก</span><input id="main" placeholder="วางที่อยู่ 0x... ของกระเป๋าหลัก" autocomplete="off" spellcheck="false"></label>
+    <span class="meta" id="farm-msg">เก็บไว้ในเครื่องนี้เท่านั้น ใช้ดูว่าทำอะไรไปแล้วบนเชน</span>
+  </details>
 
   <div class="shell" id="ag-shell">
     <nav class="alist" id="ag-list"><p class="loading">กำลังโหลด…</p></nav>
