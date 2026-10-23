@@ -75,7 +75,11 @@
     ],
     "wallets": [
      "main"
-    ]
+    ],
+    "skip": [
+     "disconnect"
+    ],
+    "skip_note": "ไม่มีสิทธิ์ Approve ค้าง เว็บที่ยังเชื่อมอยู่จึงดึงเงินไม่ได้ (ยังต้องปฏิเสธคำขอเซ็นจากเว็บที่ไม่รู้จักเสมอ)"
    },
    "open": {
     "u": "https://revoke.cash/address/{main}",

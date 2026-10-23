@@ -226,7 +226,7 @@
             state.steps[k] = { done_at: now(), skipped: false, proof: r.text, by: 'agent' };
             if (r.ok) for (const id of s.auto.skip || []) {
               const t = a.steps.find(x => x.id === id);
-              if (t && isOpen(a, t)) state.steps[a.id + ':' + id] = { done_at: now(), skipped: true, proof: T('ไม่ต้องทำ', 'Not needed'), by: 'agent' };
+              if (t && isOpen(a, t)) state.steps[a.id + ':' + id] = { done_at: now(), skipped: true, proof: s.auto.skip_note || T('ไม่ต้องทำ', 'Not needed'), by: 'agent' };
             }
           }
         }
