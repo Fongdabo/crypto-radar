@@ -149,6 +149,29 @@
     'บันทึกแล้ว': 'Saved', 'ดาวน์โหลดไฟล์สำรองแล้ว เก็บไว้ในที่ปลอดภัย': 'Backup downloaded. Keep it somewhere safe.', 'นำเข้าเรียบร้อย': 'Imported', 'ไฟล์นี้ไม่ใช่ไฟล์สำรองของแอปนี้': 'This is not a backup from this app',
     'ราคาล่าสุด ณ': 'Prices as of', '· อัปเดตทุกเช้าประมาณ 06:47 น.': '· updated every morning around 06:47', 'โหลดราคาไม่ได้': 'Could not load prices', 'นำเข้า': 'Import',
     'เหรียญ และ': 'coins and', 'ที่อยู่ใน': 'addresses in', 'บัญชี และ': 'accounts and', 'รายการซื้อขาย แทนข้อมูลเดิมในเครื่องนี้?': 'trades, replacing the data on this device?',
+    'แผงกระเป๋าฝังขวาแบบ MetaMask: บัญชี ยอดรวม เหรียญแยกเครือข่าย (ดูอย่างเดียว)': 'MetaMask-style wallet panel on the right: account, total and coins by network (read-only)',
+    'แท็บกิจกรรม: เว็บทางการที่ตรวจแล้ว ตัวตรวจลิงก์ก่อนเชื่อมกระเป๋า และสิ่งที่กดได้/ห้ามกด': 'Activities tab: verified official sites, a link checker before connecting, and what is safe to approve',
+    'ฟอนต์ภาษาไทยใหม่ (Noto Sans Thai Looped) อ่านง่ายขึ้น ใช้ได้แม้ออฟไลน์': 'New Thai font (Noto Sans Thai Looped), easier to read, works offline',
+    'การ์ดนับถอยหลังกดไปเว็บทางการได้': 'Countdown cards link to official sites',
+    'กระเป๋าแบบแท็บ: แสดงเฉพาะกระเป๋าที่คุณเพิ่มไว้ สลับได้ทั้งในหน้าพอร์ตและแผงด้านขวา กด + เพื่อเพิ่ม': 'Wallet tabs: only the wallets you added, switchable on the Portfolio page and in the side panel; + to add one',
+    'เชื่อม Ronin Wallet และกระเป๋าอื่นที่ติดตั้งในเบราว์เซอร์ได้ (ดูอย่างเดียว)': 'Connect Ronin Wallet and other wallets installed in the browser (read-only)',
+    'อ่านยอดบนเครือข่าย Ronin: RON, AXS, SLP, WETH และ USDC': 'Reads Ronin balances: RON, AXS, SLP, WETH and USDC',
+    // wallet tabs
+    'แสดงเฉพาะกระเป๋าที่คุณเพิ่มไว้ กดแท็บเพื่อสลับกระเป๋า กด + เพื่อเพิ่ม แอปอ่านยอดแบบดูอย่างเดียว รองรับ Ethereum และเครือข่าย EVM (Base, Polygon, Arbitrum, Optimism, Ronin), Bitcoin, Solana, Tron และ Stellar':
+      'Only the wallets you added are shown. Tap a tab to switch wallets, + to add one. Balances are read-only. Supports Ethereum and EVM chains (Base, Polygon, Arbitrum, Optimism, Ronin), Bitcoin, Solana, Tron and Stellar.',
+    'เพิ่มกระเป๋า': 'Add wallet', 'เอากระเป๋านี้ออก': 'Remove this wallet', 'เชื่อมกระเป๋า (ดูอย่างเดียว)': 'Connect a wallet (read-only)',
+    'หรือวางที่อยู่เอง': 'Or paste an address', 'เพิ่มเข้า': 'Add to', '+ กระเป๋าใหม่': '+ New wallet',
+    'ที่อยู่กระเป๋า (แอปรู้เองว่าเป็นเครือข่ายไหน)': 'Wallet address (the chain is detected automatically)',
+    'เหรียญใน': 'Coins in', 'เหรียญในกระเป๋าทั้งหมด': 'All coins in wallets', 'เพิ่มแล้ว · เชื่อมใหม่': 'Added · reconnect', 'ยังไม่ได้ติดตั้ง': 'Not installed',
+    'พบในเบราว์เซอร์นี้': 'Found in this browser', 'ไม่พบ': 'Not found:', 'ในเบราว์เซอร์นี้ ติดตั้งจากเว็บทางการก่อน หรือวางที่อยู่เองด้านล่าง': 'in this browser. Install it from the official site first, or paste an address below.',
+    'ดาวน์โหลด': 'Download', '(เว็บทางการ) ↗': '(official site) ↗', 'บนมือถือต้องเปิดแอปนี้จากเบราว์เซอร์ในแอป': 'On a phone, open this app in the in-app browser of',
+    'หรือวางที่อยู่เองด้านล่าง:': 'or paste an address below:', 'เปิดในแอป': 'Open in', 'ชื่อกระเป๋า': 'Wallet name',
+    'เอา': 'Remove', 'ออกจากแอป? (เงินในกระเป๋าไม่ได้หายไปไหน แอปแค่เลิกอ่านยอด)': 'from the app? (Your funds stay where they are; the app just stops reading the balance.)',
+    'ยังไม่มีที่อยู่ในกระเป๋านี้ เพิ่มได้ที่แท็บ "+"': 'No addresses in this wallet yet. Add one on the "+" tab.', 'ยังไม่มีที่อยู่ในกระเป๋านี้': 'No addresses in this wallet yet',
+    'เพิ่มกระเป๋าได้สูงสุด': 'You can add up to', ' ใบ': ' wallets', 'กระเป๋านี้ใส่ได้สูงสุด': 'This wallet holds up to', ' ที่อยู่': ' addresses',
+    'ไม่รู้จักที่อยู่นี้ ใส่ได้: EVM / Ronin (0x… หรือ ronin:…), Bitcoin (bc1… / 1… / 3…), Solana, Tron (T…), Stellar (G…) กดคัดลอกจากแอปกระเป๋าได้เลย': 'Unknown address. Accepted: EVM / Ronin (0x… or ronin:…), Bitcoin (bc1… / 1… / 3…), Solana, Tron (T…), Stellar (G…). Copy it from your wallet app.',
+    'อ่านยอดจาก Blockscout (EVM), mempool.space (Bitcoin), Solana RPC + Jupiter (Solana), TronGrid (Tron), Stellar Horizon และ Ronin RPC ราคาจาก CoinGecko แสดงเฉพาะเหรียญที่มีราคาในตลาด เหรียญแปลก ๆ ที่ถูกส่งเข้ากระเป๋าโดยไม่ได้ขอมักเป็นสแกม อย่ากดหรือแลกเด็ดขาด':
+      'Balances from Blockscout (EVM), mempool.space (Bitcoin), Solana RPC + Jupiter (Solana), TronGrid (Tron), Stellar Horizon and Ronin RPC; prices from CoinGecko. Only coins with a market price are shown. Unknown coins sent to you uninvited are usually scams: never click or swap them.',
     // coin page
     'ค้นหา': 'Search', 'เลือกเหรียญด้านบนเพื่อดูกราฟและบทวิเคราะห์': 'Pick a coin above to see its chart and analysis',
     'ราคาและกราฟจาก CoinGecko (สำรองด้วย Binance) บทวิเคราะห์เป็นข้อมูลเพื่อการศึกษา ไม่ใช่คำแนะนำการลงทุน': 'Prices and charts from CoinGecko (Binance as backup). Analysis is for research, not investment advice.',
@@ -185,7 +208,8 @@
     if (dict[trimmed] != null) return s.replace(trimmed, dict[trimmed]);
     let out = s;
     for (const k of keys) { if (!thai.test(out)) break; if (out.includes(k)) out = out.split(k).join(dict[k]); }
-    return out;
+    // Half-translated text reads worse than Thai, so keep the original unless every Thai part was known.
+    return thai.test(out) ? s : out;
   }
   window.t = tr;
 

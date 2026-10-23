@@ -8,11 +8,11 @@
     return s + '$' + (a < 1 && a !== 0 ? a.toPrecision(3) : a.toLocaleString('en-US', { maximumFractionDigits: 2 }));
   };
   const short = a => a.slice(0, 6) + '…' + a.slice(-5);
-  const MAX_ACCOUNTS = 5, MAX_PER_ACCOUNT = 10;
+  const MAX_ACCOUNTS = 10, MAX_PER_ACCOUNT = 10;
 
   // Address kinds, worked out from the address itself.
   const KINDS = {
-    evm: { label: 'Ethereum + EVM', icon: 'Ξ' },
+    evm: { label: 'Ethereum + EVM + Ronin', icon: 'Ξ' },
     btc: { label: 'Bitcoin', icon: '₿' },
     sol: { label: 'Solana', icon: '◎' },
     tron: { label: 'Tron', icon: 'T' },
@@ -33,7 +33,7 @@
   let prices = [], walletRows = [], walletState = '';
   let addrState = {};   // address -> 'loading' | 'ok' | 'failed' | 'cached'
   // Default account names follow the app language; names the user typed stay as typed.
-  const ACCT = window.CR_LANG === 'en' ? 'Account ' : 'บัญชี ';
+  const ACCT = window.CR_LANG === 'en' ? 'Wallet ' : 'กระเป๋า ';
   let store = read();
   const allAddrs = () => store.accounts.flatMap(x => x.addresses);
   const accountOf = a => store.accounts.find(x => x.addresses.includes(a));
@@ -52,11 +52,13 @@
     accounts = accounts.filter(x => x && typeof x === 'object').slice(0, MAX_ACCOUNTS).map((x, i) => ({
       id: String(x.id || 'a' + (i + 1)),
       name: String(x.name || ACCT + (i + 1)).slice(0, 30),
+      wallet: typeof x.wallet === 'string' && /^[a-z0-9._-]{1,60}$/.test(x.wallet) ? x.wallet : undefined,
       addresses: (Array.isArray(x.addresses) ? x.addresses : [])
         .filter(a => typeof a === 'string' && kindOf(a)).map(norm)
         .filter(a => !seen.has(a) && seen.add(a)).slice(0, MAX_PER_ACCOUNT),
     }));
-    if (!accounts.length) accounts = [{ id: 'a1', name: ACCT + '1', addresses: [] }];
+    // Only wallets the user added are shown, so an empty unnamed starter account is dropped.
+    accounts = accounts.filter(x => x.addresses.length || x.wallet || !/^(บัญชี|Account) 1$/.test(x.name));
     const connected = (Array.isArray(s.connected) ? s.connected : []).filter(a => seen.has(a));
     const trades = (Array.isArray(s.trades) ? s.trades : []).filter(t => t && /^\d{4}-\d{2}-\d{2}$/.test(t.date) && (t.type === 'buy' || t.type === 'sell')
       && /^[A-Z0-9.$_-]{1,20}$/.test(t.sym) && t.amount > 0 && t.price >= 0 && (t.cur === 'THB' || t.cur === 'USD'))
@@ -120,6 +122,63 @@
   const row = (sym, chain, amount, price, extra) => Object.assign({ sym, chain, amount, price: price == null ? null : Number(price), value: price == null ? null : amount * price }, extra);
 
   const EVM_CHAINS = [['eth', 'Ethereum', 'ETH'], ['base', 'Base', 'ETH'], ['polygon', 'Polygon', 'POL'], ['arbitrum', 'Arbitrum', 'ETH'], ['optimism', 'Optimism', 'ETH']];
+  // Ronin (Axie's chain) uses the same 0x addresses. Read over public JSON-RPC: RON plus a few known tokens,
+  // each confirmed by its on-chain symbol so a wrong contract can never show up as a real coin.
+  const RONIN_RPCS = ['https://api.roninchain.com/rpc', 'https://ronin.drpc.org'];
+  const RONIN_TOKENS = [
+    ['AXS', '0x97a9107c1793bc407d6f527b77e7fff4d812bece', 'axie-infinity', 'AXSUSDT'],
+    ['SLP', '0xa8754b9fa15fc18bb59458815510e40a12cd2014', 'smooth-love-potion', 'SLPUSDT'],
+    ['WETH', '0xc99a6a985ed2cac1ef41640596c5a5f9f4e19ef5', 'ethereum', 'ETHUSDT'],
+    ['USDC', '0x0b7007c13325c48911f73a2dad5fa5dcbf808adc', 'usd-coin', null],
+  ];
+  async function roninRpc(method, params) {
+    return firstOk(RONIN_RPCS, async url => {
+      const j = await retry(() => getJson(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }) }), 2);
+      if (j.error) throw new Error(j.error.message || 'rpc error');
+      return j.result;
+    });
+  }
+  const call = (to, data) => roninRpc('eth_call', [{ to, data }, 'latest']);
+  function abiString(hex) {
+    try {
+      const h = String(hex).replace(/^0x/, '');
+      const len = parseInt(h.slice(64, 128), 16);
+      const bytes = h.slice(128, 128 + len * 2).match(/../g) || [];
+      return new TextDecoder().decode(new Uint8Array(bytes.map(b => parseInt(b, 16))));
+    } catch (e) { return ''; }
+  }
+  async function roninPrices() {
+    const ids = ['ronin'].concat(RONIN_TOKENS.map(t => t[2]));
+    try {
+      const j = await retry(() => getJson('https://api.coingecko.com/api/v3/simple/price?ids=' + ids.join(',') + '&vs_currencies=usd'), 2);
+      return Object.fromEntries(ids.map(id => [id, j[id] && j[id].usd]));
+    } catch (e) {
+      try {
+        const pairs = ['RONUSDT'].concat(RONIN_TOKENS.map(t => t[3]).filter(Boolean));
+        const list = await retry(() => getJson('https://api.binance.com/api/v3/ticker/price?symbols=' + encodeURIComponent(JSON.stringify(pairs))), 2);
+        const by = Object.fromEntries(list.map(t => [t.symbol, Number(t.price)]));
+        const out = { ronin: by.RONUSDT, 'usd-coin': 1 };
+        for (const t of RONIN_TOKENS) if (t[3]) out[t[2]] = by[t[3]];
+        return out;
+      } catch (e2) { return { 'usd-coin': 1 }; }
+    }
+  }
+  async function readRonin(a) {
+    const pad = a.toLowerCase().replace(/^0x/, '').padStart(64, '0');
+    const [wei, px] = await Promise.all([roninRpc('eth_getBalance', [a, 'latest']), roninPrices()]);
+    const rows = [];
+    const ron = units(wei, 18);
+    if (ron > 0) rows.push(row('RON', 'Ronin', ron, px.ronin));
+    await Promise.all(RONIN_TOKENS.map(async ([sym, addr, id]) => {
+      const raw = await call(addr, '0x70a08231' + pad);
+      if (!raw || /^0x0*$/.test(raw)) return;
+      const [symHex, decHex] = await Promise.all([call(addr, '0x95d89b41'), call(addr, '0x313ce567')]);
+      if (abiString(symHex).toUpperCase() !== sym) return;
+      const amt = units(raw, parseInt(decHex, 16));
+      if (amt > 0) rows.push(row(sym, 'Ronin', amt, px[id]));
+    }));
+    return rows;
+  }
   async function readEvmChain(a, host, chain, native) {
     const base = `https://${host}.blockscout.com/api/v2/addresses/${a}`;
     const info = await retry(() => getJson(base)).catch(e => { if (e.status === 404) return null; throw e; });
@@ -255,7 +314,10 @@
     const cache = cacheGet(), jobs = [];
     for (const a of addrs) {
       const k = kindOf(a);
-      if (k === 'evm') for (const [host, chain, native] of EVM_CHAINS) jobs.push({ a, key: a + '|' + host, label: chain, run: () => readEvmChain(a, host, chain, native) });
+      if (k === 'evm') {
+        for (const [host, chain, native] of EVM_CHAINS) jobs.push({ a, key: a + '|' + host, label: chain, run: () => readEvmChain(a, host, chain, native) });
+        jobs.push({ a, key: a + '|ronin', label: 'Ronin', run: () => readRonin(a) });
+      }
       else jobs.push({ a, key: a + '|' + k, label: KINDS[k].label, run: () => ({ btc: readBtc, sol: readSolana, tron: readTron, xlm: readXlm })[k](a) });
     }
     let ok = 0;
@@ -289,72 +351,106 @@
     return a;
   }
   function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
-  function renderAccounts() {
-    const list = $('w-list'); list.textContent = '';
-    for (const acct of store.accounts) {
-      const box = el('div', 'acct');
-      const h = el('div', 'acct-h');
-      const nm = el('span', 'nm', acct.name); nm.dataset.noI18n = ''; h.append(nm);
-      const ren = el('button', 'plain', 'แก้ชื่อ'); ren.type = 'button';
-      ren.onclick = () => {
-        const n = (prompt('ชื่อบัญชี', acct.name) || '').trim().slice(0, 30);
-        if (n) { acct.name = n; save(); renderAccounts(); fillTargets(); }
-      };
-      h.append(ren);
-      if (store.accounts.length > 1) {
-        const del = el('button', 'ghost', 'ลบบัญชี'); del.type = 'button';
-        del.onclick = () => {
-          if (!confirm('ลบ "' + acct.name + '" และที่อยู่ทั้งหมดในบัญชีนี้ออกจากแอป? (เงินในกระเป๋าไม่ได้หายไปไหน)')) return;
-          store.accounts = store.accounts.filter(x => x !== acct);
-          store.connected = store.connected.filter(a => allAddrs().includes(a));
-          save(); fillTargets(); renderConnect(); loadWallets();
-        };
-        h.append(del);
-      }
+  // Wallet tabs: one tab per wallet the user added (MetaMask, Phantom, Ronin, a pasted address group…), plus "+" to add one.
+  // The selected tab is shared with the side panel.
+  const TAB_KEY = 'crypto-radar:panel-account:v1';
+  let tab = (() => { try { return localStorage.getItem(TAB_KEY) || ''; } catch (e) { return ''; } })();
+  const setTab = t => { tab = t; try { localStorage.setItem(TAB_KEY, t); } catch (e) {} renderWallet(); };
+  const shown = () => store.accounts;
+  const current = () => (tab === '+' ? null : shown().find(x => x.id === tab) || shown()[0] || null);
+  const badge = (acct, icon) => (window.CRWallets ? window.CRWallets.badge(acct.wallet, acct.name, icon) : el('span', '', ''));
+  function renderTabs() {
+    const bar = $('w-tabs'); bar.textContent = '';
+    const cur = current();
+    for (const acct of shown()) {
+      const b = el('button', 'wtab' + (cur === acct ? ' on' : '')); b.type = 'button'; b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', String(cur === acct));
+      const nm = el('span', 'nm', acct.name); nm.dataset.noI18n = '';
       const loading = acct.addresses.some(a => addrState[a] === 'loading');
-      h.append(el('span', 'tot', acct.addresses.length ? (loading ? '…' : usd(sumOf(walletRows.filter(r => acct.addresses.includes(r.addr))))) : '$0'));
-      box.append(h);
-      if (!acct.addresses.length) box.append(el('div', 'addr muted', 'ยังไม่มีที่อยู่ในบัญชีนี้ เพิ่มได้จากด้านล่าง'));
-      for (const a of acct.addresses) {
-        const k = kindOf(a), r = el('div', 'addr');
-        r.append(el('span', 'ic ' + k, KINDS[k].icon));
-        const ch = el('div', 'ch');
-        ch.append(el('b', '', KINDS[k].label));
-        const code = el('code', '', short(a));
-        const cp = el('button', 'copy', '⧉'); cp.type = 'button'; cp.title = 'คัดลอกที่อยู่';
-        cp.onclick = async () => { try { await navigator.clipboard.writeText(a); cp.textContent = '✓'; setTimeout(() => (cp.textContent = '⧉'), 1200); } catch (e) {} };
-        ch.append(code, cp);
-        r.append(ch);
-        const st = addrState[a];
-        const bal = el('div', 'bal', st === 'loading' ? '…' : st === 'failed' ? 'อ่านไม่ได้' : usd(addrTotal(a)));
-        if (st === 'cached') bal.append(el('small', '', 'ยอดล่าสุดที่อ่านได้'));
-        r.append(bal);
-        const rm = el('button', 'ghost', 'เอาออก'); rm.type = 'button';
-        rm.onclick = () => { acct.addresses = acct.addresses.filter(x => x !== a); store.connected = store.connected.filter(x => x !== a); save(); renderConnect(); loadWallets(); };
-        r.append(rm);
-        box.append(r);
-      }
-      list.append(box);
+      b.append(badge(acct, detectedIcon(acct.wallet)), nm, el('span', 'tot', loading ? '…' : usd(sumOf(walletRows.filter(r => acct.addresses.includes(r.addr))))));
+      b.onclick = () => setTab(acct.id);
+      bar.append(b);
     }
+    const plus = el('button', 'wtab add' + (!cur ? ' on' : '')); plus.type = 'button'; plus.setAttribute('role', 'tab');
+    plus.title = 'เพิ่มกระเป๋า'; plus.append(el('span', 'plus', '+'), el('span', 'nm', 'เพิ่มกระเป๋า'));
+    plus.onclick = () => setTab('+');
+    bar.append(plus);
+  }
+  function renderAccounts() {
+    renderTabs();
+    const list = $('w-list'); list.textContent = '';
+    const acct = current();
+    $('w-addpane').hidden = !!acct;
+    if (!acct) { renderPicker(); return; }
+    const box = el('div', 'acct');
+    const h = el('div', 'acct-h');
+    h.append(badge(acct, detectedIcon(acct.wallet)));
+    const nm = el('span', 'nm', acct.name); nm.dataset.noI18n = ''; h.append(nm);
+    const ren = el('button', 'plain', 'แก้ชื่อ'); ren.type = 'button';
+    ren.onclick = () => {
+      const n = (prompt('ชื่อกระเป๋า', acct.name) || '').trim().slice(0, 30);
+      if (n) { acct.name = n; save(); renderWallet(); fillTargets(); }
+    };
+    h.append(ren);
+    const del = el('button', 'ghost', 'เอากระเป๋านี้ออก'); del.type = 'button';
+    del.onclick = async () => {
+      if (!confirm('เอา "' + acct.name + '" ออกจากแอป? (เงินในกระเป๋าไม่ได้หายไปไหน แอปแค่เลิกอ่านยอด)')) return;
+      await disconnect(acct);
+      store.accounts = store.accounts.filter(x => x !== acct);
+      store.connected = store.connected.filter(a => allAddrs().includes(a));
+      tab = ''; save(); fillTargets(); loadWallets();
+    };
+    h.append(del);
+    const loading = acct.addresses.some(a => addrState[a] === 'loading');
+    h.append(el('span', 'tot', acct.addresses.length ? (loading ? '…' : usd(sumOf(walletRows.filter(r => acct.addresses.includes(r.addr))))) : '$0'));
+    box.append(h);
+    if (!acct.addresses.length) box.append(el('div', 'addr muted', 'ยังไม่มีที่อยู่ในกระเป๋านี้ เพิ่มได้ที่แท็บ "+"'));
+    for (const a of acct.addresses) {
+      const k = kindOf(a), r = el('div', 'addr');
+      r.append(el('span', 'ic ' + k, KINDS[k].icon));
+      const ch = el('div', 'ch');
+      ch.append(el('b', '', KINDS[k].label));
+      const code = el('code', '', short(a));
+      const cp = el('button', 'copy', '⧉'); cp.type = 'button'; cp.title = 'คัดลอกที่อยู่';
+      cp.onclick = async () => { try { await navigator.clipboard.writeText(a); cp.textContent = '✓'; setTimeout(() => (cp.textContent = '⧉'), 1200); } catch (e) {} };
+      ch.append(code, cp);
+      r.append(ch);
+      const st = addrState[a];
+      const bal = el('div', 'bal', st === 'loading' ? '…' : st === 'failed' ? 'อ่านไม่ได้' : usd(addrTotal(a)));
+      if (st === 'cached') bal.append(el('small', '', 'ยอดล่าสุดที่อ่านได้'));
+      r.append(bal);
+      const rm = el('button', 'ghost', 'เอาออก'); rm.type = 'button';
+      rm.onclick = () => { acct.addresses = acct.addresses.filter(x => x !== a); store.connected = store.connected.filter(x => x !== a); save(); loadWallets(); };
+      r.append(rm);
+      box.append(r);
+    }
+    list.append(box);
   }
 
   function renderWallet() {
     renderAccounts();
     const tb = $('w-rows'); tb.textContent = '';
     const note = t => { const tr = document.createElement('tr'), td = document.createElement('td'); td.colSpan = 5; td.className = 'muted'; td.textContent = t; tr.append(td); tb.append(tr); };
+    // The coin list follows the selected wallet tab; the "+" tab shows every wallet.
+    const acct = current();
+    const head = $('w-rows-h');
+    if (acct) { const n = el('span', '', '"' + acct.name + '"'); n.dataset.noI18n = ''; head.replaceChildren('เหรียญใน ', n); }
+    else head.textContent = 'เหรียญในกระเป๋าทั้งหมด';
+    const rows = acct ? walletRows.filter(r => acct.addresses.includes(r.addr)) : walletRows;
     if (!allAddrs().length) return note('ยังไม่ได้ใส่ที่อยู่กระเป๋า');
+    if (acct && !acct.addresses.length) return note('ยังไม่มีที่อยู่ในกระเป๋านี้');
     if (walletState === 'loading') return note('กำลังอ่านยอดจากบล็อกเชน…');
     if (walletState === 'blocked') return note('ตอนนี้เชื่อมต่อบล็อกเชนไม่ได้ ลองกด "อ่านยอดใหม่" อีกครั้งในอีกสักครู่');
-    if (!walletRows.length) note('ไม่พบเหรียญที่มีราคาในตลาดในกระเป๋า');
-    const many = store.accounts.filter(x => x.addresses.length).length > 1;
-    for (const r of walletRows) {
+    if (!rows.length) note('ไม่พบเหรียญที่มีราคาในตลาดในกระเป๋า');
+    const many = !acct && store.accounts.filter(x => x.addresses.length).length > 1;
+    for (const r of rows) {
       const tr = document.createElement('tr');
       const where = r.chain + (many && accountOf(r.addr) ? ' · ' + accountOf(r.addr).name : '');
       for (const c of [r.sym, where, r.amount.toLocaleString('en-US', { maximumFractionDigits: 6 }), usd(r.price), usd(r.value)]) { const td = document.createElement('td'); td.textContent = c; tr.append(td); }
       if (!r.unverified) tr.cells[0].replaceChildren(coinLink(r.sym));
       tb.append(tr);
     }
-    if (walletRows.some(r => r.unverified)) note('⚠ = เหรียญที่ยังไม่ได้รับการยืนยันหรือสภาพคล่องต่ำ ราคาอาจไม่จริง อาจเป็นเหรียญสแกมที่ถูกส่งมาเอง และไม่นับรวมในยอดรวม');
+    if (rows.some(r => r.unverified)) note('⚠ = เหรียญที่ยังไม่ได้รับการยืนยันหรือสภาพคล่องต่ำ ราคาอาจไม่จริง อาจเป็นเหรียญสแกมที่ถูกส่งมาเอง และไม่นับรวมในยอดรวม');
     if (walletState === 'partial') {
       note('อ่านไม่สำเร็จ: ' + [...new Set(failedChains)].join(', ') + (fromCache ? ' (แสดงยอดล่าสุดที่เคยอ่านได้แทน)' : '') + ' มักเกิดจากเว็บสำรวจบล็อกเชนจำกัดจำนวนครั้ง กด "อ่านยอดใหม่" อีกครั้งได้');
     }
@@ -364,42 +460,52 @@
     const sel = $('a-target'), cur = sel.value;
     sel.textContent = '';
     for (const x of store.accounts) { const o = el('option', '', x.name); o.value = x.id; o.dataset.noI18n = ''; sel.append(o); }
-    if (store.accounts.some(x => x.id === cur)) sel.value = cur;
+    const o = el('option', '', '+ กระเป๋าใหม่'); o.value = 'new'; sel.append(o);
+    sel.value = store.accounts.some(x => x.id === cur) || cur === 'new' ? cur : store.accounts.length ? store.accounts[0].id : 'new';
   }
-  const target = () => store.accounts.find(x => x.id === $('a-target').value) || store.accounts[0];
-  $('a-new').onclick = () => {
-    if (store.accounts.length >= MAX_ACCOUNTS) { $('w-msg').textContent = 'สร้างได้สูงสุด ' + MAX_ACCOUNTS + ' บัญชี'; return; }
-    const n = (prompt('ตั้งชื่อบัญชีใหม่', ACCT + (store.accounts.length + 1)) || '').trim().slice(0, 30);
-    if (!n) return;
-    const acct = { id: 'a' + Date.now().toString(36), name: n, addresses: [] };
-    store.accounts.push(acct); save(); fillTargets(); $('a-target').value = acct.id; renderAccounts();
+  // A new tab for a wallet: named after the wallet when it came from a connect button.
+  function newAccount(name, wallet) {
+    if (store.accounts.length >= MAX_ACCOUNTS) return null;
+    const acct = { id: 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), name: String(name).slice(0, 30), addresses: [] };
+    if (wallet) acct.wallet = wallet;
+    store.accounts.push(acct);
+    return acct;
+  }
+  const target = () => {
+    const v = $('a-target').value;
+    return v === 'new' ? null : store.accounts.find(x => x.id === v) || null;
   };
 
-  // Adds to the chosen account; returns a message when it can't.
-  function addAddress(a, connected) {
+  // Adds to the given wallet tab; returns a message when it can't.
+  function addAddress(a, connected, acct) {
     const owner = accountOf(a);
     if (owner) { if (connected && !store.connected.includes(a)) store.connected.push(a); return 'ที่อยู่นี้อยู่ใน "' + owner.name + '" แล้ว'; }
-    const acct = target();
-    if (acct.addresses.length >= MAX_PER_ACCOUNT) return 'บัญชีนี้ใส่ได้สูงสุด ' + MAX_PER_ACCOUNT + ' ที่อยู่';
+    if (!acct) return 'เพิ่มกระเป๋าได้สูงสุด ' + MAX_ACCOUNTS + ' ใบ';
+    if (acct.addresses.length >= MAX_PER_ACCOUNT) return 'กระเป๋านี้ใส่ได้สูงสุด ' + MAX_PER_ACCOUNT + ' ที่อยู่';
     acct.addresses.push(a);
     if (connected) store.connected.push(a);
     return '';
   }
 
   $('w-add').onclick = () => {
-    const m = $('w-msg'), v = $('w-addr').value.trim();
+    const m = $('w-msg');
+    let v = $('w-addr').value.trim();
     const clear = t => { $('w-addr').value = ''; m.textContent = t; };
     if (v.split(/\s+/).length >= 6) return clear('นี่ดูเหมือน seed phrase! แอปไม่ได้บันทึกไว้ ห้ามให้ใครเห็นคำชุดนี้เด็ดขาด ให้ใส่เฉพาะที่อยู่กระเป๋า');
     if (/^(0x)?[0-9a-fA-F]{64}$/.test(v) || /^\[\s*\d+(\s*,\s*\d+){31,}\s*\]$/.test(v) || /^[1-9A-HJ-NP-Za-km-z]{60,100}$/.test(v)
         || /^[5KL][1-9A-HJ-NP-Za-km-z]{50,51}$/.test(v) || /^S[A-Z2-7]{55}$/.test(v) || /^xprv/.test(v)) {
       return clear('นี่ดูเหมือน private key! แอปไม่ได้บันทึกไว้ ถ้าเคยให้ใครเห็นให้ย้ายเงินไปกระเป๋าใหม่ทันที ให้ใส่เฉพาะที่อยู่กระเป๋า');
     }
+    if (/^ronin:[0-9a-fA-F]{40}$/.test(v)) v = '0x' + v.slice(6);   // Ronin Wallet shows addresses as ronin:…
     const k = kindOf(v);
-    if (!k) { m.textContent = 'ไม่รู้จักที่อยู่นี้ ใส่ได้: EVM (0x…), Bitcoin (bc1… / 1… / 3…), Solana, Tron (T…), Stellar (G…) กดคัดลอกจากแอปกระเป๋าได้เลย'; return; }
-    const err = addAddress(norm(v), false);
+    if (!k) { m.textContent = 'ไม่รู้จักที่อยู่นี้ ใส่ได้: EVM / Ronin (0x… หรือ ronin:…), Bitcoin (bc1… / 1… / 3…), Solana, Tron (T…), Stellar (G…) กดคัดลอกจากแอปกระเป๋าได้เลย'; return; }
+    if (accountOf(norm(v))) { m.textContent = 'ที่อยู่นี้อยู่ใน "' + accountOf(norm(v)).name + '" แล้ว'; return; }
+    const acct = target() || newAccount(ACCT + (store.accounts.length + 1));
+    const err = addAddress(norm(v), false, acct);
     if (err) { m.textContent = err; return; }
-    $('w-addr').value = ''; m.textContent = 'เพิ่ม ' + KINDS[k].label + ' เข้า "' + target().name + '" แล้ว';
-    save(); loadWallets();
+    $('w-addr').value = ''; m.textContent = '';
+    save(); fillTargets(); tab = acct.id; try { localStorage.setItem(TAB_KEY, tab); } catch (e) {}
+    loadWallets();
   };
   $('w-refresh').onclick = loadWallets;
 
@@ -410,81 +516,92 @@
     if (!ALLOWED.has(method)) throw new Error('blocked method ' + method);
     return provider.request(params ? { method, params } : { method });
   };
+  // Browser wallets announce themselves (EIP-6963); Ronin and older wallets may only inject a global.
   const announced = [];
-  window.addEventListener('eip6963:announceProvider', e => { if (e.detail && e.detail.provider) announced.push(e.detail); });
-  window.dispatchEvent(new Event('eip6963:requestProvider'));
-  function evmProvider() {
-    const mm = announced.find(d => d.info && d.info.rdns === 'io.metamask');
-    if (mm) return { provider: mm.provider, name: 'MetaMask' };
-    if (announced[0]) return { provider: announced[0].provider, name: (announced[0].info && announced[0].info.name) || 'กระเป๋า' };
-    if (window.ethereum && window.ethereum.request) return { provider: window.ethereum, name: window.ethereum.isMetaMask ? 'MetaMask' : 'กระเป๋า' };
+  const RDNS = { 'io.metamask': 'metamask', 'app.phantom': 'phantom', 'com.roninchain.wallet': 'ronin', 'io.rabby': 'rabby', 'com.okex.wallet': 'okx', 'com.coinbase.wallet': 'coinbase', 'com.trustwallet.app': 'trust', 'com.binance.wallet': 'binance' };
+  const keyOf = rdns => RDNS[rdns] || String(rdns || '').toLowerCase().replace(/[^a-z0-9._-]/g, '').slice(0, 60);
+  window.addEventListener('eip6963:announceProvider', e => {
+    const d = e.detail;
+    if (!d || !d.provider || !d.info || announced.some(x => x.info.rdns === d.info.rdns)) return;
+    announced.push(d);
+    if (!current()) renderPicker();
+  });
+  const detectedIcon = key => { const d = announced.find(x => keyOf(x.info.rdns) === key); return d && typeof d.info.icon === 'string' && /^data:image\//.test(d.info.icon) ? d.info.icon : null; };
+  const WALLETS = [
+    { key: 'metamask', name: 'MetaMask', type: 'evm', install: 'https://metamask.io/download/', mobile: () => 'https://metamask.app.link/dapp/' + here.replace(/^https?:\/\//, '') },
+    { key: 'phantom', name: 'Phantom', type: 'sol', install: 'https://phantom.com/download', mobile: () => 'https://phantom.app/ul/browse/' + encodeURIComponent(here) + '?ref=' + encodeURIComponent(location.origin) },
+    { key: 'ronin', name: 'Ronin Wallet', type: 'evm', install: 'https://wallet.roninchain.com/', global: () => window.ronin && window.ronin.provider },
+  ];
+  function walletList() {
+    const list = WALLETS.slice();
+    for (const d of announced) {
+      const key = keyOf(d.info.rdns);
+      if (!key || list.some(w => w.key === key)) continue;
+      list.push({ key, name: String(d.info.name || key).slice(0, 30), type: 'evm' });
+    }
+    return list;
+  }
+  function providerOf(w) {
+    if (w.type === 'sol') { const p = (window.phantom && window.phantom.solana) || window.solana; return p && p.connect ? p : null; }
+    const d = announced.find(x => keyOf(x.info.rdns) === w.key);
+    if (d) return d.provider;
+    const g = w.global && w.global();
+    if (g && g.request) return g;
+    if (w.key === 'metamask' && window.ethereum && window.ethereum.isMetaMask && window.ethereum.request) return window.ethereum;
     return null;
   }
-  function solProvider() {
-    const p = (window.phantom && window.phantom.solana) || window.solana;
-    return p && p.connect ? p : null;
-  }
   const here = location.href.split('#')[0];
-  function noWallet(kind) {
+  function noWallet(w) {
     const m = $('c-msg'); m.textContent = '';
     const mobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    m.append(mobile
-      ? 'บนมือถือต้องเปิดแอปนี้จากเบราว์เซอร์ในแอป ' + kind + ' หรือวางที่อยู่กระเป๋าเองในช่องด้านล่าง: '
-      : 'ไม่พบ ' + kind + ' ในเบราว์เซอร์นี้ ติดตั้งส่วนขยายก่อน หรือวางที่อยู่กระเป๋าเองในช่องด้านล่าง ');
-    if (mobile) {
-      const a = document.createElement('a');
-      a.href = kind === 'MetaMask'
-        ? 'https://metamask.app.link/dapp/' + here.replace(/^https?:\/\//, '')
-        : 'https://phantom.app/ul/browse/' + encodeURIComponent(here) + '?ref=' + encodeURIComponent(location.origin);
-      a.textContent = 'เปิดในแอป ' + kind;
-      a.style.color = 'var(--blue)';
-      m.append(a);
+    const link = (href, text) => { const a = document.createElement('a'); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = text; a.style.color = 'var(--blue)'; return a; };
+    if (mobile && w.mobile) { m.append('บนมือถือต้องเปิดแอปนี้จากเบราว์เซอร์ในแอป ' + w.name + ' หรือวางที่อยู่เองด้านล่าง: '); m.append(link(w.mobile(), 'เปิดในแอป ' + w.name)); return; }
+    m.append('ไม่พบ ' + w.name + ' ในเบราว์เซอร์นี้ ติดตั้งจากเว็บทางการก่อน หรือวางที่อยู่เองด้านล่าง ');
+    if (w.install) m.append(link(w.install, 'ดาวน์โหลด ' + w.name + ' (เว็บทางการ) ↗'));
+  }
+  function renderPicker() {
+    const box = $('c-wallets'); if (!box) return;
+    box.textContent = '';
+    for (const w of walletList()) {
+      const p = providerOf(w), mine = store.accounts.find(x => x.wallet === w.key);
+      const b = el('button', 'wpick-b'); b.type = 'button';
+      const t = el('span', 't'); t.append(el('b', '', w.name), el('span', 'muted', mine ? 'เพิ่มแล้ว · เชื่อมใหม่' : p ? 'พบในเบราว์เซอร์นี้' : 'ยังไม่ได้ติดตั้ง'));
+      b.append(badge({ wallet: w.key, name: w.name }, detectedIcon(w.key)), t);
+      b.onclick = () => connect(w);
+      box.append(b);
     }
   }
-  function addConnected(list) {
-    const errs = list.map(a => addAddress(a, true)).filter(Boolean);
-    save(); renderConnect(); loadWallets();
-    return errs;
+  async function connect(w) {
+    const p = providerOf(w);
+    if (!p) return noWallet(w);
+    const m = $('c-msg');
+    m.textContent = 'กดยืนยันการเชื่อมต่อใน ' + w.name + ' (เป็นการขอดูที่อยู่เท่านั้น)';
+    try {
+      let list;
+      if (w.type === 'sol') { const r = await p.connect(); list = [String((r && r.publicKey) || p.publicKey || '')].filter(isSol); }
+      else list = (await ask(p, 'eth_requestAccounts') || []).map(a => String(a).toLowerCase()).filter(isEvm);
+      if (!list.length) { m.textContent = 'ไม่ได้รับที่อยู่จากกระเป๋า'; return; }
+      const acct = store.accounts.find(x => x.wallet === w.key) || newAccount(w.name, w.key);
+      const errs = list.map(a => addAddress(a, true, acct)).filter(Boolean);
+      save(); fillTargets();
+      if (acct) { tab = acct.id; try { localStorage.setItem(TAB_KEY, tab); } catch (e) {} }
+      loadWallets();
+      m.textContent = 'เชื่อม ' + w.name + ' แล้ว (ดูอย่างเดียว)' + (errs.length ? ' · ' + errs[0] : '');
+    } catch (e) { m.textContent = e && e.code === 4001 ? 'ยกเลิกการเชื่อมต่อแล้ว' : 'เชื่อมต่อไม่สำเร็จ ลองใหม่ หรือวางที่อยู่เองด้านล่าง'; }
   }
-  let evmConn = null, solConn = null;
-  $('c-evm').onclick = async () => {
-    const w = evmProvider();
-    if (!w) return noWallet('MetaMask');
-    $('c-msg').textContent = 'กดยืนยันการเชื่อมต่อใน ' + w.name + ' (เป็นการขอดูที่อยู่เท่านั้น)';
+  // Taking a connected wallet out also asks the wallet to forget this site.
+  async function disconnect(acct) {
+    const w = walletList().find(x => x.key === acct.wallet);
+    if (!w || !acct.addresses.some(a => store.connected.includes(a))) return;
+    const p = providerOf(w);
     try {
-      const accts = await ask(w.provider, 'eth_requestAccounts');
-      const list = (Array.isArray(accts) ? accts : []).map(a => String(a).toLowerCase()).filter(isEvm);
-      if (!list.length) { $('c-msg').textContent = 'ไม่ได้รับที่อยู่จากกระเป๋า'; return; }
-      evmConn = w.provider;
-      const errs = addConnected(list);
-      $('c-msg').textContent = 'เชื่อม ' + w.name + ' แล้ว (ดูอย่างเดียว)' + (errs.length ? ' · ' + errs[0] : '');
-    } catch (e) { $('c-msg').textContent = e && e.code === 4001 ? 'ยกเลิกการเชื่อมต่อแล้ว' : 'เชื่อมต่อไม่สำเร็จ ลองใหม่ หรือวางที่อยู่เองด้านล่าง'; }
-  };
-  $('c-sol').onclick = async () => {
-    const p = solProvider();
-    if (!p) return noWallet('Phantom');
-    $('c-msg').textContent = 'กดยืนยันการเชื่อมต่อใน Phantom (เป็นการขอดูที่อยู่เท่านั้น)';
-    try {
-      const r = await p.connect();
-      const a = String((r && r.publicKey) || p.publicKey || '');
-      if (!isSol(a)) { $('c-msg').textContent = 'ไม่ได้รับที่อยู่จากกระเป๋า'; return; }
-      solConn = p;
-      const errs = addConnected([a]);
-      $('c-msg').textContent = 'เชื่อม Phantom แล้ว (ดูอย่างเดียว)' + (errs.length ? ' · ' + errs[0] : '');
-    } catch (e) { $('c-msg').textContent = e && e.code === 4001 ? 'ยกเลิกการเชื่อมต่อแล้ว' : 'เชื่อมต่อไม่สำเร็จ ลองใหม่ หรือวางที่อยู่เองด้านล่าง'; }
-  };
-  $('c-off').onclick = async () => {
-    const w = evmConn || (evmProvider() || {}).provider;
-    if (w && store.connected.some(isEvm)) { try { await ask(w, 'wallet_revokePermissions', [{ eth_accounts: {} }]); } catch (e) {} }
-    const s = solConn || solProvider();
-    if (s && s.disconnect && store.connected.some(isSol)) { try { await s.disconnect(); } catch (e) {} }
-    for (const x of store.accounts) x.addresses = x.addresses.filter(a => !store.connected.includes(a));
-    store.connected = [];
-    evmConn = solConn = null;
-    save(); renderConnect(); loadWallets();
-    $('c-msg').textContent = 'ตัดการเชื่อมต่อแล้ว และเอาที่อยู่ที่เชื่อมไว้ออกจากรายการ';
-  };
-  function renderConnect() { $('c-off').hidden = !store.connected.length; }
+      if (w.type === 'sol') { if (p && p.disconnect) await p.disconnect(); }
+      else if (p) await ask(p, 'wallet_revokePermissions', [{ eth_accounts: {} }]);
+    } catch (e) {}
+  }
+  function renderConnect() { if (!current()) renderPicker(); }
+  window.dispatchEvent(new Event('eip6963:requestProvider'));
+  fillTargets();
   renderConnect();
   fillTargets();
 

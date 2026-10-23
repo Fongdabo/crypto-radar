@@ -18,6 +18,17 @@
   const short = a => a.slice(0, 6) + '…' + a.slice(-4);
   const CHAIN_COLOR = { Ethereum: '#627eea', Base: '#0052ff', Polygon: '#8247e5', Arbitrum: '#28a0f0', Optimism: '#ff0420', Bitcoin: '#f7931a', Solana: '#14f195', Tron: '#eb0029', Stellar: '#7d7d7d' };
 
+  // Wallet badges, shared with the portfolio page's wallet tabs. A wallet's own icon is used when the browser has it.
+  const LOOK = { metamask: ['🦊', '#3b2412'], phantom: ['👻', '#ab9ff2'], ronin: ['R', '#1273ea'], rabby: ['🐰', '#7084ff'], okx: ['OKX', '#111'], coinbase: ['C', '#0052ff'], trust: ['T', '#0500ff'], binance: ['B', '#f0b90b'] };
+  function badge(key, name, icon) {
+    const b = h('span', 'wbadge');
+    if (icon && /^data:image\//.test(icon)) { const i = document.createElement('img'); i.src = icon; i.alt = ''; b.append(i); b.classList.add('img'); return b; }
+    const [t, bg] = LOOK[key] || [String(name || '?').trim().slice(0, 1).toUpperCase(), '#475569'];
+    b.textContent = t; b.style.background = bg; if (t.length > 2) b.style.fontSize = '9px';
+    return b;
+  }
+  window.CRWallets = { badge };
+
   // ---- panel shell ----
   const panel = h('aside', 'wpanel'); panel.setAttribute('aria-label', T('กระเป๋า', 'Wallet')); panel.hidden = true;
   document.body.append(panel);
@@ -129,15 +140,25 @@
       head.append(h('b', '', T('กระเป๋า', 'Wallet')), close); panel.append(head);
       const e = h('div', 'wp-empty');
       e.append(h('p', '', T('ยังไม่มีที่อยู่กระเป๋า เพิ่มได้ในหน้าพอร์ต (ดูอย่างเดียว ไม่ต้องเซ็นอะไร)', 'No wallet addresses yet. Add them on the Portfolio page (read-only, nothing to sign).')));
-      const a = h('a', 'wp-cta', T('เพิ่มกระเป๋า →', 'Add a wallet →')); a.href = 'portfolio.html'; e.append(a);
+      const a = h('a', 'wp-cta', T('เพิ่มกระเป๋า →', 'Add a wallet →')); a.href = 'portfolio.html#wallets'; a.onclick = () => put(ACCT_KEY, '+'); e.append(a);
       panel.append(e, sites());
       return;
     }
     let acct = accts.find(a => a.id === get(ACCT_KEY)) || accts.find(a => a.addresses.length) || accts[0];
-    const sel = h('select', 'wp-acct'); sel.setAttribute('aria-label', T('บัญชี', 'Account')); sel.dataset.noI18n = '';
-    for (const a of accts) { const o = h('option', '', a.name); o.value = a.id; o.selected = a.id === acct.id; sel.append(o); }
-    sel.onchange = () => { put(ACCT_KEY, sel.value); render(); };
-    head.append(sel, close); panel.append(head);
+    const title = h('b', 'wp-name', acct.name); title.dataset.noI18n = '';
+    head.append(badge(acct.wallet, acct.name), title, close); panel.append(head);
+    // One tab per wallet the user added, like the portfolio page; + goes to adding one.
+    const wt = h('div', 'wp-wtabs'); wt.setAttribute('role', 'tablist');
+    for (const a of accts) {
+      const b = h('button', 'wp-wtab' + (a.id === acct.id ? ' on' : '')); b.type = 'button'; b.title = a.name; b.setAttribute('aria-label', a.name);
+      b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', String(a.id === acct.id)); b.dataset.noI18n = '';
+      b.append(badge(a.wallet, a.name));
+      b.onclick = () => { put(ACCT_KEY, a.id); render(); };
+      wt.append(b);
+    }
+    const plus = h('a', 'wp-wtab plus', '+'); plus.href = 'portfolio.html#wallets'; plus.title = T('เพิ่มกระเป๋า', 'Add a wallet');
+    plus.onclick = () => put(ACCT_KEY, '+');
+    wt.append(plus); panel.append(wt);
 
     if (acct.addresses.length) {
       const ad = h('button', 'wp-addr'); ad.type = 'button'; ad.title = T('คัดลอกที่อยู่', 'Copy address');

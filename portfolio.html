@@ -83,36 +83,36 @@ label.inline select { width: auto; margin: 0; }
     <div class="kpi"><span class="muted">กำไร/ขาดทุน (ที่กรอกเอง)</span><b id="k-pl">–</b></div>
   </div>
 
-  <div class="card">
+  <div class="card" id="wallets">
     <h2>กระเป๋าของฉัน</h2>
-    <p class="muted">รวมหลายที่อยู่ไว้ในบัญชีเดียวแบบใน MetaMask แอปอ่านยอดแบบดูอย่างเดียว รองรับ Ethereum และเครือข่าย EVM (Base, Polygon, Arbitrum, Optimism), Bitcoin, Solana, Tron และ Stellar</p>
+    <p class="muted">แสดงเฉพาะกระเป๋าที่คุณเพิ่มไว้ กดแท็บเพื่อสลับกระเป๋า กด + เพื่อเพิ่ม แอปอ่านยอดแบบดูอย่างเดียว รองรับ Ethereum และเครือข่าย EVM (Base, Polygon, Arbitrum, Optimism, Ronin), Bitcoin, Solana, Tron และ Stellar</p>
+    <div class="wtabs" id="w-tabs" role="tablist"></div>
     <div id="w-list"></div>
+
+    <div id="w-addpane" hidden>
+      <h3 class="sub">เชื่อมกระเป๋า (ดูอย่างเดียว)</h3>
+      <div class="wpick" id="c-wallets"></div>
+      <div class="msg muted" id="c-msg"></div>
+      <div class="warn" style="margin:6px 0 12px">แอปนี้จะขอแค่ "ดูที่อยู่กระเป๋า" เท่านั้น จะไม่ขอให้เซ็น อนุมัติ (Approve) หรือส่งธุรกรรมใด ๆ ถ้าเห็นคำขอแบบนั้น ให้กดปฏิเสธทันที</div>
+      <h3 class="sub">หรือวางที่อยู่เอง</h3>
+      <label class="inline">เพิ่มเข้า <select id="a-target"></select></label>
+      <div class="grid" style="margin-top:8px">
+        <label style="grid-column:1/-2">ที่อยู่กระเป๋า (แอปรู้เองว่าเป็นเครือข่ายไหน)<input id="w-addr" maxlength="120" placeholder="0x…, ronin:…, bc1…, Solana, T…, G…" autocomplete="off" spellcheck="false"></label>
+        <button id="w-add" type="button">เพิ่ม</button>
+      </div>
+      <div class="msg muted" id="w-msg"></div>
+    </div>
+
     <div class="row" style="margin:10px 0 4px">
       <button class="plain" id="w-refresh" type="button">↻ อ่านยอดใหม่</button>
-      <button class="plain" id="a-new" type="button">+ สร้างบัญชีใหม่</button>
     </div>
 
-    <h3 class="sub">เพิ่มที่อยู่</h3>
-    <label class="inline">เพิ่มเข้าบัญชี <select id="a-target"></select></label>
-    <div class="row" style="margin-top:8px">
-      <button id="c-evm" type="button">🦊 เชื่อม MetaMask (ดูอย่างเดียว)</button>
-      <button id="c-sol" type="button">👻 เชื่อม Phantom (ดูอย่างเดียว)</button>
-      <button id="c-off" type="button" class="plain" hidden>ตัดการเชื่อมต่อ</button>
-    </div>
-    <div class="msg muted" id="c-msg"></div>
-    <div class="warn" style="margin:6px 0 12px">แอปนี้จะขอแค่ "ดูที่อยู่กระเป๋า" เท่านั้น จะไม่ขอให้เซ็น อนุมัติ (Approve) หรือส่งธุรกรรมใด ๆ ถ้าเห็นคำขอแบบนั้น ให้กดปฏิเสธทันที</div>
-    <div class="grid">
-      <label style="grid-column:1/-2">หรือวางที่อยู่เอง (แอปรู้เองว่าเป็นเครือข่ายไหน)<input id="w-addr" maxlength="120" placeholder="0x…, bc1…, Solana, T…, G…" autocomplete="off" spellcheck="false"></label>
-      <button id="w-add" type="button">เพิ่ม</button>
-    </div>
-    <div class="msg muted" id="w-msg"></div>
-
-    <h3 class="sub">เหรียญในกระเป๋าทั้งหมด</h3>
+    <h3 class="sub" id="w-rows-h">เหรียญในกระเป๋าทั้งหมด</h3>
     <div class="tw"><table>
       <thead><tr><th>เหรียญ</th><th>เครือข่าย</th><th>จำนวน</th><th>ราคา</th><th>มูลค่า</th></tr></thead>
       <tbody id="w-rows"></tbody>
     </table></div>
-    <p class="muted">อ่านยอดจาก Blockscout (EVM), mempool.space (Bitcoin), Solana RPC + Jupiter (Solana), TronGrid (Tron) และ Stellar Horizon ราคาจาก CoinGecko แสดงเฉพาะเหรียญที่มีราคาในตลาด เหรียญแปลก ๆ ที่ถูกส่งเข้ากระเป๋าโดยไม่ได้ขอมักเป็นสแกม อย่ากดหรือแลกเด็ดขาด</p>
+    <p class="muted">อ่านยอดจาก Blockscout (EVM), mempool.space (Bitcoin), Solana RPC + Jupiter (Solana), TronGrid (Tron), Stellar Horizon และ Ronin RPC ราคาจาก CoinGecko แสดงเฉพาะเหรียญที่มีราคาในตลาด เหรียญแปลก ๆ ที่ถูกส่งเข้ากระเป๋าโดยไม่ได้ขอมักเป็นสแกม อย่ากดหรือแลกเด็ดขาด</p>
   </div>
 
   <div class="card">
