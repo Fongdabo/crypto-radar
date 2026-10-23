@@ -37,6 +37,16 @@
     return !!s.repeat_days && Date.now() - Date.parse(x.done_at) >= s.repeat_days * DAY;
   }
   const nextStep = a => (a.status === 'paused' ? null : (a.steps || []).find(s => isOpen(a, s)) || null);
+  // When a step became the user's turn: when the previous step was started or done, else 7 days back. A transaction signed before
+  // pressing "ready" still counts.
+  function stepStart(a, s) {
+    const mine = (a.steps || []).filter(x => x.who !== 'agent'), i = mine.indexOf(s);
+    const p = i > 0 ? st(a, mine[i - 1]) : {};
+    const prev = Math.min(Date.parse(p.done_at || '') || Infinity, Date.parse(p.ready_at || '') || Infinity);
+    const ready = Date.parse(st(a, s).ready_at || '');
+    const t = Math.min(prev, isNaN(ready) ? Infinity : ready);
+    return isFinite(t) ? t : Date.now() - 7 * DAY;
+  }
   function progress(a) {
     const mine = (a.steps || []).filter(s => s.who !== 'agent');
     if (!mine.length) return 1;
@@ -216,7 +226,7 @@
     const canCheck = state.addr && s.verify && EXPLORERS[s.verify.chain];
     const done = btn(lastCheck && lastCheck.key === key ? T('ตรวจอีกครั้ง', 'Check again') : canCheck ? T('เซ็นเสร็จแล้ว ให้เอเจนต์ตรวจ', 'Signed, check it') : T('เซ็นเสร็จแล้ว', 'Signed'), 'pri', async () => {
       if (!lastCheck && checks.length && checks.some(c => !c.checked) && !confirm(T('ยังติ๊กไม่ครบ ยืนยันว่าตรวจแล้ว?', 'Not every point is ticked. Confirm you checked?'))) return;
-      const since = Date.parse(st(a, s).ready_at || '') || Date.now() - 30 * 60e3;
+      const since = stepStart(a, s);
       done.disabled = true; done.textContent = T('กำลังตรวจบนเชน…', 'Checking the chain…');
       let r = null;
       try { r = await verify(s, since); } catch (e) { r = { ok: false, text: T('ตรวจบนเชนไม่ได้ตอนนี้', 'Could not check the chain right now') }; }
