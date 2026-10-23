@@ -1,7 +1,8 @@
 name: LINE morning message
 on:
-  schedule:
-    - cron: '35 0 * * *'   # 07:35 Bangkok, after the 07:17 data sync
+  # On hold at the user's request; restore the schedule (and add the two secrets) to turn LINE alerts on.
+  # schedule:
+  #   - cron: '35 0 * * *'   # 07:35 Bangkok, after the 07:17 data sync
   workflow_dispatch:
 permissions:
   contents: read
