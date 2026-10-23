@@ -15,7 +15,8 @@
     for (const fn of listeners) fn(list);
   }
 
-  async function notify(title, body) {
+  async function notify(title, body, opts) {
+    const href = (opts && opts.href) || 'portfolio.html#targets', kind = (opts && opts.kind) || 'alert';
     let shown = false;
     try {
       if ('Notification' in window && Notification.permission === 'granted') {
@@ -28,12 +29,12 @@
     // Keep it for the bell in the toolbar (last 30).
     try {
       const k = 'crypto-radar:bell-log:v1', log = JSON.parse(localStorage.getItem(k) || '[]');
-      log.push({ at: new Date().toISOString(), title, body }); localStorage.setItem(k, JSON.stringify(log.slice(-30)));
+      log.push({ at: new Date().toISOString(), title, body, href, kind }); localStorage.setItem(k, JSON.stringify(log.slice(-30)));
       window.dispatchEvent(new Event('cr-bell'));
     } catch (e) {}
     // Always also show it inside the app.
     const t = document.createElement('a');
-    t.className = 'toast alert-toast'; t.href = 'portfolio.html#targets';
+    t.className = 'toast alert-toast'; t.href = href;
     t.textContent = '🔔 ' + title + ' · ' + body;
     document.body.append(t); setTimeout(() => t.remove(), 12000);
     if (window.CRTelegram) window.CRTelegram.send('🔔 ' + title + '\n' + body).catch(() => {});

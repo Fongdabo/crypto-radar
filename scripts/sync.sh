@@ -10,6 +10,14 @@ for f in "$SRC"/*.json; do
   python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$f"   # refuse broken JSON
   cp "$f" data/
 done
+# Agent task queues (one file per agent, written by the agents' scheduled research).
+if [ -d "$SRC/agents" ]; then
+  mkdir -p data/agents
+  for f in "$SRC"/agents/*.json; do
+    python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$f"
+    cp "$f" data/agents/
+  done
+fi
 if [ -f "$PAGE" ]; then cp "$PAGE" dashboard/page.html; fi
 # English copies: files with any untranslated string fall back to Thai until translated (see scripts/translate-data.py).
 python3 scripts/translate-data.py build

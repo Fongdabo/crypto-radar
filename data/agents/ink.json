@@ -1,0 +1,59 @@
+{
+ "id": "ink",
+ "name": "Ink (Kraken)",
+ "type": "แต้ม/แอร์ดรอป",
+ "emoji": "🐙",
+ "status": "active",
+ "status_text": "ประกาศเหรียญ INK แล้ว แต่ยังไม่มีวันแจก คะแนน Ink Points ฤดูกาล 1 (เริ่ม 13 เม.ย. 2026) ได้จากการเทรดบน Kraken Pro",
+ "schedule": "เอเจนต์ตรวจข่าวทุกวันพุธ",
+ "budget": "ค่าเทรดบน Kraken",
+ "official": [
+  {
+   "t": "Kraken Pro",
+   "u": "https://pro.kraken.com"
+  },
+  {
+   "t": "ประกาศ Ink Points",
+   "u": "https://blog.kraken.com/product/pro/introducing-ink-points"
+  },
+  {
+   "t": "inkonchain.com",
+   "u": "https://inkonchain.com"
+  }
+ ],
+ "warn": "เคลม INK ผ่านแอป Kraken เท่านั้น เว็บเคลมอื่น เช่น ink-airdrop.vercel.app เป็นของปลอม",
+ "steps": [
+  {
+   "id": "research",
+   "who": "agent",
+   "kind": "research",
+   "title": "หาเงื่อนไขการได้คะแนน",
+   "result": "ประกาศทางการของ Kraken บอกว่าแต้มได้จากการใช้งาน Kraken Pro และมีบูสต์รายสัปดาห์ ไม่ได้ระบุว่าการใช้งานบนเชน Ink นับแต้ม จึงเน้นทำในแอป Kraken (ข้อมูล ณ 23 ต.ค. 2026)"
+  },
+  {
+   "id": "account",
+   "who": "you",
+   "kind": "offchain",
+   "title": "เช็กว่าเปิดบัญชี Kraken จากไทยได้ แล้วทำ KYC",
+   "how": [
+    "เปิด pro.kraken.com จากปุ่มเว็บทางการ",
+    "สมัครด้วยอีเมล ถ้าระบบไม่รับประเทศไทยให้หยุด อย่าใช้ VPN",
+    "ทำยืนยันตัวตนตามแอป แล้วเปิด 2FA"
+   ],
+   "note": "ไม่มีการเซ็นกระเป๋าในขั้นนี้ ถ้าสมัครไม่ได้ บอกผม ผมจะหยุดเอเจนต์ตัวนี้"
+  },
+  {
+   "id": "weekly",
+   "who": "you",
+   "kind": "offchain",
+   "repeat_days": 7,
+   "title": "ทุกสัปดาห์: เทรดเล็กน้อยบน Kraken Pro และดูหน้า Ink Points",
+   "how": [
+    "เทรดตามที่ตั้งใจจะทำอยู่แล้ว ไม่ต้องปั่นปริมาณ",
+    "เปิดหน้า Ink Points ในแอปเพื่อดูบูสต์ของสัปดาห์"
+   ],
+   "note": "การยืนยันในแอป Kraken ไม่ใช่การเซ็นกระเป๋า แต่ยังเป็นเงินจริง ใช้เท่าที่เสียได้"
+  }
+ ],
+ "updated_at": "2026-10-23T05:45:00Z"
+}
