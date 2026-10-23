@@ -160,7 +160,7 @@
    "id": "repeat",
    "who": "you",
    "kind": "sign",
-   "repeat_days": 10,
+   "repeat_days": 10, "first_wait": true,
    "title": "ใช้งานซ้ำ: swap หรือฝากเล็กน้อย ทุก ~10 วัน",
    "how": [
     "ทำ swap เล็ก ๆ บน Aerodrome หรือฝาก USDC เล็กน้อยใน Morpho",

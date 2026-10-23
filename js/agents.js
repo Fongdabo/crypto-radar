@@ -22,31 +22,47 @@
     return { addr: /^0x[0-9a-fA-F]{40}$/.test(s.addr || '') ? s.addr : '', steps: s.steps && typeof s.steps === 'object' ? s.steps : {} };
   }
   let state = load();
+  // Up to v20 one transaction could be credited to two steps in a row; drop the second (no tx hash was stored then).
+  (function fixDoubleCredit() {
+    let changed = false;
+    for (const [k, v] of Object.entries(state.steps)) {
+      if (!v || !v.proof || v.tx !== undefined || !/:repeat$/.test(k)) continue;
+      const ag = k.split(':')[0];
+      if (Object.entries(state.steps).some(([k2, v2]) => k2 !== k && k2.startsWith(ag + ':') && v2 && v2.proof === v.proof && v2.tx === undefined && Math.abs(Date.parse(v2.done_at) - Date.parse(v.done_at)) < 30 * 60e3)) { delete state.steps[k]; changed = true; }
+    }
+    if (changed) try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  })();
   function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
   const st = (a, s) => state.steps[a.id + ':' + s.id] || {};
   function setSt(a, s, patch) { const k = a.id + ':' + s.id; state.steps[k] = Object.assign({}, state.steps[k], patch); save(); }
 
   const DAY = 864e5;
   const daysTo = iso => Math.round((new Date(iso + 'T00:00:00') - new Date(new Date().toDateString())) / DAY);
-  // A step is open until done or skipped; a repeating step opens again repeat_days after it was last done.
+  const prevOf = (a, s) => { const mine = (a.steps || []).filter(x => x.who !== 'agent'), i = mine.indexOf(s); return i > 0 ? st(a, mine[i - 1]) : {}; };
+  // When a repeating step next opens: repeat_days after it was last done. With first_wait, its first round also waits repeat_days
+  // after the step before it (so it never asks again the same day).
+  function repeatAt(a, s) {
+    const x = st(a, s), t = Date.parse(x.done_at || (s.first_wait ? prevOf(a, s).done_at : '') || '');
+    return isNaN(t) ? NaN : t + s.repeat_days * DAY;
+  }
+  // A step is open until done or skipped; a repeating step opens at repeatAt.
   function isOpen(a, s) {
     if (s.who === 'agent') return false;
     const x = st(a, s);
     if (x.skipped) return false;
-    if (!x.done_at) return true;
-    return !!s.repeat_days && Date.now() - Date.parse(x.done_at) >= s.repeat_days * DAY;
+    if (s.repeat_days) return !(Date.now() < repeatAt(a, s));
+    return !x.done_at;
   }
   const nextStep = a => (a.status === 'paused' ? null : (a.steps || []).find(s => isOpen(a, s)) || null);
-  // When a step became the user's turn: when the previous step was started or done, else 7 days back. A transaction signed before
-  // pressing "ready" still counts.
+  // When a step became the user's turn: when it was last done (a repeating step) or the previous step was done, else 7 days back.
+  // A transaction signed before pressing "ready" still counts; one already credited to another step does not (see usedTx).
   function stepStart(a, s) {
-    const mine = (a.steps || []).filter(x => x.who !== 'agent'), i = mine.indexOf(s);
-    const p = i > 0 ? st(a, mine[i - 1]) : {};
-    const prev = Math.min(Date.parse(p.done_at || '') || Infinity, Date.parse(p.ready_at || '') || Infinity);
-    const ready = Date.parse(st(a, s).ready_at || '');
-    const t = Math.min(prev, isNaN(ready) ? Infinity : ready);
-    return isFinite(t) ? t : Date.now() - 7 * DAY;
+    const x = st(a, s), t = Date.parse(x.done_at || prevOf(a, s).done_at || '');
+    if (!isNaN(t)) return t;
+    const ready = Date.parse(x.ready_at || '');
+    return isNaN(ready) ? Date.now() - 7 * DAY : ready - 2 * 60e3;
   }
+  const usedTx = a => new Set((a.steps || []).map(s => st(a, s).tx).filter(Boolean));
   function progress(a) {
     const mine = (a.steps || []).filter(s => s.who !== 'agent');
     if (!mine.length) return 1;
@@ -91,7 +107,7 @@
   }
 
   // ---- on-chain check after the user signs ----
-  async function verify(s, since) {
+  async function verify(s, since, used) {
     const ex = s.verify && EXPLORERS[s.verify.chain];
     if (!ex || !state.addr) return null;
     const get = u => fetch(u, { headers: { accept: 'application/json' } }).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
@@ -101,11 +117,12 @@
       return { ok: bal > 0, text: bal > 0 ? T('พบยอด ' + bal.toFixed(5) + ' ETH บน ' + ex.name, 'Found ' + bal.toFixed(5) + ' ETH on ' + ex.name) : T('ยังไม่เห็นยอดบน ' + ex.name, 'No balance on ' + ex.name + ' yet'), link: ex.web + '/address/' + state.addr };
     }
     const j = await get(ex.api + '/addresses/' + state.addr + '/transactions?filter=from');
-    const tx = (j.items || []).find(t => Date.parse(t.timestamp) >= since - 2 * 60e3);
+    // Oldest new transaction first, so steps done in a row each get their own.
+    const tx = (j.items || []).filter(t => Date.parse(t.timestamp) >= since && !(used && used.has(t.hash))).pop();
     if (!tx) return { ok: false, text: T('ยังไม่เห็นธุรกรรมใหม่จากกระเป๋าฟาร์มบน ' + ex.name + ' (อาจต้องรอ 1–2 นาที)', 'No new transaction from the farm wallet on ' + ex.name + ' yet (may take 1–2 minutes)') };
     const to = tx.to ? (tx.to.name || tx.to.hash.slice(0, 10) + '…') : '?';
     const ok = tx.status === 'ok' || tx.result === 'success';
-    return { ok, text: (ok ? T('สำเร็จ: ', 'Success: ') : T('ธุรกรรมล้มเหลว: ', 'Transaction failed: ')) + (tx.method || 'tx') + ' → ' + to, link: ex.web + '/tx/' + tx.hash };
+    return { ok, tx: tx.hash, text: (ok ? T('สำเร็จ: ', 'Success: ') : T('ธุรกรรมล้มเหลว: ', 'Transaction failed: ')) + (tx.method || 'tx') + ' → ' + to, link: ex.web + '/tx/' + tx.hash };
   }
 
   // ---- page: a chat per agent, PM style. The agent's messages are built from its queue and this device's progress. ----
@@ -180,7 +197,11 @@
         body.append(bot(a, data('b', '', (s.kind === 'sign' ? '🖊️ ' : '👤 ') + s.title)));
         body.append(me(x.skipped ? T('ข้าม', 'Skip') : T('ทำแล้ว ✅', 'Done ✅'), x.done_at));
         if (x.proof) body.append(bot(a, data('p', '', '✅ ' + x.proof)));
-        if (s.repeat_days && !x.skipped) body.append(bot(a, h('div', 'meta', T('จะชวนทำอีกครั้ง ', 'I will ask again on ') + new Date(Date.parse(x.done_at) + s.repeat_days * DAY).toLocaleDateString(locale, { day: 'numeric', month: 'short' }))));
+        if (s.repeat_days && !x.skipped) body.append(bot(a, h('div', 'meta', T('จะชวนทำอีกครั้ง ', 'I will ask again on ') + new Date(repeatAt(a, s)).toLocaleDateString(locale, { day: 'numeric', month: 'short' }))));
+        continue;
+      }
+      if (s.repeat_days && s.first_wait && !x.done_at && !x.skipped && s !== cur && prevOf(a, s).done_at) {
+        body.append(bot(a, data('b', '', '🖊️ ' + s.title), h('div', 'meta', T('จะชวนทำครั้งแรก ', 'I will first ask on ') + new Date(repeatAt(a, s)).toLocaleDateString(locale, { day: 'numeric', month: 'short' }))));
         continue;
       }
       if (s !== cur) continue;
@@ -222,17 +243,17 @@
       if (r.link) { const l = h('a', '', T('ดูบน explorer', 'View on explorer')); l.href = r.link; l.target = '_blank'; l.rel = 'noopener'; p.append(l); }
       body.append(me(T('เซ็นเสร็จแล้ว', 'Signed'), lastCheck.at), bot(a, p));
     }
-    const finish = proof => { readyStep = null; lastCheck = null; setSt(a, s, { done_at: new Date().toISOString(), skipped: false, proof: proof || '' }); rerender(); };
+    const finish = (proof, tx) => { readyStep = null; lastCheck = null; setSt(a, s, { done_at: new Date().toISOString(), skipped: false, proof: proof || '', tx: tx || '' }); rerender(); };
     const canCheck = state.addr && s.verify && EXPLORERS[s.verify.chain];
     const done = btn(lastCheck && lastCheck.key === key ? T('ตรวจอีกครั้ง', 'Check again') : canCheck ? T('เซ็นเสร็จแล้ว ให้เอเจนต์ตรวจ', 'Signed, check it') : T('เซ็นเสร็จแล้ว', 'Signed'), 'pri', async () => {
       if (!lastCheck && checks.length && checks.some(c => !c.checked) && !confirm(T('ยังติ๊กไม่ครบ ยืนยันว่าตรวจแล้ว?', 'Not every point is ticked. Confirm you checked?'))) return;
       const since = stepStart(a, s);
       done.disabled = true; done.textContent = T('กำลังตรวจบนเชน…', 'Checking the chain…');
       let r = null;
-      try { r = await verify(s, since); } catch (e) { r = { ok: false, text: T('ตรวจบนเชนไม่ได้ตอนนี้', 'Could not check the chain right now') }; }
+      try { r = await verify(s, since, usedTx(a)); } catch (e) { r = { ok: false, text: T('ตรวจบนเชนไม่ได้ตอนนี้', 'Could not check the chain right now') }; }
       if (!r) return finish();
       lastCheck = { key, r, at: new Date().toISOString() };
-      if (r.ok) return finish(r.text);
+      if (r.ok) return finish(r.text, r.tx);
       rerender();
     });
     const rs = [done];
