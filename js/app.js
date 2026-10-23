@@ -1,6 +1,15 @@
 // Install and update buttons, offline cache and new-version notice shared by every page.
 (function () {
-  const APP_VERSION = '5';   // keep in step with VERSION in sw.js
+  const APP_VERSION = '6';   // keep in step with VERSION in sw.js; add a CHANGELOG entry for every release
+  const CHANGELOG = [
+    ['6', '23 ต.ค. 2569', ['กระเป๋าแบบบัญชีเหมือน MetaMask: รวมหลายที่อยู่ไว้ในบัญชีเดียว พร้อมยอดรวมของบัญชีและของแต่ละที่อยู่', 'อ่านยอด Bitcoin, Tron และ Stellar ได้แล้ว (แอปรู้เองว่าที่อยู่เป็นเครือข่ายไหน)', 'ปุ่มคัดลอกที่อยู่ แก้ชื่อบัญชี และสร้างได้หลายบัญชี', 'แสดงเลขเวอร์ชันทุกหน้าและหน้า "มีอะไรใหม่" นี้']],
+    ['5', '23 ต.ค. 2569', ['ปุ่มเชื่อม MetaMask และ Phantom แบบดูอย่างเดียว ไม่ขอเซ็นหรืออนุมัติอะไร']],
+    ['4', '23 ต.ค. 2569', ['เพิ่มแท็บคู่มือภาษาไทยสำหรับมือใหม่']],
+    ['3', '23 ต.ค. 2569', ['เพิ่มปุ่มอัปเดต และแถบแจ้งเมื่อมีเวอร์ชันใหม่']],
+    ['2', '23 ต.ค. 2569', ['อ่านยอดกระเป๋า Solana', 'อ่านยอด EVM ได้เสถียรขึ้น ลองใหม่เองเมื่อพลาด และบอกชื่อเครือข่ายที่อ่านไม่ได้']],
+    ['1', '23 ต.ค. 2569', ['เปิดตัวแอป: แดชบอร์ด พอร์ตส่วนตัว ติดตั้งได้ ใช้ออฟไลน์ได้']],
+  ];
+  window.APP_VERSION = APP_VERSION; window.APP_CHANGELOG = CHANGELOG;
   const btn = document.getElementById('install');
   let prompt = null;
   window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); prompt = e; if (btn) btn.hidden = false; });
@@ -44,7 +53,7 @@
   const upBtn = document.getElementById('refresh');
   if (upBtn) upBtn.onclick = async () => {
     if (!navigator.onLine) { toast('ออฟไลน์อยู่ ต่ออินเทอร์เน็ตก่อนแล้วกดอัปเดตอีกครั้ง'); return; }
-    updating = true; upBtn.disabled = true; upBtn.textContent = 'กำลังอัปเดต…';
+    updating = true; upBtn.disabled = true; upBtn.textContent = '…';
     try {
       if (reg) {
         await reg.update();
@@ -55,10 +64,28 @@
     location.reload();
   };
 
+  // Version chip next to the update button, on every screen size; tap it for what's new.
+  if (upBtn) {
+    const v = document.createElement('a');
+    v.className = 'ver'; v.href = 'guide.html#whatsnew'; v.textContent = 'v' + APP_VERSION; v.title = 'มีอะไรใหม่';
+    upBtn.before(v);
+  }
+  // First open after an update: say so once.
+  try {
+    const seen = localStorage.getItem('crypto-radar:seen-version');
+    if (seen && seen !== APP_VERSION) {
+      const t = document.createElement('a');
+      t.className = 'toast'; t.href = 'guide.html#whatsnew';
+      t.textContent = 'อัปเดตเป็นเวอร์ชัน ' + APP_VERSION + ' แล้ว · ดูมีอะไรใหม่ →';
+      document.body.append(t); setTimeout(() => t.remove(), 7000);
+    }
+    localStorage.setItem('crypto-radar:seen-version', APP_VERSION);
+  } catch (e) {}
+
   const up = document.getElementById('updated');
   if (up) fetch('data/meta.json', { cache: 'no-cache' }).then(r => r.json()).then(m => {
     const when = m.updated_at ? new Date(m.updated_at).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }) : '–';
-    up.textContent = 'ข้อมูลล่าสุด ' + when + ' · แอป v' + APP_VERSION;
-  }).catch(() => { up.textContent = 'แอป v' + APP_VERSION; });
+    up.textContent = 'ข้อมูลล่าสุด ' + when;
+  }).catch(() => {});
   window.addEventListener('offline', () => toast('ออฟไลน์อยู่ กำลังแสดงข้อมูลที่บันทึกไว้ล่าสุด'));
 })();

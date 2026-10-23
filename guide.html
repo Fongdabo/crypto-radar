@@ -44,7 +44,7 @@ table.sec td:first-child { white-space: nowrap; font-weight: 600; padding-right:
     <a href="guide.html" class="on">คู่มือ</a>
   </nav>
   <span class="updated" id="updated"></span>
-  <button class="refresh" id="refresh" type="button" title="เช็กเวอร์ชันใหม่และดึงข้อมูลล่าสุด">↻ อัปเดต</button>
+  <button class="refresh" id="refresh" type="button" title="เช็กเวอร์ชันใหม่และดึงข้อมูลล่าสุด">↻<span class="t"> อัปเดต</span></button>
   <button class="install" id="install" hidden>ติดตั้งแอป</button>
 </header>
 
@@ -64,6 +64,7 @@ table.sec td:first-child { white-space: nowrap; font-weight: 600; padding-right:
     <a href="#buy">ซื้อเหรียญและโอนเข้ากระเป๋า</a>
     <a href="#airdrop">กระเป๋าแยกสำหรับแอร์ดรอป</a>
     <a href="#safety">ตัดการเชื่อมต่อเว็บ</a>
+    <a href="#whatsnew">มีอะไรใหม่</a>
   </nav>
 
   <details id="install">
@@ -155,6 +156,12 @@ table.sec td:first-child { white-space: nowrap; font-weight: 600; padding-right:
         <li>วางในช่อง <b>ที่อยู่กระเป๋า</b> ในแอป แล้วกด <b>เพิ่มกระเป๋า</b></li>
         <li>แอปจะอ่าน Ethereum, Base, Polygon, Arbitrum และ Optimism ให้พร้อมกัน</li>
       </ol>
+      <h3>รวมหลายเครือข่ายไว้ในบัญชีเดียว (แบบ MetaMask)</h3>
+      <ol>
+        <li>ใน MetaMask กดชื่อบัญชี แล้วกดลูกศรใต้ชื่อ จะเห็นที่อยู่แต่ละเครือข่าย (Ethereum, Bitcoin, Solana, Tron, Stellar)</li>
+        <li>กดไอคอนคัดลอกทีละอัน แล้วมาวางในแอปทีละที่อยู่ แอปจะรู้เองว่าเป็นเครือข่ายไหน</li>
+        <li>เลือก <b>เพิ่มเข้าบัญชี</b> ให้ถูกบัญชี ถ้ามีหลายกระเป๋า กด <b>+ สร้างบัญชีใหม่</b> แล้วตั้งชื่อได้</li>
+      </ol>
       <h3>Phantom หรือกระเป๋า Solana</h3>
       <ol>
         <li>ใน Phantom กดชื่อบัญชีแล้วเลือกคัดลอกที่อยู่ <b>Solana</b> (ยาว 32–44 ตัว ไม่มี 0x)</li>
@@ -231,12 +238,28 @@ table.sec td:first-child { white-space: nowrap; font-weight: 600; padding-right:
     </div>
   </details>
 
+  <details id="whatsnew">
+    <summary>มีอะไรใหม่ (ประวัติเวอร์ชัน)</summary>
+    <div class="body" id="changelog"></div>
+  </details>
+
   <p class="lead" style="margin-top:16px">มีคำถามหรืออยากให้เพิ่มหัวข้อ บอกในแชตได้เลย</p>
 </div>
 
 <footer class="app-foot">ข้อมูลเพื่อการศึกษา ไม่ใช่คำแนะนำการลงทุน · แอปนี้ไม่รับฝากเงินและไม่เชื่อมกระเป๋า</footer>
 
 <script src="js/app.js"></script>
+<script>
+(function () {
+  const box = document.getElementById('changelog');
+  for (const [v, date, items] of window.APP_CHANGELOG || []) {
+    const h = document.createElement('h3'); h.textContent = 'เวอร์ชัน ' + v + ' · ' + date + (v === window.APP_VERSION ? ' (ที่ใช้อยู่)' : '');
+    const ul = document.createElement('ul');
+    for (const t of items) { const li = document.createElement('li'); li.textContent = t; ul.append(li); }
+    box.append(h, ul);
+  }
+})();
+</script>
 <script>
 // Open the section named in the link (guide.html#wallet) or tapped in the contents.
 (function () {

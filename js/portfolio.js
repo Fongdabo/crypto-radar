@@ -7,25 +7,56 @@
     const a = Math.abs(n), s = n < 0 ? '-' : '';
     return s + '$' + (a < 1 && a !== 0 ? a.toPrecision(3) : a.toLocaleString('en-US', { maximumFractionDigits: 2 }));
   };
-  const CHAINS = [['eth', 'Ethereum', 'ETH'], ['base', 'Base', 'ETH'], ['polygon', 'Polygon', 'POL'], ['arbitrum', 'Arbitrum', 'ETH'], ['optimism', 'Optimism', 'ETH']];
-  const short = a => a.slice(0, 6) + '…' + a.slice(-4);
+  const short = a => a.slice(0, 6) + '…' + a.slice(-5);
+  const MAX_ACCOUNTS = 5, MAX_PER_ACCOUNT = 10;
+
+  // Address kinds, worked out from the address itself.
+  const KINDS = {
+    evm: { label: 'Ethereum + EVM', icon: 'Ξ' },
+    btc: { label: 'Bitcoin', icon: '₿' },
+    sol: { label: 'Solana', icon: '◎' },
+    tron: { label: 'Tron', icon: 'T' },
+    xlm: { label: 'Stellar', icon: '✦' },
+  };
+  function kindOf(a) {
+    if (/^0x[0-9a-fA-F]{40}$/.test(a)) return 'evm';
+    if (/^bc1[02-9ac-hj-np-z]{11,71}$/i.test(a) || /^[13][1-9A-HJ-NP-Za-km-z]{25,34}$/.test(a)) return 'btc';
+    if (/^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(a)) return 'tron';
+    if (/^G[A-Z2-7]{55}$/.test(a)) return 'xlm';
+    if (/^[1-9A-HJ-NP-Za-km-z]{36,44}$/.test(a)) return 'sol';
+    return null;
+  }
+  const norm = a => { const k = kindOf(a); return k === 'evm' || (k === 'btc' && /^bc1/i.test(a)) ? a.toLowerCase() : a; };
+  const isEvm = a => kindOf(a) === 'evm';
+  const isSol = a => kindOf(a) === 'sol';
 
   let prices = [], walletRows = [], walletState = '';
+  let addrState = {};   // address -> 'loading' | 'ok' | 'failed' | 'cached'
   let store = read();
+  const allAddrs = () => store.accounts.flatMap(x => x.addresses);
+  const accountOf = a => store.accounts.find(x => x.addresses.includes(a));
 
   function read() {
-    try {
-      const s = JSON.parse(localStorage.getItem(KEY) || '{}');
-      return clean(s);
-    } catch (e) { return { holdings: [], addresses: [], connected: [] }; }
+    try { return clean(JSON.parse(localStorage.getItem(KEY) || '{}')); }
+    catch (e) { return clean({}); }
   }
   function clean(s) {
     const holdings = (Array.isArray(s.holdings) ? s.holdings : [])
       .filter(h => h && typeof h.asset === 'string' && /^[A-Z0-9.$_-]{1,20}$/.test(h.asset) && isFinite(h.amount) && isFinite(h.buy_price_usd))
       .map(h => ({ id: String(h.id || Math.random().toString(36).slice(2)), asset: h.asset, amount: Number(h.amount), buy_price_usd: Number(h.buy_price_usd), manual_price_usd: h.manual_price_usd == null ? undefined : Number(h.manual_price_usd), added_at: String(h.added_at || '') }));
-    const addresses = (Array.isArray(s.addresses) ? s.addresses : []).filter(a => typeof a === 'string' && (/^0x[0-9a-f]{40}$/.test(a) || /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(a))).slice(0, 5);
-    const connected = (Array.isArray(s.connected) ? s.connected : []).filter(a => addresses.includes(a));
-    return { holdings, addresses, connected };
+    // Older versions kept one flat list of addresses: it becomes "บัญชี 1".
+    let accounts = Array.isArray(s.accounts) ? s.accounts : [{ id: 'a1', name: 'บัญชี 1', addresses: Array.isArray(s.addresses) ? s.addresses : [] }];
+    const seen = new Set();
+    accounts = accounts.filter(x => x && typeof x === 'object').slice(0, MAX_ACCOUNTS).map((x, i) => ({
+      id: String(x.id || 'a' + (i + 1)),
+      name: String(x.name || 'บัญชี ' + (i + 1)).slice(0, 30),
+      addresses: (Array.isArray(x.addresses) ? x.addresses : [])
+        .filter(a => typeof a === 'string' && kindOf(a)).map(norm)
+        .filter(a => !seen.has(a) && seen.add(a)).slice(0, MAX_PER_ACCOUNT),
+    }));
+    if (!accounts.length) accounts = [{ id: 'a1', name: 'บัญชี 1', addresses: [] }];
+    const connected = (Array.isArray(s.connected) ? s.connected : []).filter(a => seen.has(a));
+    return { holdings, accounts, connected };
   }
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify(store)); return true; }
@@ -52,27 +83,94 @@
     await Promise.all(Array.from({ length: n }, async () => { while (i < tasks.length) { const k = i++; out[k] = await tasks[k](); } }));
     return out;
   }
+  async function firstOk(urls, fn) {
+    let last;
+    for (const u of urls) { try { return await fn(u); } catch (e) { last = e; if (e.status === 404) throw e; } }
+    throw last;
+  }
 
-  const isEvm = a => /^0x[0-9a-f]{40}$/.test(a);
-  const isSol = a => /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(a);
   const CACHE_KEY = 'crypto-radar:wallet-cache:v1';
   function cacheGet() { try { return JSON.parse(localStorage.getItem(CACHE_KEY) || '{}'); } catch (e) { return {}; } }
   function cachePut(c) { try { localStorage.setItem(CACHE_KEY, JSON.stringify(c)); } catch (e) {} }
 
+  // USD prices for the native coins of non-EVM chains: CoinGecko, then Binance.
+  let coinPx = null;
+  function nativePrices() {
+    if (coinPx) return coinPx;
+    coinPx = (async () => {
+      try {
+        const j = await retry(() => getJson('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,tron,stellar&vs_currencies=usd'), 2);
+        return { BTC: j.bitcoin && j.bitcoin.usd, TRX: j.tron && j.tron.usd, XLM: j.stellar && j.stellar.usd };
+      } catch (e) {
+        try {
+          const syms = encodeURIComponent(JSON.stringify(['BTCUSDT', 'TRXUSDT', 'XLMUSDT']));
+          const list = await retry(() => getJson('https://api.binance.com/api/v3/ticker/price?symbols=' + syms), 2);
+          const by = Object.fromEntries(list.map(t => [t.symbol.replace('USDT', ''), Number(t.price)]));
+          return { BTC: by.BTC, TRX: by.TRX, XLM: by.XLM };
+        } catch (e2) { return {}; }
+      }
+    })();
+    return coinPx;
+  }
+  const row = (sym, chain, amount, price, extra) => Object.assign({ sym, chain, amount, price: price == null ? null : Number(price), value: price == null ? null : amount * price }, extra);
+
+  const EVM_CHAINS = [['eth', 'Ethereum', 'ETH'], ['base', 'Base', 'ETH'], ['polygon', 'Polygon', 'POL'], ['arbitrum', 'Arbitrum', 'ETH'], ['optimism', 'Optimism', 'ETH']];
   async function readEvmChain(a, host, chain, native) {
     const base = `https://${host}.blockscout.com/api/v2/addresses/${a}`;
     const info = await retry(() => getJson(base)).catch(e => { if (e.status === 404) return null; throw e; });
     const toks = await retry(() => getJson(base + '/token-balances')).catch(e => { if (e.status === 404) return []; throw e; });
     const rows = [];
     if (info && info.coin_balance && info.coin_balance !== '0') {
-      const amt = units(info.coin_balance, 18), px = info.exchange_rate != null ? Number(info.exchange_rate) : null;
-      if (amt > 0) rows.push({ sym: native, chain, amount: amt, price: px, value: px == null ? null : amt * px });
+      const amt = units(info.coin_balance, 18);
+      if (amt > 0) rows.push(row(native, chain, amt, info.exchange_rate));
     }
     for (const t of Array.isArray(toks) ? toks : []) {
       const tk = t.token || {};
       if (tk.type !== 'ERC-20' || tk.exchange_rate == null || typeof tk.symbol !== 'string') continue;
-      const amt = units(t.value, tk.decimals), px = Number(tk.exchange_rate);
-      if (amt > 0) rows.push({ sym: tk.symbol.slice(0, 20), chain, amount: amt, price: px, value: amt * px });
+      const amt = units(t.value, tk.decimals);
+      if (amt > 0) rows.push(row(tk.symbol.slice(0, 20), chain, amt, tk.exchange_rate));
+    }
+    return rows;
+  }
+
+  async function readBtc(a) {
+    const j = await firstOk(['https://mempool.space/api/address/', 'https://blockstream.info/api/address/'], u => retry(() => getJson(u + a), 2));
+    const st = x => (x ? (x.funded_txo_sum || 0) - (x.spent_txo_sum || 0) : 0);
+    const btc = (st(j.chain_stats) + st(j.mempool_stats)) / 1e8;
+    const px = await nativePrices();
+    return btc > 0 ? [row('BTC', 'Bitcoin', btc, px.BTC)] : [];
+  }
+
+  // Only well-known stablecoins are counted on Tron and Stellar; other tokens there are mostly spam.
+  const TRC20 = { TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t: 'USDT', TEkxiTehnzSmSe2XqrBj4w32RUN966rdz8: 'USDC' };
+  async function readTron(a) {
+    const j = await retry(() => getJson('https://api.trongrid.io/v1/accounts/' + a), 3);
+    const acct = j && Array.isArray(j.data) && j.data[0];
+    if (!acct) return [];
+    const px = await nativePrices();
+    const rows = [];
+    const trx = (acct.balance || 0) / 1e6;
+    if (trx > 0) rows.push(row('TRX', 'Tron', trx, px.TRX));
+    for (const t of Array.isArray(acct.trc20) ? acct.trc20 : []) {
+      for (const [contract, raw] of Object.entries(t || {})) {
+        const sym = TRC20[contract];
+        const amt = sym ? units(raw, 6) : 0;
+        if (amt > 0) rows.push(row(sym, 'Tron', amt, 1));
+      }
+    }
+    return rows;
+  }
+  const STELLAR_USDC = 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN';
+  async function readXlm(a) {
+    const j = await retry(() => getJson('https://horizon.stellar.org/accounts/' + a), 3).catch(e => { if (e.status === 404) return null; throw e; });
+    if (!j) return [];   // never funded
+    const px = await nativePrices();
+    const rows = [];
+    for (const b of Array.isArray(j.balances) ? j.balances : []) {
+      const amt = Number(b.balance);
+      if (!(amt > 0)) continue;
+      if (b.asset_type === 'native') rows.push(row('XLM', 'Stellar', amt, px.XLM));
+      else if (b.asset_code === 'USDC' && b.asset_issuer === STELLAR_USDC) rows.push(row('USDC', 'Stellar', amt, 1));
     }
     return rows;
   }
@@ -133,35 +231,40 @@
     const sol = ((bal && bal.value) || 0) / 1e9;
     const px = await solPrices([WSOL, ...new Set(accts.map(t => t.mint))]);
     const rows = [];
-    if (sol > 0) { const p = px[WSOL] ? px[WSOL].price : null; rows.push({ sym: 'SOL', chain: 'Solana', amount: sol, price: p, value: p == null ? null : sol * p }); }
+    if (sol > 0) rows.push(row('SOL', 'Solana', sol, px[WSOL] ? px[WSOL].price : null));
     for (const t of accts) {
       const p = px[t.mint];
       if (!p || !p.sym) continue;   // no market price: skip, like unpriced EVM tokens
-      rows.push({ sym: p.sym + (p.verified ? '' : ' ⚠'), chain: 'Solana', amount: t.amount, price: p.price, value: t.amount * p.price, unverified: !p.verified });
+      rows.push(row(p.sym + (p.verified ? '' : ' ⚠'), 'Solana', t.amount, p.price, { unverified: !p.verified }));
     }
     return rows;
   }
 
   let failedChains = [], fromCache = false;
   async function loadWallets() {
-    const addrs = store.addresses;
-    walletRows = []; failedChains = []; fromCache = false;
+    const addrs = allAddrs();
+    walletRows = []; failedChains = []; fromCache = false; coinPx = null;
+    addrState = Object.fromEntries(addrs.map(a => [a, 'loading']));
     walletState = addrs.length ? 'loading' : ''; renderWallet();
     if (!addrs.length) { render(); return; }
     const cache = cacheGet(), jobs = [];
     for (const a of addrs) {
-      if (isSol(a) && !isEvm(a)) jobs.push({ key: a + '|sol', label: 'Solana', run: () => readSolana(a) });
-      else for (const [host, chain, native] of CHAINS) jobs.push({ key: a + '|' + host, label: chain, run: () => readEvmChain(a, host, chain, native) });
+      const k = kindOf(a);
+      if (k === 'evm') for (const [host, chain, native] of EVM_CHAINS) jobs.push({ a, key: a + '|' + host, label: chain, run: () => readEvmChain(a, host, chain, native) });
+      else jobs.push({ a, key: a + '|' + k, label: KINDS[k].label, run: () => ({ btc: readBtc, sol: readSolana, tron: readTron, xlm: readXlm })[k](a) });
     }
     let ok = 0;
     const results = await pool(jobs.map(j => async () => {
-      try { const rows = await j.run(); ok++; cache[j.key] = { at: Date.now(), rows }; return rows; }
+      let rows;
+      try { rows = await j.run(); ok++; cache[j.key] = { at: Date.now(), rows }; if (addrState[j.a] === 'loading') addrState[j.a] = 'ok'; }
       catch (e) {
         failedChains.push(j.label);
         const c = cache[j.key];
-        if (c && Array.isArray(c.rows)) { fromCache = true; return c.rows; }
-        return [];
+        rows = c && Array.isArray(c.rows) ? c.rows : [];
+        if (c) fromCache = true;
+        addrState[j.a] = c ? 'cached' : 'failed';
       }
+      return rows.map(r => Object.assign({}, r, { addr: j.a }));
     }), 3);
     for (const k of Object.keys(cache)) if (!jobs.some(j => j.key === k)) delete cache[k];
     cachePut(cache);
@@ -170,46 +273,121 @@
     renderWallet(); render();
   }
 
-  function renderWallet() {
+  // ⚠ tokens are often airdropped scams, so they never count toward a total.
+  const sumOf = rows => rows.reduce((t, r) => t + (r.unverified ? 0 : r.value || 0), 0);
+  const addrTotal = a => sumOf(walletRows.filter(r => r.addr === a));
+
+  function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function renderAccounts() {
     const list = $('w-list'); list.textContent = '';
-    for (const a of store.addresses) {
-      const row = document.createElement('div'); row.className = 'muted'; row.style.margin = '6px 0';
-      row.append(document.createTextNode('กระเป๋า ' + (isEvm(a) ? 'EVM ' : 'Solana ') + short(a) + ' '));
-      const b = document.createElement('button'); b.className = 'ghost'; b.type = 'button'; b.textContent = 'เอาออก';
-      b.onclick = () => { store.addresses = store.addresses.filter(x => x !== a); store.connected = store.connected.filter(x => x !== a); save(); renderConnect(); loadWallets(); };
-      row.append(b); list.append(row);
+    for (const acct of store.accounts) {
+      const box = el('div', 'acct');
+      const h = el('div', 'acct-h');
+      h.append(el('span', 'nm', acct.name));
+      const ren = el('button', 'plain', 'แก้ชื่อ'); ren.type = 'button';
+      ren.onclick = () => {
+        const n = (prompt('ชื่อบัญชี', acct.name) || '').trim().slice(0, 30);
+        if (n) { acct.name = n; save(); renderAccounts(); fillTargets(); }
+      };
+      h.append(ren);
+      if (store.accounts.length > 1) {
+        const del = el('button', 'ghost', 'ลบบัญชี'); del.type = 'button';
+        del.onclick = () => {
+          if (!confirm('ลบ "' + acct.name + '" และที่อยู่ทั้งหมดในบัญชีนี้ออกจากแอป? (เงินในกระเป๋าไม่ได้หายไปไหน)')) return;
+          store.accounts = store.accounts.filter(x => x !== acct);
+          store.connected = store.connected.filter(a => allAddrs().includes(a));
+          save(); fillTargets(); renderConnect(); loadWallets();
+        };
+        h.append(del);
+      }
+      const loading = acct.addresses.some(a => addrState[a] === 'loading');
+      h.append(el('span', 'tot', acct.addresses.length ? (loading ? '…' : usd(sumOf(walletRows.filter(r => acct.addresses.includes(r.addr))))) : '$0'));
+      box.append(h);
+      if (!acct.addresses.length) box.append(el('div', 'addr muted', 'ยังไม่มีที่อยู่ในบัญชีนี้ เพิ่มได้จากด้านล่าง'));
+      for (const a of acct.addresses) {
+        const k = kindOf(a), r = el('div', 'addr');
+        r.append(el('span', 'ic ' + k, KINDS[k].icon));
+        const ch = el('div', 'ch');
+        ch.append(el('b', '', KINDS[k].label));
+        const code = el('code', '', short(a));
+        const cp = el('button', 'copy', '⧉'); cp.type = 'button'; cp.title = 'คัดลอกที่อยู่';
+        cp.onclick = async () => { try { await navigator.clipboard.writeText(a); cp.textContent = '✓'; setTimeout(() => (cp.textContent = '⧉'), 1200); } catch (e) {} };
+        ch.append(code, cp);
+        r.append(ch);
+        const st = addrState[a];
+        const bal = el('div', 'bal', st === 'loading' ? '…' : st === 'failed' ? 'อ่านไม่ได้' : usd(addrTotal(a)));
+        if (st === 'cached') bal.append(el('small', '', 'ยอดล่าสุดที่อ่านได้'));
+        r.append(bal);
+        const rm = el('button', 'ghost', 'เอาออก'); rm.type = 'button';
+        rm.onclick = () => { acct.addresses = acct.addresses.filter(x => x !== a); store.connected = store.connected.filter(x => x !== a); save(); renderConnect(); loadWallets(); };
+        r.append(rm);
+        box.append(r);
+      }
+      list.append(box);
     }
+  }
+
+  function renderWallet() {
+    renderAccounts();
     const tb = $('w-rows'); tb.textContent = '';
     const note = t => { const tr = document.createElement('tr'), td = document.createElement('td'); td.colSpan = 5; td.className = 'muted'; td.textContent = t; tr.append(td); tb.append(tr); };
-    if (!store.addresses.length) return note('ยังไม่ได้ใส่ที่อยู่กระเป๋า');
+    if (!allAddrs().length) return note('ยังไม่ได้ใส่ที่อยู่กระเป๋า');
     if (walletState === 'loading') return note('กำลังอ่านยอดจากบล็อกเชน…');
-    if (walletState === 'blocked') return note('ตอนนี้เชื่อมต่อบล็อกเชนไม่ได้ ลองกด "อ่านยอดใหม่" อีกครั้งในอีกสักครู่ หรือใช้ช่องกรอกเองด้านล่างไปก่อน');
-    if (!walletRows.length) note('ไม่พบเหรียญที่มีราคาในตลาดในกระเป๋านี้');
+    if (walletState === 'blocked') return note('ตอนนี้เชื่อมต่อบล็อกเชนไม่ได้ ลองกด "อ่านยอดใหม่" อีกครั้งในอีกสักครู่');
+    if (!walletRows.length) note('ไม่พบเหรียญที่มีราคาในตลาดในกระเป๋า');
+    const many = store.accounts.filter(x => x.addresses.length).length > 1;
     for (const r of walletRows) {
       const tr = document.createElement('tr');
-      for (const c of [r.sym, r.chain, r.amount.toLocaleString('en-US', { maximumFractionDigits: 6 }), usd(r.price), usd(r.value)]) { const td = document.createElement('td'); td.textContent = c; tr.append(td); }
+      const where = r.chain + (many && accountOf(r.addr) ? ' · ' + accountOf(r.addr).name : '');
+      for (const c of [r.sym, where, r.amount.toLocaleString('en-US', { maximumFractionDigits: 6 }), usd(r.price), usd(r.value)]) { const td = document.createElement('td'); td.textContent = c; tr.append(td); }
       tb.append(tr);
     }
     if (walletRows.some(r => r.unverified)) note('⚠ = เหรียญที่ยังไม่ได้รับการยืนยันหรือสภาพคล่องต่ำ ราคาอาจไม่จริง อาจเป็นเหรียญสแกมที่ถูกส่งมาเอง และไม่นับรวมในยอดรวม');
     if (walletState === 'partial') {
-      const names = [...new Set(failedChains)].join(', ');
-      note('อ่านไม่สำเร็จ: ' + names + (fromCache ? ' (แสดงยอดล่าสุดที่เคยอ่านได้แทน)' : '') + ' มักเกิดจากเว็บสำรวจบล็อกเชนจำกัดจำนวนครั้ง กด "อ่านยอดใหม่" อีกครั้งได้');
+      note('อ่านไม่สำเร็จ: ' + [...new Set(failedChains)].join(', ') + (fromCache ? ' (แสดงยอดล่าสุดที่เคยอ่านได้แทน)' : '') + ' มักเกิดจากเว็บสำรวจบล็อกเชนจำกัดจำนวนครั้ง กด "อ่านยอดใหม่" อีกครั้งได้');
     }
+  }
+
+  function fillTargets() {
+    const sel = $('a-target'), cur = sel.value;
+    sel.textContent = '';
+    for (const x of store.accounts) { const o = el('option', '', x.name); o.value = x.id; sel.append(o); }
+    if (store.accounts.some(x => x.id === cur)) sel.value = cur;
+  }
+  const target = () => store.accounts.find(x => x.id === $('a-target').value) || store.accounts[0];
+  $('a-new').onclick = () => {
+    if (store.accounts.length >= MAX_ACCOUNTS) { $('w-msg').textContent = 'สร้างได้สูงสุด ' + MAX_ACCOUNTS + ' บัญชี'; return; }
+    const n = (prompt('ตั้งชื่อบัญชีใหม่', 'บัญชี ' + (store.accounts.length + 1)) || '').trim().slice(0, 30);
+    if (!n) return;
+    const acct = { id: 'a' + Date.now().toString(36), name: n, addresses: [] };
+    store.accounts.push(acct); save(); fillTargets(); $('a-target').value = acct.id; renderAccounts();
+  };
+
+  // Adds to the chosen account; returns a message when it can't.
+  function addAddress(a, connected) {
+    const owner = accountOf(a);
+    if (owner) { if (connected && !store.connected.includes(a)) store.connected.push(a); return 'ที่อยู่นี้อยู่ใน "' + owner.name + '" แล้ว'; }
+    const acct = target();
+    if (acct.addresses.length >= MAX_PER_ACCOUNT) return 'บัญชีนี้ใส่ได้สูงสุด ' + MAX_PER_ACCOUNT + ' ที่อยู่';
+    acct.addresses.push(a);
+    if (connected) store.connected.push(a);
+    return '';
   }
 
   $('w-add').onclick = () => {
     const m = $('w-msg'), v = $('w-addr').value.trim();
     const clear = t => { $('w-addr').value = ''; m.textContent = t; };
     if (v.split(/\s+/).length >= 6) return clear('นี่ดูเหมือน seed phrase! แอปไม่ได้บันทึกไว้ ห้ามให้ใครเห็นคำชุดนี้เด็ดขาด ให้ใส่เฉพาะที่อยู่กระเป๋า');
-    if (/^(0x)?[0-9a-fA-F]{64}$/.test(v) || /^\[\s*\d+(\s*,\s*\d+){31,}\s*\]$/.test(v) || /^[1-9A-HJ-NP-Za-km-z]{60,100}$/.test(v)) return clear('นี่ดูเหมือน private key! แอปไม่ได้บันทึกไว้ ถ้าเคยให้ใครเห็นให้ย้ายเงินไปกระเป๋าใหม่ทันที ให้ใส่เฉพาะที่อยู่กระเป๋า');
-    let a;
-    if (/^0x[0-9a-fA-F]{40}$/.test(v)) a = v.toLowerCase();
-    else if (isSol(v)) a = v;
-    else { m.textContent = 'ที่อยู่ไม่ถูกต้อง ใส่ได้ 2 แบบ: กระเป๋า EVM ขึ้นต้นด้วย 0x ยาว 42 ตัว หรือกระเป๋า Solana ยาว 32–44 ตัว (กดคัดลอกจากแอปกระเป๋าได้เลย)'; return; }
-    if (store.addresses.includes(a)) { m.textContent = 'มีกระเป๋านี้แล้ว'; return; }
-    if (store.addresses.length >= 5) { m.textContent = 'ใส่ได้สูงสุด 5 กระเป๋า'; return; }
-    $('w-addr').value = ''; m.textContent = '';
-    store.addresses.push(a); save(); loadWallets();
+    if (/^(0x)?[0-9a-fA-F]{64}$/.test(v) || /^\[\s*\d+(\s*,\s*\d+){31,}\s*\]$/.test(v) || /^[1-9A-HJ-NP-Za-km-z]{60,100}$/.test(v)
+        || /^[5KL][1-9A-HJ-NP-Za-km-z]{50,51}$/.test(v) || /^S[A-Z2-7]{55}$/.test(v) || /^xprv/.test(v)) {
+      return clear('นี่ดูเหมือน private key! แอปไม่ได้บันทึกไว้ ถ้าเคยให้ใครเห็นให้ย้ายเงินไปกระเป๋าใหม่ทันที ให้ใส่เฉพาะที่อยู่กระเป๋า');
+    }
+    const k = kindOf(v);
+    if (!k) { m.textContent = 'ไม่รู้จักที่อยู่นี้ ใส่ได้: EVM (0x…), Bitcoin (bc1… / 1… / 3…), Solana, Tron (T…), Stellar (G…) กดคัดลอกจากแอปกระเป๋าได้เลย'; return; }
+    const err = addAddress(norm(v), false);
+    if (err) { m.textContent = err; return; }
+    $('w-addr').value = ''; m.textContent = 'เพิ่ม ' + KINDS[k].label + ' เข้า "' + target().name + '" แล้ว';
+    save(); loadWallets();
   };
   $('w-refresh').onclick = loadWallets;
 
@@ -239,7 +417,7 @@
     const m = $('c-msg'); m.textContent = '';
     const mobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     m.append(mobile
-      ? 'บนมือถือต้องเปิดแอปนี้จากเบราว์เซอร์ในแอป' + kind + ' หรือวางที่อยู่กระเป๋าเองในช่องด้านล่าง: '
+      ? 'บนมือถือต้องเปิดแอปนี้จากเบราว์เซอร์ในแอป ' + kind + ' หรือวางที่อยู่กระเป๋าเองในช่องด้านล่าง: '
       : 'ไม่พบ ' + kind + ' ในเบราว์เซอร์นี้ ติดตั้งส่วนขยายก่อน หรือวางที่อยู่กระเป๋าเองในช่องด้านล่าง ');
     if (mobile) {
       const a = document.createElement('a');
@@ -252,15 +430,11 @@
     }
   }
   function addConnected(list) {
-    let added = 0;
-    for (const a of list) {
-      if (store.addresses.length >= 5) break;
-      if (!store.addresses.includes(a)) { store.addresses.push(a); added++; }
-      if (!store.connected.includes(a)) store.connected.push(a);
-    }
+    const errs = list.map(a => addAddress(a, true)).filter(Boolean);
     save(); renderConnect(); loadWallets();
-    return added;
+    return errs;
   }
+  let evmConn = null, solConn = null;
   $('c-evm').onclick = async () => {
     const w = evmProvider();
     if (!w) return noWallet('MetaMask');
@@ -270,8 +444,8 @@
       const list = (Array.isArray(accts) ? accts : []).map(a => String(a).toLowerCase()).filter(isEvm);
       if (!list.length) { $('c-msg').textContent = 'ไม่ได้รับที่อยู่จากกระเป๋า'; return; }
       evmConn = w.provider;
-      const n = addConnected(list);
-      $('c-msg').textContent = 'เชื่อม ' + w.name + ' แล้ว (ดูอย่างเดียว)' + (n ? '' : ' · กระเป๋านี้มีในรายการอยู่แล้ว');
+      const errs = addConnected(list);
+      $('c-msg').textContent = 'เชื่อม ' + w.name + ' แล้ว (ดูอย่างเดียว)' + (errs.length ? ' · ' + errs[0] : '');
     } catch (e) { $('c-msg').textContent = e && e.code === 4001 ? 'ยกเลิกการเชื่อมต่อแล้ว' : 'เชื่อมต่อไม่สำเร็จ ลองใหม่ หรือวางที่อยู่เองด้านล่าง'; }
   };
   $('c-sol').onclick = async () => {
@@ -283,24 +457,24 @@
       const a = String((r && r.publicKey) || p.publicKey || '');
       if (!isSol(a)) { $('c-msg').textContent = 'ไม่ได้รับที่อยู่จากกระเป๋า'; return; }
       solConn = p;
-      const n = addConnected([a]);
-      $('c-msg').textContent = 'เชื่อม Phantom แล้ว (ดูอย่างเดียว)' + (n ? '' : ' · กระเป๋านี้มีในรายการอยู่แล้ว');
+      const errs = addConnected([a]);
+      $('c-msg').textContent = 'เชื่อม Phantom แล้ว (ดูอย่างเดียว)' + (errs.length ? ' · ' + errs[0] : '');
     } catch (e) { $('c-msg').textContent = e && e.code === 4001 ? 'ยกเลิกการเชื่อมต่อแล้ว' : 'เชื่อมต่อไม่สำเร็จ ลองใหม่ หรือวางที่อยู่เองด้านล่าง'; }
   };
-  let evmConn = null, solConn = null;
   $('c-off').onclick = async () => {
     const w = evmConn || (evmProvider() || {}).provider;
     if (w && store.connected.some(isEvm)) { try { await ask(w, 'wallet_revokePermissions', [{ eth_accounts: {} }]); } catch (e) {} }
     const s = solConn || solProvider();
-    if (s && s.disconnect && store.connected.some(a => !isEvm(a))) { try { await s.disconnect(); } catch (e) {} }
-    store.addresses = store.addresses.filter(a => !store.connected.includes(a));
+    if (s && s.disconnect && store.connected.some(isSol)) { try { await s.disconnect(); } catch (e) {} }
+    for (const x of store.accounts) x.addresses = x.addresses.filter(a => !store.connected.includes(a));
     store.connected = [];
     evmConn = solConn = null;
     save(); renderConnect(); loadWallets();
-    $('c-msg').textContent = 'ตัดการเชื่อมต่อแล้ว และเอากระเป๋าที่เชื่อมไว้ออกจากรายการ';
+    $('c-msg').textContent = 'ตัดการเชื่อมต่อแล้ว และเอาที่อยู่ที่เชื่อมไว้ออกจากรายการ';
   };
   function renderConnect() { $('c-off').hidden = !store.connected.length; }
   renderConnect();
+  fillTargets();
 
   function fillSelect() {
     const sel = $('f-asset'), cur = sel.value;
@@ -349,8 +523,8 @@
       b.onclick = () => { store.holdings = store.holdings.filter(x => x.id !== h.id); save(); render(); };
       tdd.append(b); tr.append(tdd); tb.append(tr);
     }
-    const wv = walletRows.reduce((t, r) => t + (r.unverified ? 0 : r.value || 0), 0);   // ⚠ tokens are often airdropped scams
-    $('k-wallet').textContent = store.addresses.length ? usd(wv) : '–';
+    const wv = sumOf(walletRows);
+    $('k-wallet').textContent = allAddrs().length ? usd(wv) : '–';
     $('k-total').textContent = usd(tv + wv);
     $('k-value').textContent = usd(tv) + (missing ? '*' : '');
     $('k-cost').textContent = usd(tc);
@@ -376,7 +550,7 @@
   };
 
   $('b-export').onclick = () => {
-    const blob = new Blob([JSON.stringify({ app: 'crypto-radar', version: 1, exported_at: new Date().toISOString(), ...store }, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify({ app: 'crypto-radar', version: 2, exported_at: new Date().toISOString(), ...store }, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = 'crypto-radar-portfolio-' + new Date().toISOString().slice(0, 10) + '.json';
@@ -390,14 +564,14 @@
     if (!f) return;
     try {
       const next = clean(JSON.parse(await f.text()));
-      if (!confirm(`นำเข้า ${next.holdings.length} เหรียญ และ ${next.addresses.length} กระเป๋า แทนข้อมูลเดิมในเครื่องนี้?`)) return;
-      store = next; save(); render(); loadWallets();
+      if (!confirm(`นำเข้า ${next.holdings.length} เหรียญ และ ${next.accounts.reduce((t, x) => t + x.addresses.length, 0)} ที่อยู่ใน ${next.accounts.length} บัญชี แทนข้อมูลเดิมในเครื่องนี้?`)) return;
+      store = next; save(); fillTargets(); renderConnect(); render(); loadWallets();
       $('b-msg').textContent = 'นำเข้าเรียบร้อย';
     } catch (err) { $('b-msg').textContent = 'ไฟล์นี้ไม่ใช่ไฟล์สำรองของแอปนี้'; }
   };
 
   // Another tab or window changed the portfolio.
-  window.addEventListener('storage', e => { if (e.key === KEY) { store = read(); render(); loadWallets(); } });
+  window.addEventListener('storage', e => { if (e.key === KEY) { store = read(); fillTargets(); renderConnect(); render(); loadWallets(); } });
 
   fetch('data/prices.json', { cache: 'no-cache' }).then(r => r.json()).then(j => {
     const rows = Array.isArray(j) ? j : (j && j.rows) || [];

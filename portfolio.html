@@ -38,6 +38,24 @@ th { color: var(--muted); font-weight: 500; font-size: 13px; }
 .msg { min-height: 1.4em; font-size: 13px; margin-top: 8px; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; }
 .hidden { display: none; }
+.sub { font-size: 14px; margin: 18px 0 6px; color: var(--muted); font-weight: 600; }
+label.inline { display: inline-flex; align-items: center; gap: 8px; }
+label.inline select { width: auto; margin: 0; }
+.acct { border: 1px solid var(--line); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+.acct-h { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--panel2); flex-wrap: wrap; }
+.acct-h .nm { font-weight: 700; }
+.acct-h .tot { margin-left: auto; font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.acct-h button { padding: 4px 8px; font-size: 12px; }
+.addr { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-top: 1px solid var(--line); }
+.addr .ic { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; color: #fff; flex: none; }
+.addr .ch { min-width: 0; flex: 1; }
+.addr .ch b { display: block; font-size: 14px; }
+.addr .ch code { font-size: 12px; color: var(--muted); }
+.addr .copy { background: none; border: 0; color: var(--muted); padding: 2px 4px; cursor: pointer; font-size: 13px; }
+.addr .bal { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.addr .bal small { display: block; color: var(--muted); font-size: 11px; }
+.ic.evm { background: #627eea; } .ic.btc { background: #f7931a; } .ic.sol { background: linear-gradient(135deg, #9945ff, #14f195); }
+.ic.tron { background: #eb0029; } .ic.xlm { background: #111; border: 1px solid #555; }
 </style>
 </head>
 <body>
@@ -49,7 +67,7 @@ th { color: var(--muted); font-weight: 500; font-size: 13px; }
     <a href="guide.html">คู่มือ</a>
   </nav>
   <span class="updated" id="updated"></span>
-  <button class="refresh" id="refresh" type="button" title="เช็กเวอร์ชันใหม่และดึงข้อมูลล่าสุด">↻ อัปเดต</button>
+  <button class="refresh" id="refresh" type="button" title="เช็กเวอร์ชันใหม่และดึงข้อมูลล่าสุด">↻<span class="t"> อัปเดต</span></button>
   <button class="install" id="install" hidden>ติดตั้งแอป</button>
 </header>
 
@@ -64,9 +82,17 @@ th { color: var(--muted); font-weight: 500; font-size: 13px; }
   </div>
 
   <div class="card">
-    <h2>อ่านยอดจากกระเป๋าอัตโนมัติ</h2>
-    <p class="muted">กดเชื่อมกระเป๋าเพื่อให้แอปรู้ที่อยู่ หรือวางที่อยู่เองก็ได้ แอปอ่านยอดแบบดูอย่างเดียว รองรับกระเป๋า EVM เช่น MetaMask (Ethereum, Base, Polygon, Arbitrum, Optimism) และกระเป๋า Solana เช่น Phantom</p>
-    <div class="row">
+    <h2>กระเป๋าของฉัน</h2>
+    <p class="muted">รวมหลายที่อยู่ไว้ในบัญชีเดียวแบบใน MetaMask แอปอ่านยอดแบบดูอย่างเดียว รองรับ Ethereum และเครือข่าย EVM (Base, Polygon, Arbitrum, Optimism), Bitcoin, Solana, Tron และ Stellar</p>
+    <div id="w-list"></div>
+    <div class="row" style="margin:10px 0 4px">
+      <button class="plain" id="w-refresh" type="button">↻ อ่านยอดใหม่</button>
+      <button class="plain" id="a-new" type="button">+ สร้างบัญชีใหม่</button>
+    </div>
+
+    <h3 class="sub">เพิ่มที่อยู่</h3>
+    <label class="inline">เพิ่มเข้าบัญชี <select id="a-target"></select></label>
+    <div class="row" style="margin-top:8px">
       <button id="c-evm" type="button">🦊 เชื่อม MetaMask (ดูอย่างเดียว)</button>
       <button id="c-sol" type="button">👻 เชื่อม Phantom (ดูอย่างเดียว)</button>
       <button id="c-off" type="button" class="plain" hidden>ตัดการเชื่อมต่อ</button>
@@ -74,17 +100,17 @@ th { color: var(--muted); font-weight: 500; font-size: 13px; }
     <div class="msg muted" id="c-msg"></div>
     <div class="warn" style="margin:6px 0 12px">แอปนี้จะขอแค่ "ดูที่อยู่กระเป๋า" เท่านั้น จะไม่ขอให้เซ็น อนุมัติ (Approve) หรือส่งธุรกรรมใด ๆ ถ้าเห็นคำขอแบบนั้น ให้กดปฏิเสธทันที</div>
     <div class="grid">
-      <label style="grid-column:1/-2">หรือวางที่อยู่กระเป๋าเอง<input id="w-addr" maxlength="120" placeholder="0x... หรือที่อยู่ Solana" autocomplete="off" spellcheck="false"></label>
-      <button id="w-add" type="button">เพิ่มกระเป๋า</button>
+      <label style="grid-column:1/-2">หรือวางที่อยู่เอง (แอปรู้เองว่าเป็นเครือข่ายไหน)<input id="w-addr" maxlength="120" placeholder="0x…, bc1…, Solana, T…, G…" autocomplete="off" spellcheck="false"></label>
+      <button id="w-add" type="button">เพิ่ม</button>
     </div>
     <div class="msg muted" id="w-msg"></div>
-    <div id="w-list"></div>
+
+    <h3 class="sub">เหรียญในกระเป๋าทั้งหมด</h3>
     <div class="tw"><table>
       <thead><tr><th>เหรียญ</th><th>เครือข่าย</th><th>จำนวน</th><th>ราคา</th><th>มูลค่า</th></tr></thead>
       <tbody id="w-rows"></tbody>
     </table></div>
-    <div class="row" style="margin-top:10px"><button class="plain" id="w-refresh" type="button">อ่านยอดใหม่</button></div>
-    <p class="muted">ยอดและราคาอ่านจาก Blockscout (EVM) และ Solana RPC + Jupiter/DexScreener (Solana) ณ ตอนที่เปิด แสดงเฉพาะเหรียญที่มีราคาในตลาด เหรียญแปลก ๆ ที่ถูกส่งเข้ากระเป๋าโดยไม่ได้ขอมักเป็นสแกม อย่ากดหรือแลกเด็ดขาด</p>
+    <p class="muted">อ่านยอดจาก Blockscout (EVM), mempool.space (Bitcoin), Solana RPC + Jupiter (Solana), TronGrid (Tron) และ Stellar Horizon ราคาจาก CoinGecko แสดงเฉพาะเหรียญที่มีราคาในตลาด เหรียญแปลก ๆ ที่ถูกส่งเข้ากระเป๋าโดยไม่ได้ขอมักเป็นสแกม อย่ากดหรือแลกเด็ดขาด</p>
   </div>
 
   <div class="card">

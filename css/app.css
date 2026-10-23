@@ -40,9 +40,10 @@ body {
 @media (max-width: 520px) { .updated { display: none; } .brand span { display: none; } }
 .refresh { border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; background: var(--panel2); color: var(--fg); font: inherit; font-size: 14px; cursor: pointer; }
 .refresh:disabled { opacity: .6; cursor: default; }
-.app-bar .refresh { margin-left: auto; }
-.app-bar .updated + .refresh { margin-left: 0; }
 .new-version { display: flex; align-items: center; gap: 10px; }
 .new-version button { border: 0; border-radius: 6px; padding: 5px 10px; background: var(--teal); color: #04201c; font: inherit; font-weight: 600; cursor: pointer; }
-@media (max-width: 520px) { .app-bar .refresh { margin-left: auto; } }
 @media (max-width: 430px) { .app-bar { gap: 8px; padding: 10px 12px; } .tabs a { padding: 6px 9px; font-size: 13px; } .refresh { padding: 6px 9px; font-size: 13px; } }
+.ver { color: var(--teal); text-decoration: none; font-size: 12px; font-weight: 700; border: 1px solid #0f5f5a; border-radius: 999px; padding: 3px 8px; white-space: nowrap; }
+a.toast { color: var(--fg); text-decoration: none; }
+@media (max-width: 520px) { .app-bar .ver { margin-left: auto; } }
+@media (max-width: 430px) { .refresh .t { display: none; } .tabs a { padding: 6px 7px; } .brand img { width: 24px; height: 24px; } }
