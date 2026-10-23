@@ -11,6 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="stylesheet" href="css/app.css">
+<script src="js/i18n.js"></script>
 <style>
 :root { --green: #34d399; --amber: #fbbf24; --red: #f87171; }
 .wrap { max-width: 1500px; margin: 0 auto; padding: 16px clamp(12px, 1.5vw, 28px) 24px; }
@@ -24,7 +25,7 @@
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; align-items: end; }
 label { display: block; font-size: 13px; color: var(--muted); }
 input, select { width: 100%; margin-top: 4px; padding: 9px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel2); color: var(--fg); font: inherit; }
-button { padding: 9px 14px; border-radius: 8px; border: 0; background: var(--teal); color: #04201c; font: inherit; font-weight: 600; cursor: pointer; }
+button { padding: 9px 14px; border-radius: 8px; border: 0; background: var(--teal); color: var(--on-accent); font: inherit; font-weight: 600; cursor: pointer; }
 button.ghost { background: transparent; color: var(--red); border: 1px solid var(--line); padding: 5px 10px; }
 button.plain { background: var(--panel2); color: var(--fg); border: 1px solid var(--line); }
 button:disabled { opacity: .5; cursor: default; }
@@ -69,9 +70,6 @@ label.inline select { width: auto; margin: 0; }
     <a href="coin.html">กราฟ</a>
     <a href="guide.html">คู่มือ</a>
   </nav>
-  <span class="updated" id="updated"></span>
-  <button class="refresh" id="refresh" type="button" title="เช็กเวอร์ชันใหม่และดึงข้อมูลล่าสุด">↻<span class="t"> อัปเดต</span></button>
-  <button class="install" id="install" hidden>ติดตั้งแอป</button>
 </header>
 
 <div class="wrap">
@@ -207,7 +205,7 @@ label.inline select { width: auto; margin: 0; }
     <p class="muted">ไฟล์นี้ช่วยรวบรวมข้อมูลไว้ใช้ตอนยื่นภาษี กฎภาษีคริปโตของไทยมีข้อยกเว้นบางกรณี (เช่น ขายผ่านกระดานที่ได้รับอนุญาต) ควรเช็กกับกรมสรรพากรหรือผู้เชี่ยวชาญอีกครั้ง กำไรคำนวณแบบต้นทุนเฉลี่ย แยกตามสกุลเงิน</p>
   </div>
 
-  <div class="card">
+  <div class="card" id="backup">
     <h2>สำรองและย้ายข้อมูล</h2>
     <div class="row">
       <button class="plain" id="b-export" type="button">สำรองข้อมูล (ดาวน์โหลดไฟล์)</button>

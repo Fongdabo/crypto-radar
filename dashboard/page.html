@@ -400,11 +400,13 @@ dash.calc('deadline_status', {
 dash.calc('countdown', {
   inputs: ['timeline', 'airdrop_deadlines'],
   title: 'วันสำคัญ 45 วันข้างหน้า',
-  description: 'รวมวันที่แน่นอนจากปฏิทินและวันหมดเขตแอร์ดรอป แล้วนับจำนวนวันจากวันนี้',
+  description: 'รวมวันที่แน่นอนจากปฏิทินและวันหมดเขตแอร์ดรอป (ตัดรายการแอร์ดรอปที่ซ้ำวันเดียวกันออก) แล้วนับจำนวนวันจากวันนี้',
   fn: (timeline, airdrop_deadlines) => {
     const today = new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00Z');
     const days = (d) => Math.round((new Date(d + 'T00:00:00Z') - today) / 864e5);
-    const a = timeline.filter(r => !(r.approx === true || r.approx === 'true')).map(r => ({ label: r.label, kind: r.kind, date: r.date, days_left: days(r.date) }));
+    const name = (p) => String(p).split(/[ (]/)[0].toLowerCase();
+    const dup = (r) => r.kind === 'แอร์ดรอป' && airdrop_deadlines.some(d => d.key_date === r.date && String(r.label).toLowerCase().startsWith(name(d.project)));
+    const a = timeline.filter(r => !(r.approx === true || r.approx === 'true') && !dup(r)).map(r => ({ label: r.label, kind: r.kind, date: r.date, days_left: days(r.date) }));
     const b = airdrop_deadlines.map(r => ({ label: r.project + ' · ' + r.date_text, kind: 'แอร์ดรอป', date: r.key_date, days_left: days(r.key_date) }));
     return a.concat(b).filter(r => r.days_left >= 0 && r.days_left <= 45).sort((x, y) => x.days_left - y.days_left);
   }

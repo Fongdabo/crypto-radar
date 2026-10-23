@@ -32,6 +32,8 @@
 
   let prices = [], walletRows = [], walletState = '';
   let addrState = {};   // address -> 'loading' | 'ok' | 'failed' | 'cached'
+  // Default account names follow the app language; names the user typed stay as typed.
+  const ACCT = window.CR_LANG === 'en' ? 'Account ' : 'บัญชี ';
   let store = read();
   const allAddrs = () => store.accounts.flatMap(x => x.addresses);
   const accountOf = a => store.accounts.find(x => x.addresses.includes(a));
@@ -45,16 +47,16 @@
       .filter(h => h && typeof h.asset === 'string' && /^[A-Z0-9.$_-]{1,20}$/.test(h.asset) && isFinite(h.amount) && isFinite(h.buy_price_usd))
       .map(h => ({ id: String(h.id || Math.random().toString(36).slice(2)), asset: h.asset, amount: Number(h.amount), buy_price_usd: Number(h.buy_price_usd), manual_price_usd: h.manual_price_usd == null ? undefined : Number(h.manual_price_usd), added_at: String(h.added_at || '') }));
     // Older versions kept one flat list of addresses: it becomes "บัญชี 1".
-    let accounts = Array.isArray(s.accounts) ? s.accounts : [{ id: 'a1', name: 'บัญชี 1', addresses: Array.isArray(s.addresses) ? s.addresses : [] }];
+    let accounts = Array.isArray(s.accounts) ? s.accounts : [{ id: 'a1', name: ACCT + '1', addresses: Array.isArray(s.addresses) ? s.addresses : [] }];
     const seen = new Set();
     accounts = accounts.filter(x => x && typeof x === 'object').slice(0, MAX_ACCOUNTS).map((x, i) => ({
       id: String(x.id || 'a' + (i + 1)),
-      name: String(x.name || 'บัญชี ' + (i + 1)).slice(0, 30),
+      name: String(x.name || ACCT + (i + 1)).slice(0, 30),
       addresses: (Array.isArray(x.addresses) ? x.addresses : [])
         .filter(a => typeof a === 'string' && kindOf(a)).map(norm)
         .filter(a => !seen.has(a) && seen.add(a)).slice(0, MAX_PER_ACCOUNT),
     }));
-    if (!accounts.length) accounts = [{ id: 'a1', name: 'บัญชี 1', addresses: [] }];
+    if (!accounts.length) accounts = [{ id: 'a1', name: ACCT + '1', addresses: [] }];
     const connected = (Array.isArray(s.connected) ? s.connected : []).filter(a => seen.has(a));
     const trades = (Array.isArray(s.trades) ? s.trades : []).filter(t => t && /^\d{4}-\d{2}-\d{2}$/.test(t.date) && (t.type === 'buy' || t.type === 'sell')
       && /^[A-Z0-9.$_-]{1,20}$/.test(t.sym) && t.amount > 0 && t.price >= 0 && (t.cur === 'THB' || t.cur === 'USD'))
@@ -291,7 +293,7 @@
     for (const acct of store.accounts) {
       const box = el('div', 'acct');
       const h = el('div', 'acct-h');
-      h.append(el('span', 'nm', acct.name));
+      const nm = el('span', 'nm', acct.name); nm.dataset.noI18n = ''; h.append(nm);
       const ren = el('button', 'plain', 'แก้ชื่อ'); ren.type = 'button';
       ren.onclick = () => {
         const n = (prompt('ชื่อบัญชี', acct.name) || '').trim().slice(0, 30);
@@ -360,13 +362,13 @@
   function fillTargets() {
     const sel = $('a-target'), cur = sel.value;
     sel.textContent = '';
-    for (const x of store.accounts) { const o = el('option', '', x.name); o.value = x.id; sel.append(o); }
+    for (const x of store.accounts) { const o = el('option', '', x.name); o.value = x.id; o.dataset.noI18n = ''; sel.append(o); }
     if (store.accounts.some(x => x.id === cur)) sel.value = cur;
   }
   const target = () => store.accounts.find(x => x.id === $('a-target').value) || store.accounts[0];
   $('a-new').onclick = () => {
     if (store.accounts.length >= MAX_ACCOUNTS) { $('w-msg').textContent = 'สร้างได้สูงสุด ' + MAX_ACCOUNTS + ' บัญชี'; return; }
-    const n = (prompt('ตั้งชื่อบัญชีใหม่', 'บัญชี ' + (store.accounts.length + 1)) || '').trim().slice(0, 30);
+    const n = (prompt('ตั้งชื่อบัญชีใหม่', ACCT + (store.accounts.length + 1)) || '').trim().slice(0, 30);
     if (!n) return;
     const acct = { id: 'a' + Date.now().toString(36), name: n, addresses: [] };
     store.accounts.push(acct); save(); fillTargets(); $('a-target').value = acct.id; renderAccounts();
@@ -500,9 +502,9 @@
       const tr = el('tr');
       const gap = t.last ? (t.price - t.last) / t.last * 100 : null;
       const cells = [null, t.dir === 'above' ? 'ขึ้นถึง' : 'ลงถึง', usd(t.price), t.last ? usd(t.last) : '…', t.hit_at ? '–' : gap == null ? '–' : (gap >= 0 ? '+' : '') + gap.toFixed(1) + '%',
-        t.hit_at ? 'ถึงแล้ว ' + new Date(t.hit_at).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' }) : 'รอ'];
+        t.hit_at ? 'ถึงแล้ว ' + new Date(t.hit_at).toLocaleString(window.CR_LOCALE || 'th-TH', { dateStyle: 'short', timeStyle: 'short' }) : 'รอ'];
       for (const c of cells) tr.append(el('td', '', c));
-      tr.cells[0].append(coinLink(t.sym)); if (t.note) tr.cells[0].append(el('div', 'muted', t.note));
+      tr.cells[0].append(coinLink(t.sym)); if (t.note) { const n = el('div', 'muted', t.note); n.dataset.noI18n = ''; tr.cells[0].append(n); }
       if (t.hit_at) tr.cells[5].className = 'pos';
       const td = el('td');
       if (t.hit_at) { const re = el('button', 'plain', 'ตั้งใหม่'); re.type = 'button'; re.style.padding = '5px 10px'; re.onclick = () => A.rearm(t.key); td.append(re, ' '); }
@@ -597,7 +599,7 @@
       const total = t.type === 'buy' ? t.amount * t.price + (t.fee || 0) : t.amount * t.price - (t.fee || 0);
       for (const c of [t.date, t.type === 'buy' ? 'ซื้อ' : 'ขาย', t.sym, t.amount.toLocaleString('en-US', { maximumFractionDigits: 8 }), money(t.price, t.cur), money(t.fee || 0, t.cur), money(total, t.cur), t.ex || '']) tr.append(el('td', '', c));
       tr.cells[1].className = t.type === 'buy' ? 'pos' : 'neg';
-      if (t.note) tr.cells[7].append(el('div', 'muted', t.note));
+      if (t.note) { const n = el('div', 'muted', t.note); n.dataset.noI18n = ''; tr.cells[7].append(n); }
       const td = el('td'), rm = el('button', 'ghost', 'ลบ'); rm.type = 'button';
       rm.onclick = () => { if (!confirm('ลบรายการนี้?')) return; store.trades = store.trades.filter(x => x.id !== t.id); save(); renderTrades(); };
       td.append(rm); tr.append(td); tb.append(tr);

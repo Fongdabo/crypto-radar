@@ -25,6 +25,12 @@
         shown = true;
       }
     } catch (e) {}
+    // Keep it for the bell in the toolbar (last 30).
+    try {
+      const k = 'crypto-radar:bell-log:v1', log = JSON.parse(localStorage.getItem(k) || '[]');
+      log.push({ at: new Date().toISOString(), title, body }); localStorage.setItem(k, JSON.stringify(log.slice(-30)));
+      window.dispatchEvent(new Event('cr-bell'));
+    } catch (e) {}
     // Always also show it inside the app.
     const t = document.createElement('a');
     t.className = 'toast alert-toast'; t.href = 'portfolio.html#targets';

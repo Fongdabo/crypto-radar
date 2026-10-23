@@ -185,8 +185,10 @@
       const line = el('p'); if (claude.trend) line.append(el('span', 'badge ' + tb, claude.trend));
       if (claude.risk_score) { line.append('ความเสี่ยง '); const m = el('span', 'meter'); for (let i = 1; i <= 5; i++) m.append(el('i', i <= claude.risk_score ? 'f' : '')); line.append(m, ' ' + claude.risk_score + '/5'); }
       d.append(line);
-      if (claude.summary_th) d.append(el('p', '', claude.summary_th));
-      const list = (t, arr) => { if (!Array.isArray(arr) || !arr.length) return; d.append(el('b', '', t)); const ul = el('ul'); for (const x of arr) ul.append(el('li', '', String(x))); d.append(ul); };
+      // Claude's research is written in Thai; keep it as written in every language.
+      if (window.CR_LANG !== 'th') d.append(el('p', 'muted', 'Research written in Thai.'));
+      if (claude.summary_th) { const p = el('p', '', claude.summary_th); p.dataset.noI18n = ''; d.append(p); }
+      const list = (t, arr) => { if (!Array.isArray(arr) || !arr.length) return; d.append(el('b', '', t)); const ul = el('ul'); ul.dataset.noI18n = ''; for (const x of arr) ul.append(el('li', '', String(x))); d.append(ul); };
       list('เรื่องที่ต้องจับตา', claude.watch_th); list('ความเสี่ยง', claude.risks_th);
       c3.append(d);
     } else {
@@ -232,7 +234,7 @@
       const dot = svg.append('circle').attr('r', 4).attr('fill', col).style('display', 'none');
       const tip = el('div', 'tip'); tip.style.display = 'none'; chart.append(tip);
       const bis = d3.bisector(d => d.t).center;
-      const fmt = new Intl.DateTimeFormat('th-TH', range <= 7 ? { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short', year: '2-digit' });
+      const fmt = new Intl.DateTimeFormat(window.CR_LOCALE || 'th-TH', range <= 7 ? { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short', year: '2-digit' });
       svg.append('rect').attr('x', m.l).attr('y', m.t).attr('width', W - m.l - m.r).attr('height', H - m.t - m.b).attr('fill', 'transparent')
         .on('pointermove', ev => {
           const [mx] = d3.pointer(ev), d = data[bis(data, x.invert(mx))];
