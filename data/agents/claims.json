@@ -85,7 +85,8 @@
     ]
    },
    "need": "sign",
-   "mins": 3
+   "mins": 3,
+   "after": "standx"
   },
   {
    "id": "grass",

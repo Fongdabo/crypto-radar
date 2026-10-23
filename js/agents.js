@@ -67,6 +67,8 @@
     if (s.who === 'agent') return false;
     const x = st(a, s);
     if (x.skipped || (pastDue(s) && !s.repeat_days)) return false;
+    // A step that only makes sense after another one (`after`) closes when that one was answered "not for me".
+    if (s.after) { const p = (a.steps || []).find(t => t.id === s.after); if (p && st(a, p).skipped) return false; }
     if (s.repeat_days) return !(Date.now() < repeatAt(a, s));
     return !x.done_at;
   }
@@ -291,8 +293,8 @@
     shell.classList.toggle('open', !!a);
     if (!a) { box.replaceChildren(h('div', 'empty', T('เลือกเอเจนต์ทางซ้ายเพื่อดูแชท', 'Pick an agent on the left to open its chat'))); return; }
     const back = h('a', 'back', '‹'); back.href = '#';
-    const [head, body] = chatView(a, back);
-    box.replaceChildren(head, body);
+    const [head, body, form] = chatView(a, back);
+    box.replaceChildren(head, body, form);
     body.scrollTop = body.scrollHeight;
   }
 
@@ -337,7 +339,54 @@
       body.append(bot(a, task(a, s, false)));
     }
     if (!cur) body.append(bot(a, h('p', '', a.status === 'paused' ? T('ตอนนี้หยุดไว้ก่อน ถ้าสถานการณ์เปลี่ยนผมจะทักมาครับ', 'Paused for now. I will message you if things change.') : T('ตอนนี้ไม่มีงานรอคุณ มีข่าวหรือขั้นใหม่เมื่อไรผมจะทักมาครับ', 'Nothing waiting for you. I will message you when there is news or a new step.'))));
-    return [head, body];
+    for (const q of asked[a.id] || []) body.append(me(q.q, q.at), bot(a, ...answer(a, q.q)));
+    return [head, body, askBox(a)];
+  }
+
+  // Typing a question: the app has no AI of its own (it is a static page), so it answers from what the agent already knows
+  // (its notes, steps and checks) and hands the question, with that context, to Claude in one tap.
+  const asked = {}, drafts = {};
+  function askBox(a) {
+    const f = h('form', 'askf'), inp = h('input');
+    inp.type = 'text'; inp.placeholder = T('ถามเอเจนต์ ' + a.name + '…', 'Ask the ' + a.name + ' agent…'); inp.value = drafts[a.id] || ''; inp.dataset.agent = a.id;
+    inp.oninput = () => { drafts[a.id] = inp.value; };
+    const go = h('button', 'btn pri', T('ส่ง', 'Send')); go.type = 'submit';
+    f.append(inp, go);
+    f.onsubmit = e => {
+      e.preventDefault();
+      const q = inp.value.trim().slice(0, 300);
+      if (!q) return;
+      (asked[a.id] = asked[a.id] || []).push({ q, at: new Date().toISOString() });
+      drafts[a.id] = '';
+      rerender();
+      const i = document.querySelector('.askf input[data-agent="' + a.id + '"]'); if (i) i.focus();
+    };
+    return f;
+  }
+  // Every sentence the agent knows, and the ones that share the most two-letter pieces with the question (works for Thai,
+  // which has no spaces between words).
+  function answer(a, q) {
+    const facts = [a.status_text, a.warn, a.budget && T('งบ: ', 'Budget: ') + a.budget];
+    for (const s of a.steps) {
+      const c = state.checks[a.id + ':' + s.id];
+      facts.push(s.title, s.result, s.note, ...(s.how || []), c && c.text);
+      if (s.sign) facts.push(s.sign.action, s.sign.cost, ...(s.sign.expect || []), ...(s.sign.reject_if || []));
+    }
+    const grams = t => { const g = new Set(), x = String(t).toLowerCase().replace(/[\s"'(),.?!:]+/g, ''); for (let i = 0; i < x.length - 1; i++) g.add(x.slice(i, i + 2)); return g; };
+    const qg = grams(q);
+    const scored = [...new Set(facts.filter(Boolean))].map(t => { const g = grams(t); let n = 0; for (const x of qg) if (g.has(x)) n++; return { t, n: n / Math.max(4, qg.size) }; })
+      .filter(x => x.n >= 0.25).sort((x, y) => y.n - x.n).slice(0, 3);
+    const out = [];
+    if (scored.length) out.push(h('p', 'meta', T('จากข้อมูลที่เอเจนต์มีอยู่:', 'From what the agent already knows:')), list('ul', scored.map(x => x.t)));
+    else out.push(h('p', '', T('เรื่องนี้ไม่มีในข้อมูลของเอเจนต์ ให้ Claude ตอบดีกว่าครับ', 'That is not in the agent\'s notes. Better let Claude answer.')));
+    const cur = nextStep(a);
+    const ctx = T('เอเจนต์ ', 'Agent ') + a.name + (cur ? T(' · ขั้นตอนตอนนี้: ', ' · current step: ') + cur.title : '') + '\n' + T('คำถาม: ', 'Question: ') + q;
+    const b = btn(T('ถาม Claude (คัดลอกคำถามแล้วเปิด Claude)', 'Ask Claude (copies the question and opens Claude)'), 'ghost', async () => {
+      try { await navigator.clipboard.writeText(ctx); b.textContent = T('คัดลอกแล้ว วางในแชทของโปรเจกต์ใน Claude', 'Copied. Paste it in your project chat in Claude'); } catch (e) {}
+      window.open('https://claude.ai/', '_blank', 'noopener');
+    });
+    out.push(replies(b));
+    return out;
   }
   const dueText = due => { const d = daysTo(due); return d < 0 ? T('เลยกำหนดแล้ว', 'Past its date') : d === 0 ? T('⏰ วันนี้วันสุดท้าย', '⏰ Today is the last day') : T('⏰ เหลือ ' + d + ' วัน', '⏰ ' + d + ' days left'); };
   const replies = (...b) => { const r = h('div', 'replies'); r.append(...b); return r; };
@@ -426,10 +475,10 @@
     const a = popView === 'chat' && agents.find(x => x.id === popAgent);
     if (a) {
       const back = h('button', 'back', '‹'); back.type = 'button'; back.onclick = () => { popView = 'home'; renderPop(); };
-      const [head, body] = chatView(a, back);
+      const [head, body, form] = chatView(a, back);
       const close = h('button', 'x', '×'); close.type = 'button'; close.title = T('ปิด', 'Close'); close.onclick = () => { pop.hidden = true; };
       head.append(close);
-      pop.replaceChildren(head, body);
+      pop.replaceChildren(head, body, form);
       body.scrollTop = body.scrollHeight;
       return;
     }
