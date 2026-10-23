@@ -19,7 +19,8 @@
   <a class="brand" href="./"><img src="icons/icon-192.png" alt=""><span>เรดาร์คริปโต</span></a>
   <nav class="tabs">
     <a href="./" class="on">แดชบอร์ด</a>
-    <a href="portfolio.html">พอร์ตของฉัน</a>
+    <a href="portfolio.html">พอร์ต</a>
+    <a href="coin.html">กราฟ</a>
     <a href="guide.html">คู่มือ</a>
   </nav>
   <span class="updated" id="updated"></span>
@@ -57,6 +58,12 @@
       el.textContent = '(function(){\n' + s.textContent + '\n})();';
       document.body.append(el);
     }
+    // Tap a coin in the price table to open its chart.
+    root.addEventListener('click', e => {
+      const tr = e.target.closest('#price-table tbody tr');
+      const sym = tr && tr.cells[0] && tr.cells[0].textContent.trim();
+      if (sym && /^[A-Za-z0-9.$_-]{1,20}$/.test(sym)) location.href = 'coin.html?sym=' + encodeURIComponent(sym);
+    });
   } catch (e) {
     root.innerHTML = '<p class="loading">โหลดแดชบอร์ดไม่ได้ ตรวจสอบอินเทอร์เน็ตแล้วลองเปิดใหม่</p>';
   }

@@ -40,7 +40,8 @@ table.sec td:first-child { white-space: nowrap; font-weight: 600; padding-right:
   <a class="brand" href="./"><img src="icons/icon-192.png" alt=""><span>เรดาร์คริปโต</span></a>
   <nav class="tabs">
     <a href="./">แดชบอร์ด</a>
-    <a href="portfolio.html">พอร์ตของฉัน</a>
+    <a href="portfolio.html">พอร์ต</a>
+    <a href="coin.html">กราฟ</a>
     <a href="guide.html" class="on">คู่มือ</a>
   </nav>
   <span class="updated" id="updated"></span>
@@ -58,9 +59,10 @@ table.sec td:first-child { white-space: nowrap; font-weight: 600; padding-right:
     <a href="#install">ติดตั้งแอป</a>
     <a href="#update">ปุ่มอัปเดต</a>
     <a href="#dashboard">อ่านแดชบอร์ด</a>
-    <a href="#portfolio">พอร์ตของฉัน</a>
+    <a href="#portfolio">พอร์ต</a>
     <a href="#wallet">ใส่ที่อยู่กระเป๋า</a>
     <a href="#backup">สำรองข้อมูล</a>
+    <a href="#chart">ดูกราฟเหรียญ</a>
     <a href="#buy">ซื้อเหรียญและโอนเข้ากระเป๋า</a>
     <a href="#airdrop">กระเป๋าแยกสำหรับแอร์ดรอป</a>
     <a href="#safety">ตัดการเชื่อมต่อเว็บ</a>
@@ -189,8 +191,25 @@ table.sec td:first-child { white-space: nowrap; font-weight: 600; padding-right:
     </div>
   </details>
 
+  <details id="chart">
+    <summary>7. ดูกราฟและบทวิเคราะห์รายเหรียญ</summary>
+    <div class="body">
+      <ol>
+        <li>กดแท็บ <b>กราฟ</b> แล้วเลือกเหรียญจากปุ่มด้านล่างช่องค้นหา (เหรียญเกมที่ติดตาม, เหรียญในกระเป๋า, เหรียญหลัก) หรือพิมพ์ค้นหาชื่อเหรียญ</li>
+        <li>หรือกดชื่อเหรียญในตารางราคาของแดชบอร์ด หรือในตารางพอร์ต ก็เปิดกราฟได้เลย</li>
+        <li>เลือกช่วงเวลา 7 วัน / 30 วัน / 90 วัน / 1 ปี แตะหรือชี้บนกราฟเพื่อดูราคาแต่ละจุด</li>
+      </ol>
+      <h3>อ่านบทวิเคราะห์</h3>
+      <ul>
+        <li><b>อ่านจากตัวเลขอัตโนมัติ:</b> แอปคำนวณเองทุกครั้งที่เปิด เช่น ราคาอยู่เหนือหรือใต้ค่าเฉลี่ย 30 วัน, RSI (เกิน 70 = ขึ้นเร็วร้อนแรง, ต่ำกว่า 30 = ถูกขายหนัก), กรอบราคา 30 วัน และความผันผวน</li>
+        <li><b>จากการค้นคว้าของ Claude:</b> มีเฉพาะเหรียญที่แดชบอร์ดติดตาม อัปเดตทุกเช้า บอกแนวโน้ม ระดับความเสี่ยง 1–5 เรื่องที่ต้องจับตา และความเสี่ยง พร้อมวันที่ของข้อมูล</li>
+      </ul>
+      <div class="tip">บทวิเคราะห์เป็นข้อมูลเพื่อการศึกษา ไม่ใช่คำแนะนำให้ซื้อหรือขาย ตัวเลขในอดีตบอกอนาคตไม่ได้</div>
+    </div>
+  </details>
+
   <details id="buy">
-    <summary>7. ซื้อเหรียญและโอนเข้ากระเป๋า MetaMask</summary>
+    <summary>8. ซื้อเหรียญและโอนเข้ากระเป๋า MetaMask</summary>
     <div class="body">
       <h3>ซื้อที่กระดานเทรดไทย</h3>
       <p>ใช้กระดานที่ได้รับอนุญาตจาก ก.ล.ต. เช่น <b>Bitkub</b>, <b>Binance TH</b>, <b>Bitazza</b> สมัครและยืนยันตัวตน (KYC) โอนเงินบาทเข้า แล้วซื้อเหรียญที่ต้องการ</p>
@@ -207,7 +226,7 @@ table.sec td:first-child { white-space: nowrap; font-weight: 600; padding-right:
   </details>
 
   <details id="airdrop">
-    <summary>8. ใช้กระเป๋าแยกสำหรับลุ้นแอร์ดรอป</summary>
+    <summary>9. ใช้กระเป๋าแยกสำหรับลุ้นแอร์ดรอป</summary>
     <div class="body">
       <p>เวลาไปลองเกมหรือเว็บใหม่เพื่อลุ้นแอร์ดรอป ให้ใช้ <b>กระเป๋าใบที่ 2</b> ที่ใส่เงินไว้นิดเดียว แยกจากกระเป๋าเก็บเงินหลัก ถ้าเว็บนั้นเป็นสแกม จะเสียแค่เงินในกระเป๋าใบเล็ก</p>
       <ol>
@@ -219,7 +238,7 @@ table.sec td:first-child { white-space: nowrap; font-weight: 600; padding-right:
   </details>
 
   <details id="safety">
-    <summary>9. ตัดการเชื่อมต่อเว็บและยกเลิกสิทธิ์ (revoke.cash)</summary>
+    <summary>10. ตัดการเชื่อมต่อเว็บและยกเลิกสิทธิ์ (revoke.cash)</summary>
     <div class="body">
       <h3>ตัดการเชื่อมต่อเว็บใน MetaMask</h3>
       <ol>

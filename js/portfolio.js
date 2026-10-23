@@ -277,6 +277,11 @@
   const sumOf = rows => rows.reduce((t, r) => t + (r.unverified ? 0 : r.value || 0), 0);
   const addrTotal = a => sumOf(walletRows.filter(r => r.addr === a));
 
+  function coinLink(sym) {
+    const a = document.createElement('a');
+    a.className = 'coinlink'; a.href = 'coin.html?sym=' + encodeURIComponent(sym); a.textContent = sym; a.title = 'ดูกราฟ';
+    return a;
+  }
   function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function renderAccounts() {
     const list = $('w-list'); list.textContent = '';
@@ -340,6 +345,7 @@
       const tr = document.createElement('tr');
       const where = r.chain + (many && accountOf(r.addr) ? ' · ' + accountOf(r.addr).name : '');
       for (const c of [r.sym, where, r.amount.toLocaleString('en-US', { maximumFractionDigits: 6 }), usd(r.price), usd(r.value)]) { const td = document.createElement('td'); td.textContent = c; tr.append(td); }
+      if (!r.unverified) tr.cells[0].replaceChildren(coinLink(r.sym));
       tb.append(tr);
     }
     if (walletRows.some(r => r.unverified)) note('⚠ = เหรียญที่ยังไม่ได้รับการยืนยันหรือสภาพคล่องต่ำ ราคาอาจไม่จริง อาจเป็นเหรียญสแกมที่ถูกส่งมาเอง และไม่นับรวมในยอดรวม');
@@ -515,6 +521,7 @@
       const tr = document.createElement('tr');
       const cells = [h.asset, h.amount.toLocaleString('en-US', { maximumFractionDigits: 6 }), usd(h.buy_price_usd), usd(price) + (p || price == null ? '' : ' (กรอกเอง)'), usd(value)];
       for (const c of cells) { const td = document.createElement('td'); td.textContent = c; tr.append(td); }
+      tr.cells[0].replaceChildren(coinLink(h.asset));
       const tdp = document.createElement('td');
       if (pl != null) { tdp.textContent = (pl >= 0 ? '+' : '') + usd(pl) + (cost ? ` (${(pl / cost * 100).toFixed(1)}%)` : ''); tdp.className = pl >= 0 ? 'pos' : 'neg'; } else tdp.textContent = '–';
       tr.append(tdp);
