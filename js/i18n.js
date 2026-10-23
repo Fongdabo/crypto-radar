@@ -14,7 +14,11 @@
   applyTheme(theme);
   window.CRTheme = { set(t) { try { localStorage.setItem(THEME_KEY, t); } catch (e) {} applyTheme(t); } };
 
-  const LANGS = { th: { name: 'ภาษาไทย', flag: '🇹🇭', locale: 'th-TH' }, en: { name: 'English', flag: '🇬🇧', locale: 'en-GB' } };
+  // Flags are drawn as SVG: Windows shows flag emoji as two letters.
+  const LANGS = {
+    th: { name: 'ภาษาไทย', locale: 'th-TH', flag: '<svg viewBox="0 0 30 20" width="21" height="14" aria-hidden="true"><path fill="#A51931" d="M0 0h30v20H0z"/><path fill="#F4F5F8" d="M0 3.33h30v13.34H0z"/><path fill="#2D2A4A" d="M0 6.67h30v6.66H0z"/></svg>' },
+    en: { name: 'English', locale: 'en-GB', flag: '<svg viewBox="0 0 60 30" width="21" height="14" aria-hidden="true"><path fill="#012169" d="M0 0h60v30H0z"/><path stroke="#fff" stroke-width="6" d="M0 0l60 30M60 0L0 30"/><path stroke="#C8102E" stroke-width="2" d="M0 0l60 30M60 0L0 30"/><path stroke="#fff" stroke-width="10" d="M30 0v30M0 15h60"/><path stroke="#C8102E" stroke-width="6" d="M30 0v30M0 15h60"/></svg>' },
+  };
   let lang = 'th';
   try { lang = localStorage.getItem('crypto-radar:lang') || (navigator.language || '').slice(0, 2); } catch (e) {}
   if (!LANGS[lang]) lang = 'th';
@@ -45,6 +49,7 @@
     'แถบเครื่องมือมุมขวาบนแบบแอป PM: สถานะออนไลน์, กระดิ่งแจ้งเตือน, ธีมมืด/สว่าง, คู่มือ, ภาษา และเมนู': 'PM-style toolbar at the top right: online status, notification bell, dark/light theme, guide, language and menu',
     'เปลี่ยนภาษาเป็นอังกฤษได้ (เนื้อหาวิจัยในแดชบอร์ดยังเป็นภาษาไทย)': 'Switch the app to English (dashboard research stays in Thai)',
     'แก้นับถอยหลังที่แสดงรายการซ้ำ': 'Fixed duplicate items in the countdown',
+    'แดชบอร์ดเป็นภาษาอังกฤษทั้งหน้าเมื่อเลือก English รวมบทวิจัยและบทวิเคราะห์รายเหรียญ (แปลใหม่ทุกเช้า)': 'The whole dashboard is in English when English is chosen, including the research and per-coin analysis (translated every morning)', 'ธงภาษาแสดงถูกต้องบน Windows': 'Language flags now show correctly on Windows',
     'แดชบอร์ดขยายเต็มจอบนจอใหญ่ ไม่มีขอบว่างสองข้าง': 'Dashboard uses the full width on large screens', 'หน้าพอร์ตและหน้ากราฟกว้างขึ้น': 'Wider portfolio and chart pages',
     'แจ้งเตือนเข้า Telegram: ราคาถึงเป้า และเหรียญที่ถือขยับแรงเกิน 10% ใน 24 ชม.': 'Telegram alerts: price targets hit and held coins moving more than 10% in 24h',
     'เตือนบนเครื่องเมื่อเหรียญที่ถือขยับแรง (วันละครั้งต่อเหรียญ)': 'Device alert when a held coin moves sharply (once a day per coin)',
@@ -184,19 +189,37 @@
   }
   window.t = tr;
 
-  const SKIP = '#dash-root, [data-no-i18n], script, style, code, textarea, [data-lang]';
+  // The dashboard page has its own phrase list (i18n/page-<lang>.json, loaded by index.html) and is translated strictly:
+  // a text is changed only when every Thai part of it is known, so research text is never left half-translated.
+  let dashDict = null, dashKeys = [];
+  function trDash(s) {
+    if (!dashDict || !thai.test(s)) return s;
+    const trimmed = s.trim();
+    const exact = dashDict[trimmed] != null ? dashDict[trimmed] : dict[trimmed];
+    if (exact != null) return s.replace(trimmed, exact);
+    // Thai dates (22 ต.ค. 2569, 25 ต.ค. 69, ต.ค. 2569) become 22 Oct 2026.
+    let out = s.replace(THAI_DATE, (m, d, mon, y) => (d ? d + ' ' : '') + MONTHS[mon] + (y ? ' ' + (y.length === 2 ? 2000 + ((+y + 57) % 100) : +y > 2400 ? +y - 543 : +y) : ''));
+    for (const k of dashKeys) { if (!thai.test(out)) break; if (out.includes(k)) out = out.split(k).join(dashDict[k]); }
+    return thai.test(out) ? s : out;
+  }
+  const MONTHS = { 'ม.ค.': 'Jan', 'ก.พ.': 'Feb', 'มี.ค.': 'Mar', 'เม.ย.': 'Apr', 'พ.ค.': 'May', 'มิ.ย.': 'Jun', 'ก.ค.': 'Jul', 'ส.ค.': 'Aug', 'ก.ย.': 'Sep', 'ต.ค.': 'Oct', 'พ.ย.': 'Nov', 'ธ.ค.': 'Dec' };
+  const THAI_DATE = new RegExp('(?:(\\d{1,2}) )?(' + Object.keys(MONTHS).map(m => m.replace(/\./g, '\\.')).join('|') + ')(?: (\\d{4}|\\d{2})(?!\\d))?', 'g');
+  const inDash = n => !!(n.closest && n.closest('#dash-root'));
+  const SKIP = '[data-no-i18n], script, style, code, textarea, [data-lang]';
   function walk(root) {
     if (!dict) return;
-    if (root.nodeType === 3) { const p = root.parentElement; if (p && !p.closest(SKIP) && thai.test(root.nodeValue)) { const v = tr(root.nodeValue); if (v !== root.nodeValue) root.nodeValue = v; } return; }
-    if (root.nodeType !== 1 || root.closest(SKIP)) return;
-    for (const a of ['placeholder', 'title', 'aria-label']) { const v = root.getAttribute(a); if (v && thai.test(v)) root.setAttribute(a, tr(v)); }
-    if (root.tagName === 'OPTION' && thai.test(root.textContent)) root.textContent = tr(root.textContent);
+    const el = root.nodeType === 1 ? root : root.parentElement;
+    if (!el || el.closest(SKIP)) return;
+    const f = inDash(el) ? trDash : tr;
+    if (f === trDash && !dashDict) return;
+    const text = n => { if (thai.test(n.nodeValue)) { const v = f(n.nodeValue); if (v !== n.nodeValue) n.nodeValue = v; } };
+    const attrs = n => { for (const a of ['placeholder', 'title', 'aria-label']) { const v = n.getAttribute(a); if (v && thai.test(v)) { const t = f(v); if (t !== v) n.setAttribute(a, t); } } };
+    if (root.nodeType === 3) return text(root);
+    if (root.nodeType !== 1) return;
+    attrs(root);
     const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, { acceptNode: n => (n.nodeType === 1 && n.matches(SKIP) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT) });
     let n;
-    while ((n = w.nextNode())) {
-      if (n.nodeType === 3) { if (thai.test(n.nodeValue)) { const v = tr(n.nodeValue); if (v !== n.nodeValue) n.nodeValue = v; } }
-      else for (const a of ['placeholder', 'title', 'aria-label']) { const v = n.getAttribute(a); if (v && thai.test(v)) n.setAttribute(a, tr(v)); }
-    }
+    while ((n = w.nextNode())) { if (n.nodeType === 3) text(n); else attrs(n); }
   }
   if (dict) {
     document.title = tr(document.title);
@@ -212,8 +235,21 @@
     window.prompt = (m, d) => _p(tr(String(m)), d == null ? d : tr(String(d)));
   }
 
+  // Dashboard data: English copies live in data/en/ (scripts/translate-data.py); a file not translated yet falls back to Thai.
+  window.crFetchData = (id, query) => {
+    const get = dir => fetch(dir + encodeURIComponent(id) + '.json' + (query || ''), { cache: 'no-cache' });
+    if (lang === 'th') return get('data/');
+    return get('data/' + lang + '/').then(r => (r.ok ? r : get('data/'))).catch(() => get('data/'));
+  };
+
   window.CRI18n = {
     lang, LANGS,
+    // index.html hands over the dashboard's phrase list once it has loaded it.
+    setDashDict(d) {
+      if (!dict || !d) return;
+      dashDict = d; dashKeys = Object.keys(d).sort((a, b) => b.length - a.length);
+      const r = document.getElementById('dash-root'); if (r) walk(r);
+    },
     set(l) { if (!LANGS[l] || l === lang) return; try { localStorage.setItem('crypto-radar:lang', l); } catch (e) {} location.reload(); },
   };
 })();

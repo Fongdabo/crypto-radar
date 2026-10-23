@@ -15,7 +15,7 @@
 
   let analysis = [], tracked = [];
   const ready = Promise.all([
-    fetch('data/analysis.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : []).then(j => { analysis = Array.isArray(j) ? j : []; }).catch(() => {}),
+    (window.crFetchData ? window.crFetchData('analysis') : fetch('data/analysis.json', { cache: 'no-cache' })).then(r => r.ok ? r.json() : []).then(j => { analysis = Array.isArray(j) ? j : []; }).catch(() => {}),
     fetch('data/prices.json', { cache: 'no-cache' }).then(r => r.json()).then(j => { tracked = (Array.isArray(j) ? j : []).filter(r => r && typeof r.token === 'string'); }).catch(() => {}),
   ]);
   function walletSyms() {
@@ -185,8 +185,7 @@
       const line = el('p'); if (claude.trend) line.append(el('span', 'badge ' + tb, claude.trend));
       if (claude.risk_score) { line.append('ความเสี่ยง '); const m = el('span', 'meter'); for (let i = 1; i <= 5; i++) m.append(el('i', i <= claude.risk_score ? 'f' : '')); line.append(m, ' ' + claude.risk_score + '/5'); }
       d.append(line);
-      // Claude's research is written in Thai; keep it as written in every language.
-      if (window.CR_LANG !== 'th') d.append(el('p', 'muted', 'Research written in Thai.'));
+      // Claude's research comes in the page's language (data/en/ for English); never run it through the phrase dictionary.
       if (claude.summary_th) { const p = el('p', '', claude.summary_th); p.dataset.noI18n = ''; d.append(p); }
       const list = (t, arr) => { if (!Array.isArray(arr) || !arr.length) return; d.append(el('b', '', t)); const ul = el('ul'); ul.dataset.noI18n = ''; for (const x of arr) ul.append(el('li', '', String(x))); d.append(ul); };
       list('เรื่องที่ต้องจับตา', claude.watch_th); list('ความเสี่ยง', claude.risks_th);

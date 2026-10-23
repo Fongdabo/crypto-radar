@@ -28,7 +28,7 @@
 
   function load(id) {
     sets[id] = { status: 'loading', data: [], message: '' };
-    fetch('data/' + encodeURIComponent(id) + '.json' + (VERSION ? '?v=' + VERSION : ''), { cache: 'no-cache' })
+    (window.crFetchData ? window.crFetchData(id, VERSION ? '?v=' + VERSION : '') : fetch('data/' + encodeURIComponent(id) + '.json' + (VERSION ? '?v=' + VERSION : ''), { cache: 'no-cache' }))
       .then(r => {
         if (r.status === 404) { sets[id] = { status: 'missing', data: [], message: 'ยังไม่มีข้อมูล' }; return; }
         if (!r.ok) throw new Error('HTTP ' + r.status);

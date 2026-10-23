@@ -49,6 +49,10 @@
     // The page links its portfolio to the claude.ai version; in the app it is the local one.
     html = html.replace(/https:\/\/claude\.ai\/artifact\/2eUPvnjUQCfss36SJNCmqR"[^>]*>/g, 'portfolio.html">')
                .replace(/พอร์ตส่วนตัวแยกของแต่ละคน[^<]*/g, 'พอร์ตส่วนตัว เก็บไว้ในเครื่องของคุณเท่านั้น ไม่ส่งขึ้นเซิร์ฟเวอร์');
+    // Dates in the page follow the app language.
+    if (window.CR_LOCALE && window.CR_LOCALE !== 'th-TH') html = html.replace(/'th-TH'/g, "'" + window.CR_LOCALE + "'");
+    // Labels in the dashboard page follow the app language (the research data comes translated from data/<lang>/).
+    if (window.CR_LANG && window.CR_LANG !== 'th') fetch('i18n/page-' + window.CR_LANG + '.json', { cache: 'no-cache' }).then(r => r.json()).then(d => window.CRI18n.setDashDict(d)).catch(() => {});
     const tpl = document.createElement('template');
     tpl.innerHTML = html;
     const scripts = [...tpl.content.querySelectorAll('script')];

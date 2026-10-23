@@ -124,6 +124,10 @@
 .nf-empty { background: var(--nf-panel-2); border: 1px dashed var(--nf-line); border-radius: 10px; padding: var(--cds-pad-md); line-height: 1.6; color: var(--nf-muted); }
 .nf-empty b { color: var(--nf-fg); }
 .nf-pf-go { display: inline-block; background: var(--nf-teal); color: #04201c; font-weight: 700; padding: .55rem 1rem; border-radius: 8px; text-decoration: none; }
+.nf-off { color: inherit; text-decoration: none; border-bottom: 1px dashed var(--nf-teal); }
+.nf-off:hover { color: var(--nf-teal); }
+.nf-offtag { margin-left: .4rem; font-size: .72em; font-weight: 600; color: var(--nf-teal); border: 1px solid var(--nf-teal); border-radius: 999px; padding: 0 .4rem; white-space: nowrap; }
+.nf-offnote { font-size: var(--cds-font-size-caption); color: var(--nf-muted); font-weight: 400; margin-top: .15rem; }
 .nf-links { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: var(--cds-gap-sm); min-height: 6rem; }
 .nf-links .ol { background: var(--nf-panel-2); border: 1px solid var(--nf-line); border-radius: 10px; padding: .7rem .85rem; display: flex; flex-direction: column; gap: .4rem; min-width: 0; }
 .nf-links .ol h3 { margin: 0; font-size: var(--cds-font-size-body); display: flex; justify-content: space-between; gap: .4rem; flex-wrap: wrap; align-items: center; }
@@ -406,8 +410,8 @@ dash.calc('countdown', {
     const days = (d) => Math.round((new Date(d + 'T00:00:00Z') - today) / 864e5);
     const name = (p) => String(p).split(/[ (]/)[0].toLowerCase();
     const dup = (r) => r.kind === 'แอร์ดรอป' && airdrop_deadlines.some(d => d.key_date === r.date && String(r.label).toLowerCase().startsWith(name(d.project)));
-    const a = timeline.filter(r => !(r.approx === true || r.approx === 'true') && !dup(r)).map(r => ({ label: r.label, kind: r.kind, date: r.date, days_left: days(r.date) }));
-    const b = airdrop_deadlines.map(r => ({ label: r.project + ' · ' + r.date_text, kind: 'แอร์ดรอป', date: r.key_date, days_left: days(r.key_date) }));
+    const a = timeline.filter(r => !(r.approx === true || r.approx === 'true') && !dup(r)).map(r => ({ label: r.label, kind: r.kind, date: r.date, days_left: days(r.date), url: r.url || '', url_note: r.url_note || '' }));
+    const b = airdrop_deadlines.map(r => ({ label: r.project + ' · ' + r.date_text, kind: 'แอร์ดรอป', date: r.key_date, days_left: days(r.key_date), url: r.url || '', url_note: r.url_note || '' }));
     return a.concat(b).filter(r => r.days_left >= 0 && r.days_left <= 45).sort((x, y) => x.days_left - y.days_left);
   }
 });
@@ -426,6 +430,12 @@ dash.calc('countdown', {
   const monFmt = new Intl.DateTimeFormat('th-TH', { month: 'short', year: '2-digit', timeZone: 'UTC' });
   const pill = (text, colorVar) => { const p = document.createElement('span'); p.className = 'nf-pill'; p.style.setProperty('--pc', `var(${colorVar})`); p.textContent = text; return p; };
 
+  function officialTitle(r) {
+    const a = safeLink(r.url, r.label, 'nf-off');
+    if (!a) return document.createTextNode(r.label);
+    const tag = document.createElement('span'); tag.className = 'nf-offtag'; tag.textContent = 'ทางการ ↗';
+    a.appendChild(tag); return a;
+  }
   function drawWatch() {
     const t = document.getElementById('watch-table'), tb = t.querySelector('tbody');
     const s = dash.data('timeline');
@@ -436,7 +446,8 @@ dash.calc('countdown', {
       .sort((a, b) => a.dt - b.dt).forEach(r => {
         const tr = document.createElement('tr'); if (r.date < new Date().toISOString().slice(0, 10)) tr.className = 'past';
         const a = document.createElement('td'); a.appendChild(pill(r.kind, kindColor[r.kind] || '--nf-grey'));
-        const b = document.createElement('td'); b.textContent = r.label;
+        const b = document.createElement('td'); b.append(officialTitle(r));
+        if (r.url_note) { const nt = document.createElement('div'); nt.className = 'nf-offnote'; nt.textContent = r.url_note; b.appendChild(nt); }
         const c = document.createElement('td'); c.className = 'dt'; c.textContent = r.approx ? 'ภายใน ' + monFmt.format(r.dt) : dayFmt.format(r.dt);
         tr.append(a, b, c); tb.appendChild(tr);
       });
@@ -632,8 +643,9 @@ dash.calc('countdown', {
       n.style.color = `var(${d <= 2 ? '--nf-red' : d <= 7 ? '--nf-amber' : '--nf-fg'})`;
       if (d) { const sm = document.createElement('small'); sm.textContent = 'วัน'; n.appendChild(sm); }
       const tx = document.createElement('div'); tx.className = 'tx';
-      const b = document.createElement('b'); b.textContent = r.label;
+      const b = document.createElement('b'); b.append(officialTitle(r));
       tx.append(b, pill(r.kind, kindColor[r.kind] || '--nf-grey'), document.createTextNode(' ' + dayFmt.format(new Date(r.date + 'T00:00:00Z'))));
+      if (r.url_note) { const nt = document.createElement('div'); nt.className = 'nf-offnote'; nt.textContent = r.url_note; tx.appendChild(nt); }
       it.append(n, tx); el.appendChild(it);
     });
   }

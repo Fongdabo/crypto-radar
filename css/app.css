@@ -53,7 +53,7 @@ a.toast { color: var(--fg); text-decoration: none; }
 .tb:focus-visible { outline: 2px solid var(--teal); outline-offset: 1px; }
 .lang .tb, .menu .tb { border-color: var(--line); }
 .tb .caret { color: var(--muted); font-size: 11px; }
-.tb .flag { font-size: 16px; line-height: 1; }
+.flag { display: inline-flex; line-height: 0; } .flag svg { border-radius: 2px; box-shadow: 0 0 0 1px rgba(127, 127, 127, .35); }
 .status .dot { position: absolute; right: 6px; bottom: 7px; width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 2px var(--bg); }
 .status.off .dot { background: var(--muted); }
 .status.off .tb { color: var(--muted); }

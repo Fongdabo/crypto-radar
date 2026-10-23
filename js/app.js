@@ -1,7 +1,8 @@
 // Shared by every page: the top-right toolbar (status, bell, theme, help, language, menu), install and update, offline cache and new-version notice.
 (function () {
-  const APP_VERSION = '11';   // keep in step with VERSION in sw.js; add a CHANGELOG entry for every release
+  const APP_VERSION = '12';   // keep in step with VERSION in sw.js; add a CHANGELOG entry for every release
   const CHANGELOG = [
+    ['12', '23 ต.ค. 2569', ['แดชบอร์ดเป็นภาษาอังกฤษทั้งหน้าเมื่อเลือก English รวมบทวิจัยและบทวิเคราะห์รายเหรียญ (แปลใหม่ทุกเช้า)', 'ธงภาษาแสดงถูกต้องบน Windows']],
     ['11', '23 ต.ค. 2569', ['แถบเครื่องมือมุมขวาบนแบบแอป PM: สถานะออนไลน์, กระดิ่งแจ้งเตือน, ธีมมืด/สว่าง, คู่มือ, ภาษา และเมนู', 'เปลี่ยนภาษาเป็นอังกฤษได้ (เนื้อหาวิจัยในแดชบอร์ดยังเป็นภาษาไทย)', 'แก้นับถอยหลังที่แสดงรายการซ้ำ']],
     ['10', '23 ต.ค. 2569', ['แดชบอร์ดขยายเต็มจอบนจอใหญ่ ไม่มีขอบว่างสองข้าง', 'หน้าพอร์ตและหน้ากราฟกว้างขึ้น']],
     ['9', '23 ต.ค. 2569', ['แจ้งเตือนเข้า Telegram: ราคาถึงเป้า และเหรียญที่ถือขยับแรงเกิน 10% ใน 24 ชม.', 'เตือนบนเครื่องเมื่อเหรียญที่ถือขยับแรง (วันละครั้งต่อเหรียญ)', 'สรุปทุกเช้า 07:35 น. เข้า Telegram แม้ปิดแอป (ต้องตั้งค่าใน GitHub ตามคู่มือ)']],
@@ -95,7 +96,6 @@
       for (const it of list) {
         const a = h('a', 'dd-item' + (read.has(it.id) ? '' : ' new')); a.href = it.href;
         const t = h('span', 't', it.title), s = h('span', 's', it.sub);
-        if (it.kind === 'date') t.dataset.noI18n = '';
         a.append(t, s); p.append(a);
       }
     };
@@ -111,7 +111,7 @@
     const b = bell.btn.querySelector('.badge');
     b.hidden = !n; b.textContent = n > 9 ? '9+' : String(n);
   }
-  fetch('data/timeline.json', { cache: 'no-cache' }).then(r => r.json()).then(list => {
+  (window.crFetchData ? window.crFetchData('timeline') : fetch('data/timeline.json', { cache: 'no-cache' })).then(r => r.json()).then(list => {
     const today = new Date(); today.setHours(0, 0, 0, 0);
     dates = (Array.isArray(list) ? list : []).map(x => {
       const d = new Date(String(x.date) + 'T00:00:00'), days = Math.round((d - today) / 864e5);
@@ -144,17 +144,17 @@
   help.title = T('คู่มือ', 'Guide'); help.setAttribute('aria-label', help.title); tools.append(help);
 
   // 5. Language.
-  const I = window.CRI18n || { lang: 'th', LANGS: { th: { name: 'ภาษาไทย', flag: '🇹🇭' } }, set() {} };
+  const I = window.CRI18n || { lang: 'th', LANGS: { th: { name: 'ภาษาไทย', flag: '' } }, set() {} };
   const cur = I.LANGS[I.lang];
   const lang = dropdown('lang', '<span class="flag">' + cur.flag + '</span><span class="lbl">' + cur.name + '</span><span class="caret">▾</span>', T('เปลี่ยนภาษา', 'Change language'), p => {
     p.replaceChildren();
     for (const [code, L] of Object.entries(I.LANGS)) {
       const b = h('button', 'dd-item row' + (code === I.lang ? ' on' : '')); b.type = 'button';
-      b.append(h('span', 'flag', L.flag), h('span', '', L.name), h('span', 'chk', code === I.lang ? '✓' : ''));
+      const f = h('span', 'flag'); f.innerHTML = L.flag;
+      b.append(f, h('span', '', L.name), h('span', 'chk', code === I.lang ? '✓' : ''));
       b.onclick = () => I.set(code);
       p.append(b);
     }
-    if (I.lang !== 'th') p.append(h('div', 'muted dd-note', 'The dashboard research is written in Thai'));
   });
   lang.wrap.dataset.noI18n = '';
 
