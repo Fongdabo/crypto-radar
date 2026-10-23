@@ -73,7 +73,7 @@
   function units(v, dec) { const d = Number(dec) || 0; try { const b = BigInt(v); const p = 10n ** BigInt(d); return Number(b / p) + Number(b % p) / Number(p); } catch (e) { return Number(v) / 10 ** d; } }
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   async function getJson(u, opts) {
-    const r = await fetch(u, Object.assign({ headers: { accept: 'application/json' } }, opts));
+    const r = await fetch(u, Object.assign({ headers: { accept: 'application/json' }, signal: AbortSignal.timeout ? AbortSignal.timeout(20000) : undefined }, opts));
     if (!r.ok) { const e = new Error(String(r.status)); e.status = r.status; throw e; }
     return r.json();
   }
@@ -81,7 +81,7 @@
   async function retry(fn, tries) {
     for (let i = 0; ; i++) {
       try { return await fn(); }
-      catch (e) { if (e.status === 404 || i >= (tries || 3) - 1) throw e; await sleep(800 * 2 ** i); }
+      catch (e) { if (e.status === 404 || e.status === 403 || i >= (tries || 3) - 1) throw e; await sleep(800 * 2 ** i); }
     }
   }
   // Run tasks a few at a time instead of all at once.
@@ -179,7 +179,45 @@
     }));
     return rows;
   }
+  // Fallback when Blockscout is down or shows a bot check: public JSON-RPC for the native coin and the main stablecoins,
+  // each stablecoin confirmed by its on-chain symbol.
+  const EVM_RPC = {
+    eth: ['https://ethereum-rpc.publicnode.com', 'ethereum', [['USDC', '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'], ['USDT', '0xdac17f958d2ee523a2206206994597c13d831ec7']]],
+    base: ['https://base-rpc.publicnode.com', 'ethereum', [['USDC', '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913']]],
+    polygon: ['https://polygon-bor-rpc.publicnode.com', 'polygon-ecosystem-token', [['USDC', '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359'], ['USDT', '0xc2132d05d31c914a87c6611c10748aeb04b58e8f']]],
+    arbitrum: ['https://arbitrum-one-rpc.publicnode.com', 'ethereum', [['USDC', '0xaf88d065e77c8cc2239327c5edb3a432268e5831'], ['USDT', '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9']]],
+    optimism: ['https://optimism-rpc.publicnode.com', 'ethereum', [['USDC', '0x0b2c639c533813f4aa9d7837caf62653d097ff85'], ['USDT', '0x94b008aa00579c1307b0ef2c499ad98a8ce58e58']]],
+  };
+  let evmPx = null;
+  const evmPrices = () => evmPx || (evmPx = retry(() => getJson('https://api.coingecko.com/api/v3/simple/price?ids=ethereum,polygon-ecosystem-token&vs_currencies=usd'), 2)
+    .then(j => ({ ethereum: j.ethereum && j.ethereum.usd, 'polygon-ecosystem-token': j['polygon-ecosystem-token'] && j['polygon-ecosystem-token'].usd })).catch(() => ({})));
+  async function readEvmRpc(a, host, chain, native) {
+    const [url, pxId, stables] = EVM_RPC[host];
+    const rpc = async (method, params) => {
+      const j = await retry(() => getJson(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }) }), 2);
+      if (j.error) throw new Error(j.error.message || 'rpc error');
+      return j.result;
+    };
+    const pad = a.toLowerCase().replace(/^0x/, '').padStart(64, '0');
+    const [wei, px] = await Promise.all([rpc('eth_getBalance', [a, 'latest']), evmPrices()]);
+    const rows = [];
+    const amt = units(wei, 18);
+    if (amt > 0) rows.push(row(native, chain, amt, px[pxId]));
+    await Promise.all(stables.map(async ([sym, to]) => {
+      const raw = await rpc('eth_call', [{ to, data: '0x70a08231' + pad }, 'latest']).catch(() => null);
+      if (!raw || /^0x0*$/.test(raw)) return;
+      const symHex = await rpc('eth_call', [{ to, data: '0x95d89b41' }, 'latest']).catch(() => '');
+      if (abiString(symHex).toUpperCase() !== sym) return;
+      const n = units(raw, 6);
+      if (n > 0) rows.push(row(sym, chain, n, 1));
+    }));
+    return rows;
+  }
   async function readEvmChain(a, host, chain, native) {
+    try { return await readEvmBlockscout(a, host, chain, native); }
+    catch (e) { return readEvmRpc(a, host, chain, native); }
+  }
+  async function readEvmBlockscout(a, host, chain, native) {
     const base = `https://${host}.blockscout.com/api/v2/addresses/${a}`;
     const info = await retry(() => getJson(base)).catch(e => { if (e.status === 404) return null; throw e; });
     const toks = await retry(() => getJson(base + '/token-balances')).catch(e => { if (e.status === 404) return []; throw e; });
@@ -239,7 +277,8 @@
     return rows;
   }
 
-  const SOL_RPCS = ['https://solana-rpc.publicnode.com', 'https://api.mainnet-beta.solana.com'];
+  // publicnode answers getBalance but blocks token-account lookups, and mainnet-beta refuses browser calls, so the token list tries several.
+  const SOL_RPCS = ['https://public.rpc.solanavibestation.com', 'https://solana-rpc.publicnode.com', 'https://api.mainnet-beta.solana.com'];
   const WSOL = 'So11111111111111111111111111111111111111112';
   const TOKEN_PROGRAMS = ['TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA', 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PTn2Y6MjqGVGNdN'];
   async function solRpc(method, params) {
@@ -284,8 +323,10 @@
   async function readSolana(a) {
     const bal = await solRpc('getBalance', [a]);
     const accts = [];
+    // SOL itself is enough to show a balance; a failed token lookup only hides the tokens.
     for (const pid of TOKEN_PROGRAMS) {
-      const r = await solRpc('getTokenAccountsByOwner', [a, { programId: pid }, { encoding: 'jsonParsed' }]);
+      let r = null;
+      try { r = await solRpc('getTokenAccountsByOwner', [a, { programId: pid }, { encoding: 'jsonParsed' }]); } catch (e) {}
       for (const it of (r && r.value) || []) {
         const info = it.account && it.account.data && it.account.data.parsed && it.account.data.parsed.info;
         const amt = info && info.tokenAmount && Number(info.tokenAmount.uiAmountString);
@@ -304,10 +345,20 @@
     return rows;
   }
 
-  let failedChains = [], fromCache = false;
+  let failedChains = [], failWhy = {}, addrWhy = {}, fromCache = false;
+  // A short, plain reason for a failed read, shown next to the address instead of a bare "can't read".
+  function reason(e) {
+    const st = e && e.status;
+    if (st === 429) return 'เรียกถี่เกินไป (ผู้ให้บริการจำกัด) ลองใหม่อีกสักครู่';
+    if (st === 403 || st === 401) return 'ผู้ให้บริการไม่อนุญาตให้เรียกจากเบราว์เซอร์';
+    if (st >= 500) return 'ผู้ให้บริการขัดข้องชั่วคราว';
+    if (e && e.name === 'AbortError' || /timeout|timed out/i.test(String(e && e.message))) return 'ผู้ให้บริการตอบช้าเกินไป';
+    if (e instanceof TypeError) return 'เชื่อมต่อผู้ให้บริการไม่ได้ (เน็ต, ตัวบล็อกโฆษณา หรือ VPN อาจบล็อกอยู่)';
+    return 'ผู้ให้บริการตอบกลับผิดปกติ';
+  }
   async function loadWallets() {
     const addrs = allAddrs();
-    walletRows = []; failedChains = []; fromCache = false; coinPx = null;
+    walletRows = []; failedChains = []; failWhy = {}; addrWhy = {}; fromCache = false; coinPx = null; evmPx = null;
     addrState = Object.fromEntries(addrs.map(a => [a, 'loading']));
     walletState = addrs.length ? 'loading' : ''; renderWallet();
     if (!addrs.length) { render(); return; }
@@ -323,13 +374,16 @@
     let ok = 0;
     const results = await pool(jobs.map(j => async () => {
       let rows;
-      try { rows = await j.run(); ok++; cache[j.key] = { at: Date.now(), rows }; if (addrState[j.a] === 'loading') addrState[j.a] = 'ok'; }
+      try { rows = await j.run(); ok++; cache[j.key] = { at: Date.now(), rows }; addrState[j.a] = 'ok'; }
       catch (e) {
         failedChains.push(j.label);
+        failWhy[j.label] = failWhy[j.label] || reason(e);
+        addrWhy[j.a] = addrWhy[j.a] || failWhy[j.label];
         const c = cache[j.key];
         rows = c && Array.isArray(c.rows) ? c.rows : [];
         if (c) fromCache = true;
-        addrState[j.a] = c ? 'cached' : 'failed';
+        // One chain failing (say Ronin) must not mark the whole address unreadable when the others worked.
+        if (addrState[j.a] !== 'ok') addrState[j.a] = c ? 'cached' : 'failed';
       }
       return rows.map(r => Object.assign({}, r, { addr: j.a }));
     }), 3);
@@ -418,6 +472,7 @@
       const st = addrState[a];
       const bal = el('div', 'bal', st === 'loading' ? '…' : st === 'failed' ? 'อ่านไม่ได้' : usd(addrTotal(a)));
       if (st === 'cached') bal.append(el('small', '', 'ยอดล่าสุดที่อ่านได้'));
+      if ((st === 'failed' || st === 'cached') && addrWhy[a]) bal.append(el('small', 'why', addrWhy[a]));
       r.append(bal);
       const rm = el('button', 'ghost', 'เอาออก'); rm.type = 'button';
       rm.onclick = () => { acct.addresses = acct.addresses.filter(x => x !== a); store.connected = store.connected.filter(x => x !== a); save(); loadWallets(); };
@@ -430,7 +485,7 @@
   function renderWallet() {
     renderAccounts();
     const tb = $('w-rows'); tb.textContent = '';
-    const note = t => { const tr = document.createElement('tr'), td = document.createElement('td'); td.colSpan = 5; td.className = 'muted'; td.textContent = t; tr.append(td); tb.append(tr); };
+    const note = t => { const tr = document.createElement('tr'), td = document.createElement('td'); td.colSpan = 5; td.className = 'muted'; td.textContent = t; tr.append(td); tb.append(tr); return td; };
     // The coin list follows the selected wallet tab; the "+" tab shows every wallet.
     const acct = current();
     const head = $('w-rows-h');
@@ -452,7 +507,11 @@
     }
     if (rows.some(r => r.unverified)) note('⚠ = เหรียญที่ยังไม่ได้รับการยืนยันหรือสภาพคล่องต่ำ ราคาอาจไม่จริง อาจเป็นเหรียญสแกมที่ถูกส่งมาเอง และไม่นับรวมในยอดรวม');
     if (walletState === 'partial') {
-      note('อ่านไม่สำเร็จ: ' + [...new Set(failedChains)].join(', ') + (fromCache ? ' (แสดงยอดล่าสุดที่เคยอ่านได้แทน)' : '') + ' มักเกิดจากเว็บสำรวจบล็อกเชนจำกัดจำนวนครั้ง กด "อ่านยอดใหม่" อีกครั้งได้');
+      const n = note('');
+      n.append('อ่านไม่สำเร็จ:');
+      for (const c of new Set(failedChains)) n.append(' ' + c + ' (', failWhy[c] || '', ')');
+      if (fromCache) n.append(' ', 'แสดงยอดล่าสุดที่เคยอ่านได้แทน');
+      n.append(' ', 'กด "อ่านยอดใหม่" อีกครั้งได้');
     }
   }
 
