@@ -27,10 +27,10 @@ body {
 .tabs a.on { background: #0f2f33; color: var(--teal); font-weight: 600; }
 .updated { margin-left: auto; color: var(--muted); font-size: 12px; }
 .install { border: 0; border-radius: 8px; padding: 7px 12px; background: var(--teal); color: #04201c; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
-.app-main { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
+.app-main { max-width: 2400px; margin: 0 auto; padding: 0 clamp(12px, 1.5vw, 28px); }
 .app-main .nf { border-radius: 0; }
 .loading { color: var(--muted); padding: 40px 0; text-align: center; }
-.app-foot { max-width: 1280px; margin: 0 auto; padding: 16px 16px 32px; color: var(--muted); font-size: 12px; text-align: center; }
+.app-foot { max-width: 2400px; margin: 0 auto; padding: 16px 16px 32px; color: var(--muted); font-size: 12px; text-align: center; }
 .toast {
   position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 20;
   background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; font-size: 14px;
