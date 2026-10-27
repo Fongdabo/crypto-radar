@@ -5,13 +5,21 @@
  "emoji": "⛔",
  "status": "active",
  "deadline": "2026-12-15",
- "status_text": "Abstract ประกาศปิดเครือข่าย 15 ธ.ค. 2026 (ข่าว 6 ต.ค. 2026) ไม่พบข่าวเหรียญหรือแอร์ดรอป หยุดฟาร์มแล้ว เหลืองานเดียวคือถอนเงินออกถ้ามี",
+ "status_text": "ตรวจ 26 ต.ค.: Abstract ปิด 15 ธ.ค. 2026 ทีมเปิดหน้าย้ายเงินทางการ migrate.abs.xyz แล้ว (Migration Hub + บริดจ์ทางการ) ไม่มีเหรียญหรือแอร์ดรอป เหลืองานเดียวคือถอนเงินออกถ้ามี",
  "schedule": "เอเจนต์เตือนก่อนปิด 30, 14, 7 และ 3 วัน",
  "budget": "ค่าแก๊สถอน",
  "official": [
   {
    "t": "abs.xyz",
    "u": "https://abs.xyz"
+  },
+  {
+   "t": "หน้าย้ายเงินทางการ (Migration Hub)",
+   "u": "https://migrate.abs.xyz"
+  },
+  {
+   "t": "Native Bridge ทางการ",
+   "u": "https://native-bridge.abs.xyz"
   },
   {
    "t": "เอกสารทางการ",
@@ -22,14 +30,14 @@
    "u": "https://thedefiant.io/news/blockchains/abstract-to-shut-down-ethereum-layer-2-on-dec-15"
   }
  ],
- "warn": "ช่วงปิดตัวจะมีเว็บ \"ย้ายเงิน\" ปลอมเยอะ ใช้ Migration Hub หรือบริดจ์ที่ลิงก์จาก abs.xyz เท่านั้น",
+ "warn": "ช่วงปิดตัวจะมีเว็บ \"ย้ายเงิน\" ปลอมเยอะ ใช้ migrate.abs.xyz หรือ native-bridge.abs.xyz เท่านั้น (ต้องลงท้าย .abs.xyz) บริดจ์ทางเดียว ถ้าเหรียญไหนไม่มีบนเครือข่ายปลายทางให้ขายบน Abstract ก่อน",
  "steps": [
   {
    "id": "research",
    "who": "agent",
    "kind": "research",
    "title": "ตรวจสถานะ Abstract",
-   "result": "ยืนยันแล้ว: ปิดเครือข่าย 15 ธ.ค. 2026 ให้ถอนผ่าน Migration Hub หรือบริดจ์ทางการ ไม่มีแอร์ดรอปให้ฟาร์ม"
+   "result": "ตรวจ 26 ต.ค.: ยืนยันปิด 15 ธ.ค. 2026 หน้าทางการ migrate.abs.xyz ให้เชื่อมกระเป๋าดูยอด แล้วย้ายผ่าน Migration Hub หรือ Native Bridge (ช้า ~3 ชม. แต่ปลอดภัยสุด) ไม่มีแอร์ดรอป"
   },
   {
    "id": "check",
@@ -67,18 +75,20 @@
    "due": "2026-12-01",
    "title": "ถอนเงินออกจาก Abstract (ทำก่อน 1 ธ.ค. เผื่อเวลา)",
    "how": [
-    "เข้าผ่าน abs.xyz แล้วหาเมนู Migration Hub หรือ Bridge",
-    "เลือกถอนไป Ethereum หรือเครือข่ายที่หน้าเว็บรองรับ",
+    "เปิด migrate.abs.xyz (ลิงก์ด้านล่าง) แล้วเชื่อมกระเป๋าเพื่อดูยอดเหรียญและ NFT",
+    "ถอนเงินที่ฝากไว้ในแอป (pool, ปล่อยกู้) ออกมาก่อน",
+    "เลือก Migration Hub หรือ Native Bridge ส่งไป Ethereum เหลือ ETH ไว้นิดหน่อยเป็นค่าแก๊สแล้วย้ายเป็นอันสุดท้าย",
     "ตรวจหน้าต่างยืนยันตามรายการด้านล่าง"
    ],
    "sign": {
-    "site": "abs.xyz",
+    "site": "migrate.abs.xyz หรือ native-bridge.abs.xyz",
     "network": "Abstract",
     "action": "ธุรกรรมถอน 1 ครั้งต่อเหรียญ",
     "expect": [
-     "เว็บที่ขอคือ abs.xyz",
+     "เว็บที่ขอลงท้ายด้วย .abs.xyz",
      "ที่อยู่ปลายทางเป็นของคุณเอง",
-     "ไม่มี SetApprovalForAll"
+     "ไม่มี SetApprovalForAll",
+     "ถ้าต้อง Approve เหรียญ ให้เป็นจำนวนเท่าที่จะย้ายเท่านั้น"
     ],
     "cost": "ค่าแก๊สถอน",
     "reject_if": [
@@ -91,10 +101,10 @@
    "need": "sign",
    "mins": 5,
    "open": {
-    "u": "https://portal.abs.xyz",
-    "t": "เปิด Abstract Portal"
+    "u": "https://migrate.abs.xyz",
+    "t": "เปิดหน้าย้ายเงินทางการ Abstract"
    }
   }
  ],
- "updated_at": "2026-10-23T05:45:00Z"
+ "updated_at": "2026-10-26T23:31:23Z"
 }
