@@ -11,46 +11,46 @@
  {
   "token": "SAND",
   "game": "The Sandbox",
-  "price_usd": 0.0445,
-  "mcap_usd": 130660000,
-  "change_24h_pct": -3.69,
-  "as_of": "2026-11-02 23:48 UTC",
+  "price_usd": 0.0458,
+  "mcap_usd": 134650000,
+  "change_24h_pct": 3.15,
+  "as_of": "2026-11-03 23:48 UTC",
   "source": "MetaMask"
  },
  {
   "token": "AXS",
   "game": "Axie Infinity",
-  "price_usd": 0.8299,
-  "mcap_usd": 145743861,
-  "change_24h_pct": -3.27,
-  "as_of": "2026-11-02 23:48 UTC",
+  "price_usd": 0.849,
+  "mcap_usd": 149080000,
+  "change_24h_pct": 2.25,
+  "as_of": "2026-11-03 23:48 UTC",
   "source": "MetaMask"
  },
  {
   "token": "IMX",
   "game": "Immutable",
-  "price_usd": 0.1208,
-  "mcap_usd": 109216801,
-  "change_24h_pct": -1.74,
-  "as_of": "2026-11-02 23:48 UTC",
+  "price_usd": 0.1185,
+  "mcap_usd": 107165985,
+  "change_24h_pct": -1.86,
+  "as_of": "2026-11-03 23:48 UTC",
   "source": "MetaMask"
  },
  {
   "token": "ILV",
   "game": "Illuvium",
-  "price_usd": 2.87,
-  "mcap_usd": 23820000,
-  "change_24h_pct": -4.17,
-  "as_of": "2026-11-02",
+  "price_usd": 2.96,
+  "mcap_usd": 24546869,
+  "change_24h_pct": 3.08,
+  "as_of": "2026-11-03",
   "source": "MetaMask"
  },
  {
   "token": "GUN",
   "game": "Off The Grid",
-  "price_usd": 0.002059,
-  "mcap_usd": 8138819,
-  "change_24h_pct": -4.2,
-  "as_of": "2026-11-01",
+  "price_usd": 0.001967,
+  "mcap_usd": 7802335,
+  "change_24h_pct": -1.9,
+  "as_of": "2026-11-03",
   "source": "CoinGecko"
  }
 ]
