@@ -2,55 +2,55 @@
  {
   "token": "NXPC",
   "game": "MapleStory Universe",
-  "price_usd": 0.1494,
-  "mcap_usd": 47571029,
-  "change_24h_pct": -2.7,
-  "as_of": "2026-11-10",
+  "price_usd": 0.1544,
+  "mcap_usd": 49169359,
+  "change_24h_pct": 7.7,
+  "as_of": "2026-11-12",
   "source": "CoinGecko"
  },
  {
   "token": "SAND",
   "game": "The Sandbox",
-  "price_usd": 0.0414,
-  "mcap_usd": 121596608,
-  "change_24h_pct": -3.06,
-  "as_of": "2026-11-11 23:48 UTC",
+  "price_usd": 0.0415,
+  "mcap_usd": 121920000,
+  "change_24h_pct": 0.38,
+  "as_of": "2026-11-13 01:12 UTC",
   "source": "MetaMask"
  },
  {
   "token": "AXS",
   "game": "Axie Infinity",
-  "price_usd": 0.7936,
-  "mcap_usd": 139358313,
-  "change_24h_pct": -0.92,
-  "as_of": "2026-11-11 23:48 UTC",
+  "price_usd": 0.7881,
+  "mcap_usd": 138380000,
+  "change_24h_pct": -0.7,
+  "as_of": "2026-11-13 01:11 UTC",
   "source": "MetaMask"
  },
  {
   "token": "IMX",
   "game": "Immutable",
-  "price_usd": 0.1162,
-  "mcap_usd": 105110000,
-  "change_24h_pct": -0.02,
-  "as_of": "2026-11-11 23:48 UTC",
+  "price_usd": 0.1154,
+  "mcap_usd": 104408104,
+  "change_24h_pct": -1.33,
+  "as_of": "2026-11-13 01:11 UTC",
   "source": "MetaMask"
  },
  {
   "token": "ILV",
   "game": "Illuvium",
   "price_usd": 2.72,
-  "mcap_usd": 22574136,
-  "change_24h_pct": -0.92,
-  "as_of": "2026-11-11",
+  "mcap_usd": 22574497,
+  "change_24h_pct": -0.97,
+  "as_of": "2026-11-13",
   "source": "MetaMask"
  },
  {
   "token": "GUN",
   "game": "Off The Grid",
-  "price_usd": 0.001683,
-  "mcap_usd": 6743813,
-  "change_24h_pct": 2.3,
-  "as_of": "2026-11-09",
+  "price_usd": 0.001685,
+  "mcap_usd": 6784734,
+  "change_24h_pct": -0.1,
+  "as_of": "2026-11-13",
   "source": "CoinGecko"
  }
 ]
