@@ -162,6 +162,7 @@
       <button type="button" data-go="countdown">นับถอยหลัง</button>
       <button type="button" data-go="weekly">สรุปรายสัปดาห์</button>
       <button type="button" data-go="watch">ต้องดูช่วงนี้</button>
+      <button type="button" data-go="newgames">เกมมาใหม่ เข้าก่อนเพื่อน</button>
       <button type="button" data-go="prices">ราคาล่าสุด</button>
       <button type="button" data-go="reviews">รีวิวและตัวอย่าง</button>
       <button type="button" data-go="scam">เช็กเหรียญเสี่ยง</button>
@@ -219,6 +220,19 @@
           <tbody></tbody>
         </table>
       </div>
+    </section>
+
+    <section class="nf-card" id="newgames">
+      <h2>เกมมาใหม่ เข้าก่อนเพื่อน <span>เกม Web3 ที่เปิดทดสอบ Early Access หรือรอรายชื่อ · อัปเดตอัตโนมัติทุกเช้า · ลิงก์ทางการเท่านั้น</span></h2>
+      <div class="nf-alert" role="note"><b>ก่อนเข้าเกมใหม่</b>
+        <ul>
+          <li>ใช้กระเป๋าแยกสำหรับลองเกมใหม่ ใส่เงินน้อยหรือไม่ใส่เลย</li>
+          <li>ห้ามให้ seed phrase หรือ private key กับใคร ทีมจริงไม่ขอเด็ดขาด</li>
+          <li>เกมทดสอบส่วนใหญ่ฟรี ใครให้จ่ายเงินหรือซื้อ "โค้ดเชิญ" เพื่อเข้า ให้ถือว่าโกงไว้ก่อน</li>
+          <li>เข้าผ่านลิงก์ในการ์ดนี้หรือสโตร์ทางการ อย่ากดลิงก์จาก DM หรือโฆษณา</li>
+        </ul>
+      </div>
+      <div class="nf-revs dash-skeleton" id="ng-list" data-source="new_games" style="margin-top:var(--cds-gap-sm)"></div>
     </section>
 
     <section class="nf-card" id="prices">
@@ -737,6 +751,41 @@ dash.calc('countdown', {
       });
   }
 
+  const stageVar = { 'เปิดทดสอบ': '--nf-green', 'Early Access': '--nf-teal', 'ใกล้เปิด': '--nf-blue', 'รอรายชื่อ': '--nf-amber', 'ทดสอบปิด': '--nf-pink' };
+  function drawNewGames() {
+    const el = document.getElementById('ng-list');
+    const s = dash.data('new_games');
+    if (bad(s)) return fail(el);
+    if (s.status !== 'ok') { el.innerHTML = ''; el.classList.add('dash-skeleton'); return; }
+    el.classList.remove('dash-skeleton'); el.innerHTML = '';
+    const order = { 'เปิดทดสอบ': 0, 'Early Access': 1, 'ใกล้เปิด': 2, 'รอรายชื่อ': 3, 'ทดสอบปิด': 4 };
+    s.data.map(r => ({ ...r, risk: Number(r.risk) }))
+      .sort((a, b) => (order[a.stage] ?? 9) - (order[b.stage] ?? 9) || a.risk - b.risk)
+      .forEach(r => {
+        const sv = stageVar[r.stage] || '--nf-grey';
+        const c = document.createElement('article'); c.className = 'nf-rev'; c.style.setProperty('--tc', `var(${sv})`);
+        const top = document.createElement('div'); top.className = 'top';
+        const h = document.createElement('h3'); h.textContent = r.game;
+        top.append(h, pill(r.stage, sv));
+        const kd = document.createElement('div'); kd.className = 'kd';
+        const m = document.createElement('span'); m.className = 'nf-meter';
+        const rc = r.risk >= 4 ? '--nf-red' : r.risk === 3 ? '--nf-amber' : '--nf-green';
+        for (let i = 1; i <= 5; i++) { const b = document.createElement('b'); if (i <= r.risk) b.style.background = `var(${rc})`; m.appendChild(b); }
+        kd.append(m, document.createTextNode(`ความเสี่ยง ${r.risk}/5 · ${r.chain}`));
+        const w = document.createElement('p'); w.textContent = r.when;
+        const pc = document.createElement('div'); pc.className = 'pc';
+        [['y', 'วิธีเข้า: ' + r.how_to_join], ['y', 'ค่าใช้จ่าย: ' + r.cost + ' · โทเคน: ' + r.token], ['n', r.warn]].forEach(([k, t]) => {
+          const d = document.createElement('div'); d.className = k; const sp = document.createElement('span'); sp.textContent = t; d.appendChild(sp); pc.appendChild(d);
+        });
+        const lk = document.createElement('div'); lk.className = 'lk';
+        if (typeof r.url === 'string' && r.url.startsWith('https://')) {
+          const a = document.createElement('a'); a.href = r.url; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = 'ลิงก์ทางการ · ' + hostOf(r.url); lk.appendChild(a);
+        } else { const sp = document.createElement('span'); sp.style.color = 'var(--nf-muted)'; sp.textContent = 'ยังไม่มีลิงก์ทางการที่ยืนยันได้'; lk.appendChild(sp); }
+        if (r.source) { const sm = document.createElement('small'); sm.style.color = 'var(--nf-muted)'; sm.textContent = 'ที่มา: ' + r.source; lk.appendChild(sm); }
+        c.append(top, kd, w, pc, lk); el.appendChild(c);
+      });
+  }
+
   function chartBox(id, src) {
     const el = document.getElementById(id); const s = dash.data(src);
     if (bad(s)) { fail(el); return null; }
@@ -815,7 +864,7 @@ dash.calc('countdown', {
 
   let first = true;
   dash.onData(() => {
-    fillMarks(); drawCountdown(); drawWeekly(); drawOfficial(); drawWhales(); drawWatch(); drawPrices(); drawReviews(); drawScam(); drawAirdrops(); drawDeadlines(); drawRisk(); drawDrawdown(); drawClosures();
+    fillMarks(); drawCountdown(); drawWeekly(); drawOfficial(); drawWhales(); drawWatch(); drawNewGames(); drawPrices(); drawReviews(); drawScam(); drawAirdrops(); drawDeadlines(); drawRisk(); drawDrawdown(); drawClosures();
     if (first && dash.data('timeline').status === 'ok') {
       first = false;
       const named = location.hash.slice(1);
