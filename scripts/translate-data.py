@@ -6,14 +6,14 @@ Thai strings in data/*.json are looked up in i18n/data-en.json (Thai -> English)
   add FILE     merge a JSON object {thai: english} into i18n/data-en.json
   build        write data/en/<id>.json for every file whose strings are all translated;
                a file with any untranslated string gets no English copy, so the app shows the Thai one
-The `kind`, `trend` and `period` fields stay in Thai: the pages pick colours by them, and the app translates them on screen.
+The `kind`, `trend`, `period` and `stage` fields stay in Thai: the pages pick colours by them, and the app translates them on screen.
 """
 import json, os, re, sys, glob
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MAP = os.path.join(ROOT, 'i18n', 'data-en.json')
 THAI = re.compile('[ก-๛]')
-KEEP = {'kind', 'trend', 'period'}
+KEEP = {'kind', 'trend', 'period', 'stage'}
 
 def load_map():
     try:
