@@ -41,6 +41,13 @@
   "url": "https://gameoffthegrid.com"
  },
  {
+  "date": "2026-10-31",
+  "kind": "ปลดล็อก",
+  "label": "GUN (Off The Grid) ปลดล็อกโทเคน",
+  "approx": false,
+  "url": "https://gameoffthegrid.com"
+ },
+ {
   "date": "2026-11-01",
   "kind": "แอร์ดรอป",
   "label": "StandX เริ่มเคลม DUSD ถึง 31 ธ.ค.",
@@ -61,10 +68,40 @@
   "approx": false
  },
  {
+  "date": "2026-11-15",
+  "kind": "ปลดล็อก",
+  "label": "NXPC (MapleStory Universe) ปลดล็อกโทเคน",
+  "approx": false,
+  "url": "https://msu.io",
+  "url_note": "ระวังเว็บที่สะกดคล้ายกัน"
+ },
+ {
   "date": "2026-11-26",
   "kind": "พรีเซลเสี่ยง",
   "label": "Bitcoin Hyper (HYPER) เคลมและลิสต์",
   "approx": false
+ },
+ {
+  "date": "2026-11-28",
+  "kind": "เกมใหม่",
+  "label": "WWII: TCG (GFAL) เปิด Open Beta บนมือถือ เล่นได้โดยไม่ต้องเชื่อมกระเป๋า (ชุมชน GFAL ทดสอบก่อน 26 พ.ย.)",
+  "approx": false,
+  "url": "https://x.com/GFAL_Official",
+  "url_note": "ประกาศทางการบน X"
+ },
+ {
+  "date": "2026-11-30",
+  "kind": "ปลดล็อก",
+  "label": "GUN (Off The Grid) ปลดล็อกราว 271 ล้าน GUN (2.7% ของซัพพลาย ส่วนใหญ่เป็นนักลงทุนรอบ Private)",
+  "approx": false,
+  "url": "https://gameoffthegrid.com"
+ },
+ {
+  "date": "2026-12-01",
+  "kind": "เส้นตาย",
+  "label": "Gigaverse: ผู้ถือ NFT Gigling ต้องย้ายออกจาก Abstract ก่อนเชนปิด 15 ธ.ค.",
+  "approx": false,
+  "url": ""
  },
  {
   "date": "2026-12-15",
@@ -79,27 +116,5 @@
   "kind": "เกม",
   "label": "Illuvium Overworld เปิด (ILV)",
   "approx": true
- },
- {
-  "date": "2026-10-31",
-  "kind": "ปลดล็อก",
-  "label": "GUN (Off The Grid) ปลดล็อกโทเคน",
-  "approx": false,
-  "url": "https://gameoffthegrid.com"
- },
- {
-  "date": "2026-11-15",
-  "kind": "ปลดล็อก",
-  "label": "NXPC (MapleStory Universe) ปลดล็อกโทเคน",
-  "approx": false,
-  "url": "https://msu.io",
-  "url_note": "ระวังเว็บที่สะกดคล้ายกัน"
- },
- {
-  "date": "2026-11-30",
-  "kind": "ปลดล็อก",
-  "label": "GUN (Off The Grid) ปลดล็อกราว 271 ล้าน GUN (2.7% ของซัพพลาย ส่วนใหญ่เป็นนักลงทุนรอบ Private)",
-  "approx": false,
-  "url": "https://gameoffthegrid.com"
  }
 ]
