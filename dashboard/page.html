@@ -163,6 +163,7 @@
       <button type="button" data-go="weekly">สรุปรายสัปดาห์</button>
       <button type="button" data-go="watch">ต้องดูช่วงนี้</button>
       <button type="button" data-go="newgames">เกมมาใหม่ เข้าก่อนเพื่อน</button>
+      <button type="button" data-go="followup">ผลหลังเหตุการณ์</button>
       <button type="button" data-go="prices">ราคาล่าสุด</button>
       <button type="button" data-go="reviews">รีวิวและตัวอย่าง</button>
       <button type="button" data-go="scam">เช็กเหรียญเสี่ยง</button>
@@ -233,6 +234,17 @@
         </ul>
       </div>
       <div class="nf-revs dash-skeleton" id="ng-list" data-source="new_games" style="margin-top:var(--cds-gap-sm)"></div>
+    </section>
+
+    <section class="nf-card" id="followup">
+      <h2>ผลหลังเหตุการณ์ <span>ราคาก่อนและหลังวันปลดล็อก เผาเหรียญ หรือเกมเปิด · ติดตาม 7 วันแล้วสรุป · อัปเดตทุกเช้า</span></h2>
+      <div class="nf-tw">
+        <table class="nf-table dash-skeleton" id="fu-table" data-source="event_followup" data-row-key="event">
+          <thead><tr><th data-field="event">เหตุการณ์</th><th data-field="before_price" class="r">ราคาก่อน</th><th data-field="now_price" class="r">ราคาล่าสุด</th><th data-field="change_pct" class="r">เปลี่ยนไป</th><th data-field="status">สถานะ</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p style="margin:.6rem 0 0;color:var(--nf-muted);font-size:var(--cds-font-size-caption)">ราคาเปลี่ยนได้จากหลายสาเหตุ เช่น ตลาดทั้งกลุ่มขึ้นลง จึงดูในหมายเหตุประกอบเสมอ ไม่ใช่คำแนะนำการลงทุน</p>
     </section>
 
     <section class="nf-card" id="prices">
@@ -786,6 +798,31 @@ dash.calc('countdown', {
       });
   }
 
+  const fuVar = { 'กำลังติดตาม': '--nf-blue', 'สรุปแล้ว': '--nf-teal', 'รอเหตุการณ์': '--nf-grey' };
+  function drawFollowup() {
+    const t = document.getElementById('fu-table'), tb = t.querySelector('tbody');
+    const s = dash.data('event_followup');
+    if (bad(s)) return fail(t);
+    if (s.status !== 'ok') { tb.innerHTML = ''; t.classList.add('dash-skeleton'); return; }
+    t.classList.remove('dash-skeleton'); tb.innerHTML = '';
+    const num = (v) => (v === null || v === undefined || v === '') ? null : Number(v);
+    const usd = (v) => v === null ? '—' : '$' + (v < 0.01 ? v.toPrecision(3) : v.toLocaleString('en-US', { maximumFractionDigits: 4 }));
+    const ord = { 'กำลังติดตาม': 0, 'สรุปแล้ว': 1, 'รอเหตุการณ์': 2 };
+    s.data.slice().sort((a, b) => (ord[a.status] ?? 9) - (ord[b.status] ?? 9) || String(a.date).localeCompare(String(b.date))).forEach(r => {
+      const tr = document.createElement('tr');
+      const a = document.createElement('td'); const h = document.createElement('b'); h.textContent = r.event; a.appendChild(h);
+      const d = document.createElement('div'); d.className = 'nf-offnote'; d.textContent = `${r.token} · วันที่ ${r.date}${r.note ? ' · ' + r.note : ''}`; a.appendChild(d);
+      const bp = num(r.before_price), np = num(r.now_price), ch = num(r.change_pct);
+      const b = document.createElement('td'); b.className = 'r'; b.textContent = usd(bp); if (r.before_date) b.title = r.before_date;
+      const c = document.createElement('td'); c.className = 'r'; c.textContent = usd(np); if (r.now_date) c.title = r.now_date;
+      const e = document.createElement('td'); e.className = 'r';
+      if (ch === null) e.textContent = '—'; else { e.textContent = (ch > 0 ? '+' : '') + ch.toFixed(1) + '%'; e.style.color = `var(${ch < 0 ? '--nf-red' : '--nf-green'})`; e.style.fontWeight = '700'; }
+      const f = document.createElement('td'); f.appendChild(pill(r.status, fuVar[r.status] || '--nf-grey'));
+      if (r.check_date && r.status !== 'สรุปแล้ว') { const k = document.createElement('div'); k.className = 'nf-offnote'; k.textContent = 'สรุปผล ' + r.check_date; f.appendChild(k); }
+      tr.append(a, b, c, e, f); tb.appendChild(tr);
+    });
+  }
+
   function chartBox(id, src) {
     const el = document.getElementById(id); const s = dash.data(src);
     if (bad(s)) { fail(el); return null; }
@@ -864,7 +901,7 @@ dash.calc('countdown', {
 
   let first = true;
   dash.onData(() => {
-    fillMarks(); drawCountdown(); drawWeekly(); drawOfficial(); drawWhales(); drawWatch(); drawNewGames(); drawPrices(); drawReviews(); drawScam(); drawAirdrops(); drawDeadlines(); drawRisk(); drawDrawdown(); drawClosures();
+    fillMarks(); drawCountdown(); drawWeekly(); drawOfficial(); drawWhales(); drawWatch(); drawNewGames(); drawFollowup(); drawPrices(); drawReviews(); drawScam(); drawAirdrops(); drawDeadlines(); drawRisk(); drawDrawdown(); drawClosures();
     if (first && dash.data('timeline').status === 'ok') {
       first = false;
       const named = location.hash.slice(1);
