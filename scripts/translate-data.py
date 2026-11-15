@@ -6,7 +6,7 @@ Thai strings in data/*.json are looked up in i18n/data-en.json (Thai -> English)
   add FILE     merge a JSON object {thai: english} into i18n/data-en.json
   build        write data/en/<id>.json for every file whose strings are all translated;
                a file with any untranslated string gets no English copy, so the app shows the Thai one
-The `kind`, `trend`, `period` and `stage` fields stay in Thai: the pages pick colours by them, and the app translates them on screen.
+The `kind`, `trend`, `period` and `stage` fields (and `status` in event_followup.json) stay in Thai: the pages pick colours by them, and the app translates them on screen.
 """
 import json, os, re, sys, glob
 
@@ -14,6 +14,9 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MAP = os.path.join(ROOT, 'i18n', 'data-en.json')
 THAI = re.compile('[ก-๛]')
 KEEP = {'kind', 'trend', 'period', 'stage'}
+KEEP_IN = {'event_followup.json': {'status'}}  # per-file: airdrops.json `status` is free text and is translated
+
+def keep_for(p): return KEEP | KEEP_IN.get(os.path.basename(p), set())
 
 def load_map():
     try:
@@ -23,18 +26,18 @@ def load_map():
 def files():
     return sorted(p for p in glob.glob(os.path.join(ROOT, 'data', '*.json')))
 
-def strings(v, key=None):
+def strings(v, key=None, keep=KEEP):
     if isinstance(v, str):
-        if key not in KEEP and THAI.search(v): yield v
+        if key not in keep and THAI.search(v): yield v
     elif isinstance(v, list):
-        for x in v: yield from strings(x, key)
+        for x in v: yield from strings(x, key, keep)
     elif isinstance(v, dict):
-        for k, x in v.items(): yield from strings(x, k)
+        for k, x in v.items(): yield from strings(x, k, keep)
 
-def apply(v, m, key=None):
-    if isinstance(v, str): return m[v] if key not in KEEP and THAI.search(v) else v
-    if isinstance(v, list): return [apply(x, m, key) for x in v]
-    if isinstance(v, dict): return {k: apply(x, m, k) for k, x in v.items()}
+def apply(v, m, key=None, keep=KEEP):
+    if isinstance(v, str): return m[v] if key not in keep and THAI.search(v) else v
+    if isinstance(v, list): return [apply(x, m, key, keep) for x in v]
+    if isinstance(v, dict): return {k: apply(x, m, k, keep) for k, x in v.items()}
     return v
 
 def main():
@@ -44,7 +47,7 @@ def main():
         seen = []
         for p in files():
             with open(p, encoding='utf-8') as f: d = json.load(f)
-            for s in strings(d):
+            for s in strings(d, keep=keep_for(p)):
                 if s not in m and s not in seen: seen.append(s)
         print(json.dumps(seen, ensure_ascii=False, indent=0))
     elif cmd == 'add':
@@ -60,10 +63,10 @@ def main():
         used, skipped = set(), []
         for p in files():
             with open(p, encoding='utf-8') as f: d = json.load(f)
-            ss = list(strings(d)); used.update(ss)
+            ss = list(strings(d, keep=keep_for(p))); used.update(ss)
             target = os.path.join(out, os.path.basename(p))
             if all(s in m for s in ss):
-                with open(target, 'w', encoding='utf-8') as f: json.dump(apply(d, m), f, ensure_ascii=False)
+                with open(target, 'w', encoding='utf-8') as f: json.dump(apply(d, m, keep=keep_for(p)), f, ensure_ascii=False)
             else:
                 skipped.append(os.path.basename(p))
                 if os.path.exists(target): os.remove(target)
